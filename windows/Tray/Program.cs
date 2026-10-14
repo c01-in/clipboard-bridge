@@ -34,22 +34,26 @@ sealed class TrayContext : ApplicationContext
     readonly NotifyIcon icon;
     readonly ClipboardWindow window;
     readonly System.Windows.Forms.Timer debounce = new() { Interval = 250 };
+    readonly System.Windows.Forms.Timer receiveTimer = new() { Interval = 500 };
     readonly SemaphoreSlim sending = new(1, 1);
     bool paused, sendAgain;
+    bool receiving;
+    uint? receivedClipboardSequence;
     string? lastHash;
     string status = "正在连接后台服务…";
     public TrayContext()
     {
-        window = new ClipboardWindow(); window.Changed += () => { if (!paused) { debounce.Stop(); debounce.Start(); } }; window.ManualSend += async () => await Send(true);
+        window = new ClipboardWindow(); window.Changed += () => { if (!paused && receivedClipboardSequence != ClipboardWindow.Sequence) { debounce.Stop(); debounce.Start(); } }; window.ManualSend += async () => await Send(true);
         var menu = new ContextMenuStrip();
         menu.Items.Add("立即发送剪贴板  Ctrl+Alt+V", null, async (_, _) => await Send(true));
-        var toggle = new ToolStripMenuItem("暂停自动同步") { CheckOnClick = true };
+        var toggle = new ToolStripMenuItem("暂停 Windows 自动发送") { CheckOnClick = true };
         toggle.CheckedChanged += (_, _) => { paused = toggle.Checked; SavePreferences(); icon!.Text = paused ? "剪贴板同步 · 已暂停" : "剪贴板同步 · 自动"; icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray; }; menu.Items.Add(toggle);
         menu.Items.Add("设置与手机配对", null, (_, _) => ShowSettings());
         menu.Items.Add("退出", null, (_, _) => ExitThread());
         icon = new NotifyIcon { Icon = AppIcons.Tray, Text = "剪贴板同步", Visible = true, ContextMenuStrip = menu };
         icon.DoubleClick += (_, _) => ShowSettings();
         debounce.Tick += async (_, _) => { debounce.Stop(); await Send(false); };
+        receiveTimer.Tick += async (_, _) => await Receive(); receiveTimer.Start();
         var pref = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge", "paused.txt");
         paused = File.Exists(pref) && File.ReadAllText(pref) == "true"; toggle.Checked = paused;
         if (!File.Exists(pref)) ShowSettings();
@@ -62,21 +66,54 @@ sealed class TrayContext : ApplicationContext
     }
     async Task Send(bool manual)
     {
+        if (!manual && receivedClipboardSequence == ClipboardWindow.Sequence) return;
         if (!await sending.WaitAsync(0)) { sendAgain = true; if (manual) Notify("正在处理上一条剪贴板，随后会发送最新内容", false); return; }
         try
         {
+            uint sequence = ClipboardWindow.Sequence;
             (string mime, byte[] bytes) = await ReadClipboard();
+            if (!manual && (sequence != ClipboardWindow.Sequence || receivedClipboardSequence == ClipboardWindow.Sequence)) return;
             if (bytes.Length == 0) return;
             if (bytes.Length > Bridge.MaxBytes) throw new InvalidOperationException("内容超过 16 MiB，未发送");
             string hash = mime + Convert.ToHexString(SHA256.HashData(bytes));
             if (!manual && hash == lastHash) return;
             var reply = await Ipc.Call(new Command("send", mime, Convert.ToBase64String(bytes)));
             status = reply.Message;
-            if (reply.Ok) lastHash = hash;
+            if (reply.Ok && sequence == ClipboardWindow.Sequence) lastHash = hash;
             if (manual || !reply.Ok) Notify(reply.Message, !reply.Ok);
         }
         catch (Exception e) { status = e is TimeoutException ? "后台服务未启动，请运行安装脚本" : e.Message; if (manual || e is not ExternalException) Notify(status, true); }
         finally { sending.Release(); if (sendAgain) { sendAgain = false; debounce.Stop(); debounce.Start(); } }
+    }
+    async Task Receive()
+    {
+        if (receiving) return;
+        receiving = true;
+        try
+        {
+            var reply = await Ipc.Call(new Command("receive"));
+            if (!reply.Ok || reply.Value is null) return;
+            var clip = Bridge.Decode<IncomingClip>(Encoding.UTF8.GetBytes(reply.Value));
+            Receipt receipt;
+            try
+            {
+                WindowsClipboard.Apply(clip);
+                receivedClipboardSequence = ClipboardWindow.Sequence;
+                debounce.Stop(); sendAgain = false; lastHash = null;
+                receipt = new Receipt(clip.Manifest.Id, clip.Manifest.Sequence, "applied", null);
+                status = "手机内容已写入 Windows 剪贴板，可以粘贴";
+            }
+            catch (Exception e)
+            {
+                receipt = new Receipt(clip.Manifest.Id, clip.Manifest.Sequence, "error", "Windows 剪贴板写入失败：" + e.Message);
+                status = receipt.Detail!;
+            }
+            await Ipc.Call(new Command("receive-ack", Value: System.Text.Json.JsonSerializer.Serialize(receipt, Bridge.Json)));
+            Notify(status, receipt.Status != "applied");
+        }
+        catch (Exception)
+        { /* The next timer tick reconnects after a service restart. */ }
+        finally { receiving = false; }
     }
     static async Task<(string, byte[])> ReadClipboard()
     {
@@ -107,7 +144,7 @@ sealed class TrayContext : ApplicationContext
     }
     void Notify(string text, bool error) { icon.BalloonTipTitle = error ? "剪贴板同步需要处理" : "剪贴板同步"; icon.BalloonTipText = text.Length > 250 ? text[..250] : text; icon.BalloonTipIcon = error ? ToolTipIcon.Warning : ToolTipIcon.Info; icon.ShowBalloonTip(3500); }
     void ShowSettings() { var form = new SettingsForm(() => status); form.Show(); }
-    protected override void ExitThreadCore() { icon.Visible = false; icon.Dispose(); debounce.Dispose(); window.Dispose(); base.ExitThreadCore(); }
+    protected override void ExitThreadCore() { receiveTimer.Dispose(); icon.Visible = false; icon.Dispose(); debounce.Dispose(); window.Dispose(); base.ExitThreadCore(); }
 }
 
 sealed class ClipboardWindow : NativeWindow, IDisposable
@@ -116,6 +153,8 @@ sealed class ClipboardWindow : NativeWindow, IDisposable
     [DllImport("user32.dll")] static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
     [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr hwnd, int id);
+    [DllImport("user32.dll")] static extern uint GetClipboardSequenceNumber();
+    public static uint Sequence => GetClipboardSequenceNumber();
     public event Action? Changed, ManualSend;
     public bool HotkeyRegistered { get; }
     public ClipboardWindow() { CreateHandle(new CreateParams { Caption = "ClipboardBridge.Clipboard", Parent = new IntPtr(-3) }); AddClipboardFormatListener(Handle); HotkeyRegistered = RegisterHotKey(Handle, 1, 0x4000 | 0x0001 | 0x0002, 0x56); }
@@ -135,7 +174,7 @@ sealed class SettingsForm : Form
         Text = "剪贴板同步 · 设置与手机配对"; Icon = AppIcons.Application; ClientSize = new Size(660, 710); MinimumSize = new Size(680, 740); Font = new Font("Microsoft YaHei UI", 10); StartPosition = FormStartPosition.CenterScreen;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 9 };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 292)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        layout.Controls.Add(new Label { Text = "Windows 复制，Android 直接粘贴", Font = new Font(Font.FontFamily, 17, FontStyle.Bold), AutoSize = true });
+        layout.Controls.Add(new Label { Text = "Windows 自动发送 · Android 点击发送", Font = new Font(Font.FontFamily, 17, FontStyle.Bold), AutoSize = true });
         layout.Controls.Add(state);
         var imports = new FlowLayoutPanel { Dock = DockStyle.Fill };
         imports.Controls.Add(Button("导入 Firebase 发送凭据", async () => await Import("account")));

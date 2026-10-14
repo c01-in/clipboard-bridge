@@ -58,6 +58,9 @@ public sealed record Device(string Token, string DeviceName);
 public sealed record Receipt(string Id, long Sequence, string Status, string? Detail);
 public sealed record ClipManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size, string? Inline, string? Blob);
 public sealed record Delivery(string Id, long Sequence, long ExpiresAt, string Envelope, string? BlobFile, bool Submitted = false);
+public sealed record UploadManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size);
+public sealed record ClipboardUpload(string Envelope, string Data);
+public sealed record IncomingClip(UploadManifest Manifest, string Data);
 
 public sealed class Configuration
 {
@@ -69,13 +72,16 @@ public sealed class Configuration
     public string? DeviceName { get; set; }
     public string? FirebaseAndroidJson { get; set; }
     public long OutgoingSequence { get; set; }
+    public long IncomingSequence { get; set; }
+    public string? IncomingId { get; set; }
 }
 
 public sealed class Vault
 {
     private readonly object gate = new();
     private readonly string path;
-    public Vault() { Directory.CreateDirectory(Bridge.DataDir); path = Path.Combine(Bridge.DataDir, "configuration.dpapi"); }
+    public string DataDir { get; }
+    public Vault(string? dataDir = null) { DataDir = dataDir ?? Bridge.DataDir; Directory.CreateDirectory(DataDir); path = Path.Combine(DataDir, "configuration.dpapi"); }
     public Configuration Read()
     {
         lock (gate)

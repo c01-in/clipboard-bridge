@@ -9,9 +9,11 @@ namespace ClipboardBridge;
 public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
 {
     private readonly SemaphoreSlim gate = new(1, 1);
-    private readonly string pendingPath = Path.Combine(Bridge.DataDir, "pending.json");
+    private readonly string pendingPath = Path.Combine(vault.DataDir, "pending.json");
     private string status = "等待配置 Firebase 和配对手机";
     private Delivery? pending;
+    private PendingIncoming? incoming;
+    private sealed record PendingIncoming(UploadManifest Manifest, byte[] Bytes, long Deadline, TaskCompletionSource<Receipt> Completion);
     public string Status => status;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -66,6 +68,33 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
         switch (c.Op)
         {
             case "status": return new Reply(true, status, JsonSerializer.Serialize(new { device = vault.Read().DeviceName, configured = vault.Read().ServiceAccountJson is not null, endpoints = vault.Read().Endpoints }, Bridge.Json));
+            case "receive":
+                await gate.WaitAsync(ct);
+                try
+                {
+                    if (incoming is null || incoming.Deadline <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return new Reply(true, "没有手机待发送内容");
+                    var clip = new IncomingClip(incoming.Manifest with { ExpiresAt = incoming.Deadline }, Convert.ToBase64String(incoming.Bytes));
+                    return new Reply(true, "手机内容等待写入", JsonSerializer.Serialize(clip, Bridge.Json));
+                }
+                finally { gate.Release(); }
+            case "receive-ack":
+                var receipt = Bridge.Decode<Receipt>(System.Text.Encoding.UTF8.GetBytes(c.Value ?? ""));
+                await gate.WaitAsync(ct);
+                try
+                {
+                    if (incoming is null || incoming.Manifest.Id != receipt.Id || incoming.Manifest.Sequence != receipt.Sequence)
+                        return new Reply(false, "该手机发送请求已结束");
+                    if (receipt.Status is not ("applied" or "error")) throw new InvalidDataException("写入回执格式无效");
+                    if (receipt.Status == "applied")
+                    {
+                        vault.Update(x => { x.IncomingSequence = receipt.Sequence; x.IncomingId = receipt.Id; });
+                        ClearPending();
+                    }
+                    status = receipt.Status == "applied" ? "手机内容已写入 Windows 剪贴板" : "手机发送失败：" + receipt.Detail;
+                    incoming.Completion.TrySetResult(receipt); incoming = null;
+                    return new Reply(true, status);
+                }
+                finally { gate.Release(); }
             case "account":
                 using (var a = JsonDocument.Parse(c.Value ?? ""))
                 {
@@ -108,7 +137,7 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
                     vault.Update(c => { c.OutgoingSequence = Math.Max(DateTime.UtcNow.Ticks, c.OutgoingSequence + 1); seq = c.OutgoingSequence; });
                     string? inline = bytes.Length <= 900 && c.Mime == "text/plain" ? Convert.ToBase64String(bytes) : null;
                     string? file = inline is null ? id + ".blob" : null;
-                    if (file is not null) File.WriteAllText(Path.Combine(Bridge.DataDir, file), Bridge.Seal(bytes, cfg.Key));
+                    if (file is not null) File.WriteAllText(Path.Combine(vault.DataDir, file), Bridge.Seal(bytes, cfg.Key));
                     var manifest = new ClipManifest(id, seq, c.Mime, expiry, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), bytes.Length, inline, file is null ? null : id);
                     var next = new Delivery(id, seq, expiry, Bridge.Seal(Bridge.Encode(manifest), cfg.Key), file);
                     ClearPending(); pending = next; SavePending();
@@ -126,10 +155,59 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
         pending = pending with { Submitted = true }; SavePending();
         status = "已提交 FCM，等待手机确认写入剪贴板";
     }
+    public async Task<Receipt> ReceiveFromAndroid(UploadManifest manifest, byte[] bytes, CancellationToken ct)
+    {
+        PendingIncoming next;
+        await gate.WaitAsync(ct);
+        try
+        {
+            var cfg = vault.Read();
+            if (manifest.Sequence == cfg.IncomingSequence && manifest.Id == cfg.IncomingId)
+                return new Receipt(manifest.Id, manifest.Sequence, "applied", null);
+            if (manifest.Sequence <= cfg.IncomingSequence)
+                return new Receipt(manifest.Id, manifest.Sequence, "error", "这是旧的发送请求，请重新点击发送");
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (incoming is not null && incoming.Deadline <= now)
+            {
+                incoming.Completion.TrySetResult(new Receipt(incoming.Manifest.Id, incoming.Manifest.Sequence, "error", "Windows 未及时确认写入，请检查托盘程序"));
+                incoming = null;
+            }
+            if (incoming is not null)
+            {
+                if (incoming.Manifest != manifest)
+                    return new Receipt(manifest.Id, manifest.Sequence, "error", "电脑正在接收上一条内容，请稍后再试");
+                next = incoming;
+            }
+            else
+            {
+                next = new PendingIncoming(manifest, bytes, Math.Min(manifest.ExpiresAt, now + 20_000), new(TaskCreationOptions.RunContinuationsAsynchronously));
+                incoming = next;
+            }
+        }
+        finally { gate.Release(); }
+        try
+        {
+            var remaining = TimeSpan.FromMilliseconds(Math.Max(1, next.Deadline - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            return await next.Completion.Task.WaitAsync(remaining, ct);
+        }
+        catch (Exception e) when (e is TimeoutException or OperationCanceledException)
+        {
+            await gate.WaitAsync(CancellationToken.None);
+            try
+            {
+                if (next.Completion.Task.IsCompletedSuccessfully) return next.Completion.Task.Result;
+                if (incoming == next) incoming = null;
+                var failure = new Receipt(manifest.Id, manifest.Sequence, "error", "未收到 Windows 写入确认，请检查电脑托盘程序后重新发送");
+                next.Completion.TrySetResult(failure);
+                return failure;
+            }
+            finally { gate.Release(); }
+        }
+    }
     public async Task<string?> Blob(string id, CancellationToken ct)
     {
         await gate.WaitAsync(ct);
-        try { return pending is not null && pending.Id == id && pending.ExpiresAt > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() && pending.BlobFile is not null ? File.ReadAllText(Path.Combine(Bridge.DataDir, pending.BlobFile)) : null; }
+        try { return pending is not null && pending.Id == id && pending.ExpiresAt > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() && pending.BlobFile is not null ? File.ReadAllText(Path.Combine(vault.DataDir, pending.BlobFile)) : null; }
         finally { gate.Release(); }
     }
     public async Task AcceptReceipt(Receipt receipt, CancellationToken ct)
@@ -146,7 +224,7 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
     private void SavePending() { File.WriteAllBytes(pendingPath + ".tmp", Bridge.Encode(pending)); File.Move(pendingPath + ".tmp", pendingPath, true); }
     private void ClearPending()
     {
-        if (pending?.BlobFile is not null) File.Delete(Path.Combine(Bridge.DataDir, pending.BlobFile));
+        if (pending?.BlobFile is not null) File.Delete(Path.Combine(vault.DataDir, pending.BlobFile));
         pending = null; File.Delete(pendingPath);
     }
 }

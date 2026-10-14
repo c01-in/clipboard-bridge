@@ -25,6 +25,15 @@ builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(20
 builder.Services.AddSingleton<FcmSender>(); builder.Services.AddSingleton<Broker>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Broker>());
 var app = builder.Build();
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsPost(context.Request.Method) && context.Request.Path.Equals("/api/clipboard", StringComparison.OrdinalIgnoreCase))
+    {
+        var bodyLimit = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+        if (bodyLimit is not null && !bodyLimit.IsReadOnly) bodyLimit.MaxRequestBodySize = Bridge.MaxBytes * 2L;
+    }
+    await next(context);
+});
 app.MapGet("/health", () => Results.Json(new { service = "ClipboardBridge", version = 1 }));
 app.MapPost("/api/register", async (Box body, Vault vault) =>
 {
@@ -45,5 +54,17 @@ app.MapPost("/api/ack", async (Box body, Vault vault, Broker broker, Cancellatio
 {
     try { await broker.AcceptReceipt(Bridge.Decode<Receipt>(Bridge.Open(body.Data, vault.Read().Key)), ct); return Results.Ok(); }
     catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException) { return Results.BadRequest(); }
+});
+app.MapPost("/api/clipboard", async (ClipboardUpload body, Vault vault, Broker broker, CancellationToken ct) =>
+{
+    try
+    {
+        var key = vault.Read().Key;
+        var (manifest, bytes) = UploadContent.Open(body, key);
+        var receipt = await broker.ReceiveFromAndroid(manifest, bytes, ct);
+        return Results.Json(new Box(Bridge.Seal(Bridge.Encode(receipt), key)), Bridge.Json);
+    }
+    catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException or InvalidDataException or System.Text.DecoderFallbackException)
+    { return Results.BadRequest(); }
 });
 await app.RunAsync();
