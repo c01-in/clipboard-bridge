@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><AssemblyName>ClipboardBridge.Cli</AssemblyName></PropertyGroup><ItemGroup><ProjectReference Include="../Common/Common.csproj"/></ItemGroup></Project>

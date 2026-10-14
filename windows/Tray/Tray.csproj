@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>ClipboardBridge</AssemblyName>
+    <ApplicationIcon>Assets/ClipboardBridge.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Common/Common.csproj"/>
+    <PackageReference Include="QRCoder" Version="1.6.0"/>
+    <EmbeddedResource Include="Assets/ClipboardBridge.ico" LogicalName="ClipboardBridge.App.ico"/>
+    <EmbeddedResource Include="Assets/ClipboardBridge-Paused.ico" LogicalName="ClipboardBridge.Paused.ico"/>
+  </ItemGroup>
+</Project>
