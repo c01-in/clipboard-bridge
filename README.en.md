@@ -18,7 +18,7 @@ Copy on Windows, paste on Android. Text and one image at a time, with on-demand 
 
 There is no shared hosted backend or maintainer credential in this repository.
 
-1. Install .NET SDK 10, JDK 21 and Android SDK Platform 36 / Build Tools 36.0.0 on Windows.
+1. Install PowerShell 7+, .NET SDK 10, JDK 21 and Android SDK Platform 36 / Build Tools 36.0.0 on Windows.
 2. Clone the repository and build:
 
 ```powershell
