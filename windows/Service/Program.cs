@@ -37,12 +37,7 @@ app.Use(async (context, next) =>
     await next(context);
 });
 app.MapGet("/health", () => Results.Json(new { service = "ClipboardBridge", version = 1 }));
-app.MapGet("/app/android", (HttpContext context) =>
-{
-    context.Response.Headers.CacheControl = "no-store";
-    string apk = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "android", "ClipboardBridge.apk"));
-    return File.Exists(apk) ? Results.File(apk, "application/vnd.android.package-archive", "ClipboardBridge.apk") : Results.NotFound();
-});
+AndroidDownload.Map(app, () => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "android", "ClipboardBridge.apk")));
 app.MapPost("/api/pairing/{id}/confirm", (string id, Box body, PairingHub hub, HttpContext context) =>
     PairResult(() => hub.ConfirmPhone(id, body, context.Connection.RemoteIpAddress!.MapToIPv4())));
 app.MapGet("/api/pairing/{id}/configuration", (string id, PairingHub hub, HttpContext context) =>

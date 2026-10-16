@@ -131,4 +131,5 @@ finally
     testDirectory.Delete();
 }
 await PairingChecks.Run(Assert);
+await DownloadChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");
