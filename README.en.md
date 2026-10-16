@@ -4,11 +4,11 @@
 
 Automatically send Windows clipboard text or one image to Android. On Android, tap Send in the app to place the clipboard on Windows. Devices discover each other and pair with confirmation on both screens; no addresses or pairing links to enter.
 
-## Download the 0.1.1 preview
+## Download the 0.1.2 preview
 
-- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge.apk)
-- [Windows x64 installer](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge-Windows-x64-Setup.exe)
-- [Manual ZIP, library sources and checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.1)
+- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk)
+- [Windows x64 installer](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
+- [Manual ZIP, library sources and checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
 
 Users do not need SDKs, local builds or phone debugging. Windows installation requires administrator permission. The installer is not Authenticode-signed.
 
@@ -42,12 +42,12 @@ Both apps follow the system language: English, Simplified/Traditional Chinese, S
 
 ## Upgrade and privacy
 
-Windows and Android share version 0.1.1. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically.
+Windows and Android share version 0.1.2. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically.
 Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
 Keys, subscription endpoints and runtime data stay local and are excluded from source and public installers. Clipboard content is AES-GCM encrypted, but Google can observe push metadata. Use trusted LAN/Tailscale networks. See [SECURITY.md](SECURITY.md).
 
-Our code is [MIT](LICENSE). UnifiedPush libraries retain LGPL-2.1; the full license is inside the APK and original library sources accompany each Release. See [third-party notices](THIRD_PARTY_NOTICES.md).
+Our code is [MIT](LICENSE). The embedded UnifiedPush receiver retains LGPL-2.1; the connector uses Apache-2.0. Both full licenses are inside the APK and original library sources accompany each Release. See [third-party notices](THIRD_PARTY_NOTICES.md). Version 0.1.2 corrects the license packaging in 0.1.1 without changing delivery behavior.
 
 ## Development
 
@@ -55,5 +55,5 @@ Our code is [MIT](LICENSE). UnifiedPush libraries retain LGPL-2.1; the full lice
 - [GitHub Actions releases](docs/releases.md): matching `v0.x.y` tags automatically test, sign, package and publish both apps.
 - [Protocol](docs/protocol.md), [troubleshooting](docs/troubleshooting.md), [contributing](CONTRIBUTING.md)
 
-83 protocol, IPC, pairing, Web Push, pause revision, migration, locale and actual HTTP download checks pass. All six short native probe messages arrived, including process termination and forced deep Doze; see [probe evidence](experiments/webpush-probe/RESULTS.md). Production pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions also passed; see [0.1.1 device evidence](docs/verification-0.1.1.md).
+85 protocol, IPC, pairing, Web Push, pause revision, migration, license, locale and actual HTTP download checks pass. All six short native probe messages arrived, including process termination and forced deep Doze; see [probe evidence](experiments/webpush-probe/RESULTS.md). Production pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions also passed; see [0.1.1 device evidence](docs/verification-0.1.1.md).
 All vendors, prolonged sleep, reboot recovery and cross-network combinations have not been validated. This is a preview, not a guarantee of long-term delivery.
