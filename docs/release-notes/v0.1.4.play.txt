@@ -1,0 +1,1 @@
+Share text or one image directly through Clipboard Bridge from another Android app, without opening the main screen. Shared content goes to your paired computer using the existing encrypted connection. Improved receive feedback on Android 13 and later to avoid an extra app success notification after the system clipboard overlay. Existing pairing and pause settings are preserved.

@@ -19,6 +19,9 @@ jobs:
       - name: Check tracked files and reachable history
         shell: pwsh
         run: ./scripts/Check-Publish.ps1 -IncludeHistory
+      - name: Test Google Play publishing safeguards
+        shell: pwsh
+        run: ./scripts/Test-GooglePlay.ps1
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: microsoft

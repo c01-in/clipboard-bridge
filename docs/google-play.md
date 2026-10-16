@@ -1,8 +1,8 @@
 # Google Play readiness review
 
-Reviewed: 16 October 2026. Baseline: public 0.1.2, package `com.colin.clipbridge`, target SDK 36; the 0.1.3 changes add companion download/privacy links and AAB output.
+Reviewed: 16 October 2026. Current GitHub release: 0.1.4 (version code 8), package `com.colin.clipbridge`, target SDK 36. Production review was submitted with 0.1.3 (version code 7); approval has not been confirmed. The 0.1.4 AAB has not yet been uploaded to Play.
 
-**Finding: there is no established blanket ban on UnifiedPush, but this build is not yet confirmed ready for Google Play production.** Play Console accepted the signed 0.1.3 bundle (version code 7) and it has been published to internal testing. No blocking validation error or push-library incompatibility warning was shown. The release is explicitly marked **not reviewed**; this is not Google's confirmation of the native Web Push registration path or production approval.
+**Finding: there is no established blanket ban on UnifiedPush, but this build is not yet confirmed ready for Google Play production.** Play Console accepted the signed 0.1.3 bundle (version code 7) and it has been published to internal testing. No blocking validation error or push-library incompatibility warning was shown. The internal release was marked **not reviewed**. A subsequent 0.1.3 production submission reached the changes-in-review page; this is not Google's confirmation of the native Web Push registration path or production approval.
 
 ## Internal test outcome — 16 October 2026
 
@@ -11,6 +11,12 @@ Reviewed: 16 October 2026. Baseline: public 0.1.2, package `com.colin.clipbridge
 - Prepublication validation showed two warnings: no testers had yet been assigned, and no deobfuscation mapping file was attached. Tester access is configured separately in Play Console. The build does not enable R8/ProGuard minification, so it has no mapping file to upload.
 - Internal testing can proceed before a full store review. Store listing, policy declarations and production eligibility checks remain separate work. Acceptance here does not establish official support for the registration broadcast or guarantee a later review outcome.
 - Tester email addresses, developer account identifiers, signing material and private Console screenshots are not part of this repository.
+
+## Production submission and automation
+
+The 0.1.3 production submission included the store listing, real screenshots, public support alias, privacy/Data safety declarations and IARC content rating. Its last verified state was **changes in review**, with managed publishing off. No approval or public availability has been verified. Do not confuse that submission with the GitHub-only 0.1.4 release.
+
+[Google Play CI publishing](google-play-ci.md) uploads existing signed AAB assets through the official API, with a guard that preserves pending reviews. Its one-time Google-side publisher authorization remains unconfigured. CI validation without credentials is not a real upload. The preparation checklist below describes review considerations, not a claim that all earlier Console setup remains undone.
 
 ## The actual libraries and registration path
 
@@ -46,7 +52,7 @@ The exact published 3.0.0 source archive was inspected. `Constants.kt` sets `ACT
 5. **Complete the store submission.** Supply screenshots, listing, content rating, audience, ads declaration, reviewer steps and a Windows companion link. A reviewer needs a Windows computer, the same Wi-Fi and Google connectivity to test pairing/transfer; no account credentials are needed.
 6. **Check the developer account's testing requirement.** For personal accounts created after 13 November 2023, Google currently requires at least 12 opted-in testers for 14 continuous days before applying for production access. [Official requirement](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en). The account's creation date and resulting production eligibility have not been established.
 
-A Play app has been created and the 0.1.3 bundle published to internal testing. It has not passed a full production review. AAB generation, GitHub publication, CI success and internal test availability are separate from production approval.
+A Play app has been created, the 0.1.3 bundle published to internal testing, and 0.1.3 submitted for production review. Production approval has not been confirmed. AAB generation, GitHub publication, CI success and internal test availability are separate from production approval.
 
 ## Companion download link
 

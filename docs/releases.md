@@ -1,44 +1,41 @@
-# 自动构建与发布
+# Automated builds and releases
 
-普通使用者从 [GitHub Releases](https://github.com/c01-in/clipboard-bridge/releases) 下载 Android APK 或 Windows 安装 EXE，不需要构建环境。当前版本是 0.x 测试版，GitHub 发布标记为 prerelease，不宣称稳定。
+Users install the Android APK or Windows setup EXE from [GitHub Releases](https://github.com/c01-in/clipboard-bridge/releases), without a build environment. Versions remain 0.x previews. The current GitHub release is **0.1.4**; GitHub publication is separate from Google Play submission and approval.
 
-## 维护者首次配置
+## One-time maintainer setup
 
-1. 使用自己的持久 Android 签名密钥完成一次本地 `scripts/Build.ps1`。保留 `local/signing/` 的加密备份，不要每次重新生成。
-2. 使用拥有仓库管理权限的 GitHub CLI 账号运行 `scripts/Configure-CISigning.ps1 -Repository <owner/repo>`。脚本把同一 keystore 和密码保存为仓库的 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD` 加密 Secrets，通过标准输入传入，避免出现在命令行参数中。
-3. Secrets 不进入 Git、Release 资产或构建产物。修改发布 workflow、推送标签和使用发布 Secrets 的权限只应交给受信任维护者。不要为不受信任 PR 开放 Secrets。
-4. 不要把 Firebase 发送私钥、`google-services.json`、手机令牌、DPAPI 配置或配对密钥上传到 Actions。构建和安装验证均无需这些数据。每台电脑自行生成 VAPID 身份，不需要 Firebase 发送凭据。
+1. Keep the persistent Android signing key and its encrypted backup in ignored `local/signing/`.
+2. With repository administration access through GitHub CLI, run `scripts/Configure-CISigning.ps1`. It saves the existing keystore/password as encrypted `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` repository secrets via standard input.
+3. Configure the dedicated Google Play publisher once using [Google Play CI setup](google-play-ci.md). No Play publishing credential is currently configured, so automatic Play uploads remain disabled until access is verified.
+4. Restrict workflow modifications, release tags and secret access to trusted maintainers. Never expose publishing secrets to untrusted PRs. Firebase credentials, device tokens, clipboard data and pairing keys are not build inputs.
 
-## 每次发版
+## Each release
 
-两端可见版本必须一致，写在 `Directory.Build.props` 和 `android/app/build.gradle`。当前为 `0.1.3`。Android 的 `versionCode` 是独立、持续递增的内部升级编号；从早期内部 2.x 名称改成 0.x 时也必须递增，不能回退该编号或更换签名。
+Keep the visible versions in `Directory.Build.props` and `android/app/build.gradle` identical. Increase Android's internal `versionCode` for every upload, even if the visible version decreases. Keep the original signing identity for updates. Add version-specific GitHub notes in `docs/release-notes/v0.x.y.md` and English Play notes (at most 500 characters) in `docs/release-notes/v0.x.y.play.txt`.
 
-修改源码、两端版本与下载链接，提交并通过 CI 后推送对应标签：
-
-```powershell
-git tag v0.1.4
-git push origin v0.1.4
-```
-
-示例下一版需要先把两端可见版本改成 `0.1.4`，并增加 Android `versionCode`；不能直接给旧版本代码打新版本标签。已有标签也可在 Actions 的 **Build and publish preview installers** 中手动运行，输入该标签。已发布版本不覆盖旧资产，应增加版本号重新发布。
-
-发布任务自动检查标签与两端版本、源码及历史隐私、协议、语言、下载行为和 Android lint，然后使用原签名密钥构建 APK、打包 Windows EXE，在一次性 GitHub Windows runner 上执行全新安装及卸载，最后发布预发布版本和 SHA-256 校验文件。任一步失败不会发布安装包。
-
-Windows 安装器使用系统自带的 .NET Framework 编译器，无需额外打包工具；安装后的三个程序自带 .NET 运行时。普通 PR 检查没有发布权限。签名 keystore 临时文件在任务结束时清理。
-
-## 本地复现
+After committing and checking CI, push the matching new tag. For example, **after updating source versions** for the next release:
 
 ```powershell
-.\scripts\Build.ps1 -JavaHome 'C:\Tools\jdk-21' -AndroidSdk 'C:\Tools\android-sdk'
-.\scripts\Package.ps1 -AndroidSdk 'C:\Tools\android-sdk'
+git tag v0.1.5
+git push origin v0.1.5
 ```
 
-输出位于 `dist/release/`，仅包含明确列出的公开产物。另提供 `ClipboardBridge-Android-Library-Sources.zip`，包含固定版本的 UnifiedPush 原始库源码与 LGPL-2.1 许可证；App 完整源码由 Release 标签提供。ZIP 不包含 `local/`、签名文件、原始 Firebase 配置或调试 PDB。Windows EXE 没有 Authenticode 签名，安装时会请求管理员权限。覆盖更新沿用已有服务的数据目录；全新 Windows 安装默认使用 `%ProgramData%\ClipboardBridge`。
+The release job validates versions and privacy, runs protocol/localization/download checks and Android lint, builds and verifies signed APK/AAB files, packages Windows installers, and checks a fresh Windows install/service/download/uninstall on a disposable runner. It then publishes the GitHub prerelease with SHA-256 checksums and library sources. Failures prevent installer publication. Temporary signing files are cleaned up.
 
-GitHub 自动构建验证不能代替真实手机权限弹窗、配对、长时间锁屏与实际粘贴验收。
+When `GOOGLE_PLAY_UPLOAD_ENABLED=true`, a following job submits the exact release AAB to Google Play through the official API. Existing reviews are preserved by default. If an earlier review is pending, the summary explicitly reports `waiting_previous_review`; it does not claim submission or retry on a schedule. Approval still belongs to Google.
 
-## Google Play 产物与审核
+Do not overwrite existing tags or assets. To upload an existing release such as 0.1.4 to Play, use **Publish to Google Play** with that tag and mode `submit`; it downloads the existing AAB instead of rebuilding. See [workflow modes, authorization and review handling](google-play-ci.md).
 
-从 0.1.3 开始，自动构建同时生成并验证签名 `ClipboardBridge.aab`，随 GitHub Release 提供并计入 SHA-256 校验文件。普通用户安装 APK，AAB 供维护者在 Play Console 上传；不会自动提交或发布到 Google Play。
+## Local reproduction
 
-上架前仍需处理 [Google Play 发布评估](google-play.md) 中的注册接口支持确认、Data safety、签名及账号测试要求。Android 内有公开隐私政策入口。CI 成功或 AAB 构建成功都不代表 Google 已批准此推送库或应用。
+```powershell
+./scripts/Build.ps1 -JavaHome 'C:\Tools\jdk-21' -AndroidSdk 'C:\Tools\android-sdk'
+./scripts/Package.ps1 -AndroidSdk 'C:\Tools\android-sdk'
+./scripts/Test-GooglePlay.ps1
+```
+
+Public outputs are explicitly selected under `dist/release/`. They exclude `local/`, credentials, runtime configuration, pairing data and debug PDBs. `ClipboardBridge-Android-Library-Sources.zip` contains original UnifiedPush library sources and licenses; full app source is available at the release tag.
+
+The Windows installer is not Authenticode-signed and requests administrator privileges. Installed apps include their .NET runtime. Updates preserve service data; fresh installs use `%ProgramData%\ClipboardBridge`.
+
+CI and HTTP-fixture tests do not replace real-device permission, pairing, clipboard or long-term delivery checks. AAB validation and Google accepting an upload do not establish policy approval; see the [Google Play review](google-play.md).

@@ -24,3 +24,4 @@ deployment.json
 *.pem
 *.key
 *.log
+gha-creds-*.json

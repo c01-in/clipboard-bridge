@@ -42,7 +42,7 @@ if ($UseLocalSecrets) {
 }
 $taskFailures = [Collections.Generic.List[string]]::new()
 $taskChecked = [Collections.Generic.HashSet[string]]::new()
-$taskPaths = '(^|/)(local|secrets|\.idea|\.vscode|node_modules)/|(^|/)(google-services\.json|deployment\.json|pairing\.txt|\.env(?:\..*)?)$|\.(?:jks|keystore|p12|pfx|dpapi|clixml|pem|key|apk|aab|exe|pdb|zip)$|service-account[^/]*\.json$'
+$taskPaths = '(^|/)(local|secrets|\.idea|\.vscode|node_modules)/|(^|/)(gha-creds-[^/]+\.json|google-services\.json|deployment\.json|pairing\.txt|\.env(?:\..*)?)$|\.(?:jks|keystore|p12|pfx|dpapi|clixml|pem|key|apk|aab|exe|pdb|zip)$|service-account[^/]*\.json$'
 $taskPatterns = @(
     '-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
     'AIza[0-9A-Za-z_-]{35}',
