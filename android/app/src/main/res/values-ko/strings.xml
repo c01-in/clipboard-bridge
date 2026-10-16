@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">클립보드 동기화</string>
-    <string name="app_description">Windows에서 복사하고 휴대폰에 붙여넣으세요.\n휴대폰에서 복사한 뒤 전송을 누르세요.</string>
     <string name="status_unpaired">아직 페어링되지 않음</string>
     <string name="status_paired">페어링됨. Windows에서 수신할 준비가 되었습니다.</string>
-    <string name="status_checking">알림과 연결 확인 중…</string>
     <string name="send_clipboard">Windows로 클립보드 전송</string>
     <string name="send_help">텍스트 또는 이미지 한 장. 전송을 누를 때만 클립보드를 읽습니다.</string>
     <string name="connection_heading">컴퓨터 연결</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">네트워크가 변경되었습니다. 다시 검색 중…</string>
     <string name="discovery_connected">페어링된 컴퓨터를 찾아 확인했습니다.</string>
     <string name="discovery_failed">검색 실패: %1$s</string>
-    <string name="find_computer">컴퓨터 찾기</string>
-    <string name="check_connection">연결 및 알림 확인</string>
     <string name="notification_help">수신하려면 알림을 허용하세요. 페어링 후 앱을 계속 열어 둘 필요는 없습니다. 이미지 붙여넣기는 대상 앱의 지원 여부에 따라 다릅니다.</string>
     <string name="system_settings">앱 시스템 설정 열기</string>
     <string name="confirmation_code">확인 코드: %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">클립보드 접근에는 데스크톱 STA 스레드가 필요합니다.</string>
     <string name="win_text_null">Windows 텍스트 클립보드는 널 문자를 지원하지 않습니다.</string>
     <string name="win_service_account">서비스 계정 JSON 자격 증명 파일을 선택하세요.</string>
+    <string name="more_options">추가 옵션</string>
+    <string name="change_computer">컴퓨터 변경</string>
+    <string name="reconnect">다시 연결</string>
+    <string name="about">앱 정보</string>
+    <string name="about_version">버전 %1$s · 테스트 버전</string>
+    <string name="notification_required">동기화 알림 사용</string>
+    <string name="enable_notifications">알림 사용</string>
+    <string name="permission_intro">알림으로 클립보드 동기화 결과를 확인할 수 있습니다. 다음에 Android가 권한을 요청합니다. 나중에 변경할 수 있습니다.</string>
+    <string name="permission_settings_needed">Android가 권한을 다시 요청할 수 없거나 알림이 꺼져 있습니다. 이 앱의 알림 설정에서 알림을 켠 후 돌아오세요.</string>
+    <string name="continue_permission">계속</string>
+    <string name="installer_description">Windows 서비스, 트레이 앱, 시작 메뉴 바로가기를 설치합니다. 기존 자격 증명과 페어링을 유지합니다. 이 테스트 버전의 백그라운드 수신에는 본인의 Firebase 프로젝트를 사용합니다.</string>
+    <string name="installer_ready">서비스 설치에는 관리자 권한이 필요합니다.</string>
+    <string name="installer_install">설치 / 업데이트</string>
+    <string name="installer_close">닫기</string>
+    <string name="installer_installing">설치 중… 잠시 기다리세요.</string>
+    <string name="installer_success">설치가 완료되었습니다. 설정을 열어 휴대폰을 연결하세요.</string>
+    <string name="installer_failed">설치 실패: %1$s</string>
+    <string name="installer_log">설치 로그를 확인하세요: %1$s</string>
 </resources>

@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Zwischenablage synchronisieren</string>
-    <string name="app_description">Unter Windows kopieren, auf dem Handy einfügen.\nAuf dem Handy kopieren und auf Senden tippen.</string>
     <string name="status_unpaired">Noch nicht gekoppelt</string>
     <string name="status_paired">Gekoppelt. Bereit zum Empfangen von Windows.</string>
-    <string name="status_checking">Benachrichtigungen und Verbindung werden geprüft…</string>
     <string name="send_clipboard">Zwischenablage an Windows senden</string>
     <string name="send_help">Text oder ein Bild. Der Inhalt wird erst beim Tippen auf Senden gelesen.</string>
     <string name="connection_heading">Mit einem Computer verbinden</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">Netzwerk geändert. Erneute Suche…</string>
     <string name="discovery_connected">Gekoppelter Computer gefunden und geprüft.</string>
     <string name="discovery_failed">Suche fehlgeschlagen: %1$s</string>
-    <string name="find_computer">Computer suchen</string>
-    <string name="check_connection">Verbindung und Benachrichtigungen prüfen</string>
     <string name="notification_help">Benachrichtigungen erlauben, um Inhalte zu empfangen. Nach der Kopplung muss die App nicht geöffnet bleiben. Bilder lassen sich nur in unterstützten Apps einfügen.</string>
     <string name="system_settings">App-Einstellungen öffnen</string>
     <string name="confirmation_code">Bestätigungscode: %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">Die Zwischenablage erfordert den STA-Thread des Desktops.</string>
     <string name="win_text_null">Die Windows-Zwischenablage unterstützt keine Nullzeichen.</string>
     <string name="win_service_account">Wählen Sie eine JSON-Zugangsdaten-Datei für das Dienstkonto.</string>
+    <string name="more_options">Weitere Optionen</string>
+    <string name="change_computer">Computer wechseln</string>
+    <string name="reconnect">Neu verbinden</string>
+    <string name="about">Info</string>
+    <string name="about_version">Version %1$s · Testversion</string>
+    <string name="notification_required">Synchronisierungsbenachrichtigungen aktivieren</string>
+    <string name="enable_notifications">Benachrichtigungen aktivieren</string>
+    <string name="permission_intro">Benachrichtigungen zeigen das Synchronisierungsergebnis. Android fragt gleich nach Ihrer Erlaubnis. Sie können die Auswahl später ändern.</string>
+    <string name="permission_settings_needed">Android kann nicht erneut fragen, oder die Benachrichtigungen sind deaktiviert. Öffnen Sie die Benachrichtigungseinstellungen dieser App, aktivieren Sie sie und kehren Sie zurück.</string>
+    <string name="continue_permission">Weiter</string>
+    <string name="installer_description">Installiert Windows-Dienst, Taskleisten-App und Startmenü-Verknüpfung. Zugangsdaten und Kopplung bleiben erhalten. Diese Testversion nutzt Ihr Firebase-Projekt für den Empfang im Hintergrund.</string>
+    <string name="installer_ready">Zum Installieren des Dienstes sind Administratorrechte erforderlich.</string>
+    <string name="installer_install">Installieren / aktualisieren</string>
+    <string name="installer_close">Schließen</string>
+    <string name="installer_installing">Installation läuft… Bitte warten.</string>
+    <string name="installer_success">Installiert. Öffnen Sie die Einstellungen, um Ihr Telefon zu verbinden.</string>
+    <string name="installer_failed">Installation fehlgeschlagen: %1$s</string>
+    <string name="installer_log">Siehe Installationsprotokoll: %1$s</string>
 </resources>

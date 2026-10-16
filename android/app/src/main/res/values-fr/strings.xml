@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Synchronisation du presse-papiers</string>
-    <string name="app_description">Copiez sur Windows, collez sur le téléphone.\nCopiez sur le téléphone, puis touchez Envoyer.</string>
     <string name="status_unpaired">Pas encore associé</string>
     <string name="status_paired">Associé. Prêt à recevoir depuis Windows.</string>
-    <string name="status_checking">Vérification des notifications et de la connexion…</string>
     <string name="send_clipboard">Envoyer le presse-papiers à Windows</string>
     <string name="send_help">Texte ou une image. Lecture uniquement lorsque vous touchez Envoyer.</string>
     <string name="connection_heading">Connecter un ordinateur</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">Le réseau a changé. Nouvelle recherche…</string>
     <string name="discovery_connected">Ordinateur associé trouvé et vérifié.</string>
     <string name="discovery_failed">Échec de la recherche : %1$s</string>
-    <string name="find_computer">Rechercher un ordinateur</string>
-    <string name="check_connection">Vérifier connexion et notifications</string>
     <string name="notification_help">Autorisez les notifications pour recevoir le contenu. Après l’association, l’app peut être fermée. Le collage d’images dépend de l’app cible.</string>
     <string name="system_settings">Ouvrir les réglages de l’app</string>
     <string name="confirmation_code">Code : %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">Le presse-papiers nécessite le thread STA du bureau.</string>
     <string name="win_text_null">Le presse-papiers Windows ne prend pas en charge les caractères nuls.</string>
     <string name="win_service_account">Sélectionnez un fichier JSON d’identifiants de compte de service.</string>
+    <string name="more_options">Plus d’options</string>
+    <string name="change_computer">Changer d’ordinateur</string>
+    <string name="reconnect">Reconnecter</string>
+    <string name="about">À propos</string>
+    <string name="about_version">Version %1$s · Test</string>
+    <string name="notification_required">Activer les notifications de synchronisation</string>
+    <string name="enable_notifications">Activer les notifications</string>
+    <string name="permission_intro">Les notifications affichent le résultat de la synchronisation. Android va demander votre autorisation. Vous pourrez changer ce choix.</string>
+    <string name="permission_settings_needed">Android ne peut plus afficher la demande ou les notifications sont désactivées. Ouvrez les paramètres de notification de cette application, activez-les puis revenez.</string>
+    <string name="continue_permission">Continuer</string>
+    <string name="installer_description">Installe le service Windows, l’application de notification et le raccourci Démarrer. Conserve les identifiants et l’appairage. Cette version de test utilise votre projet Firebase pour la réception en arrière-plan.</string>
+    <string name="installer_ready">Les droits administrateur sont requis pour installer le service.</string>
+    <string name="installer_install">Installer ou mettre à jour</string>
+    <string name="installer_close">Fermer</string>
+    <string name="installer_installing">Installation… Veuillez patienter.</string>
+    <string name="installer_success">Installation terminée. Ouvrez les paramètres pour connecter votre téléphone.</string>
+    <string name="installer_failed">Échec de l’installation : %1$s</string>
+    <string name="installer_log">Consultez le journal d’installation : %1$s</string>
 </resources>

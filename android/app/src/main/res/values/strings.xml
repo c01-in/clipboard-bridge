@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Clipboard Bridge</string>
-    <string name="app_description">Copy on Windows, paste on your phone.\nCopy on your phone, then tap Send.</string>
     <string name="status_unpaired">Not paired yet</string>
     <string name="status_paired">Paired. Ready to receive from Windows.</string>
-    <string name="status_checking">Checking push notifications and connection…</string>
     <string name="send_clipboard">Send clipboard to Windows</string>
     <string name="send_help">Text or one image. Your clipboard is read only when you tap Send.</string>
     <string name="connection_heading">Connect to a computer</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">Network changed. Searching again…</string>
     <string name="discovery_connected">Connected to your paired computer.</string>
     <string name="discovery_failed">Discovery failed: %1$s</string>
-    <string name="find_computer">Find a computer</string>
-    <string name="check_connection">Check connection and notifications</string>
     <string name="notification_help">Allow notifications to receive clipboard updates. After pairing, this app does not need to stay open. Image pasting depends on the receiving app.</string>
     <string name="system_settings">Open app settings</string>
     <string name="confirmation_code">Confirmation code: %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">Clipboard access requires the desktop STA thread.</string>
     <string name="win_text_null">Windows text clipboard does not support null characters.</string>
     <string name="win_service_account">Select a service-account JSON credential file.</string>
+    <string name="more_options">More options</string>
+    <string name="change_computer">Change computer</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="about">About</string>
+    <string name="about_version">Version %1$s · Preview</string>
+    <string name="notification_required">Enable sync notifications</string>
+    <string name="enable_notifications">Enable notifications</string>
+    <string name="permission_intro">Notifications show clipboard sync results. Next, Android will ask you to allow them. You can change this choice later.</string>
+    <string name="permission_settings_needed">Android cannot show another permission prompt, or notifications are disabled in system settings. Open this app’s notification settings, enable them, then return.</string>
+    <string name="continue_permission">Continue</string>
+    <string name="installer_description">Installs the Windows background service, tray app and Start menu shortcut. Existing credentials and pairing are kept. This preview uses your own Firebase project for background delivery.</string>
+    <string name="installer_ready">Administrator permission is required to install the service.</string>
+    <string name="installer_install">Install or update</string>
+    <string name="installer_close">Close</string>
+    <string name="installer_installing">Installing… Please wait.</string>
+    <string name="installer_success">Installed. Open settings to connect your phone.</string>
+    <string name="installer_failed">Installation failed: %1$s</string>
+    <string name="installer_log">See the installation log: %1$s</string>
 </resources>

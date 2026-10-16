@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Área de transferência</string>
-    <string name="app_description">Copie no Windows e cole no celular.\nCopie no celular e toque em Enviar.</string>
     <string name="status_unpaired">Ainda não pareado</string>
     <string name="status_paired">Pareado. Pronto para receber do Windows.</string>
-    <string name="status_checking">Verificando notificações e conexão…</string>
     <string name="send_clipboard">Enviar área de transferência ao Windows</string>
     <string name="send_help">Texto ou uma imagem. A leitura ocorre apenas ao tocar em Enviar.</string>
     <string name="connection_heading">Conectar a um computador</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">A rede mudou. Buscando novamente…</string>
     <string name="discovery_connected">Computador pareado encontrado e verificado.</string>
     <string name="discovery_failed">Falha na busca: %1$s</string>
-    <string name="find_computer">Procurar computador</string>
-    <string name="check_connection">Verificar conexão e notificações</string>
     <string name="notification_help">Permita notificações para receber conteúdo. Após parear, o app não precisa ficar aberto. Colar imagens depende do app de destino.</string>
     <string name="system_settings">Abrir configurações do app</string>
     <string name="confirmation_code">Código: %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">A área de transferência exige a thread STA da área de trabalho.</string>
     <string name="win_text_null">A área de transferência do Windows não aceita caracteres nulos.</string>
     <string name="win_service_account">Selecione um arquivo JSON de credenciais da conta de serviço.</string>
+    <string name="more_options">Mais opções</string>
+    <string name="change_computer">Trocar de computador</string>
+    <string name="reconnect">Reconectar</string>
+    <string name="about">Sobre</string>
+    <string name="about_version">Versão %1$s · Teste</string>
+    <string name="notification_required">Ativar notificações de sincronização</string>
+    <string name="enable_notifications">Ativar notificações</string>
+    <string name="permission_intro">As notificações mostram o resultado da sincronização. O Android pedirá sua permissão. Você pode alterar isso depois.</string>
+    <string name="permission_settings_needed">O Android não pode pedir permissão novamente ou as notificações estão desativadas. Abra as configurações de notificações deste app, ative-as e volte.</string>
+    <string name="continue_permission">Continuar</string>
+    <string name="installer_description">Instala o serviço Windows, o app da bandeja e o atalho do menu Iniciar. Preserva credenciais e emparelhamento. Esta versão de teste usa seu projeto Firebase para receber em segundo plano.</string>
+    <string name="installer_ready">É necessário ser administrador para instalar o serviço.</string>
+    <string name="installer_install">Instalar ou atualizar</string>
+    <string name="installer_close">Fechar</string>
+    <string name="installer_installing">Instalando… Aguarde.</string>
+    <string name="installer_success">Instalação concluída. Abra as configurações para conectar seu celular.</string>
+    <string name="installer_failed">Falha na instalação: %1$s</string>
+    <string name="installer_log">Consulte o log de instalação: %1$s</string>
 </resources>

@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Portapapeles sincronizado</string>
-    <string name="app_description">Copia en Windows y pega en el teléfono.\nCopia en el teléfono y toca Enviar.</string>
     <string name="status_unpaired">Sin emparejar</string>
     <string name="status_paired">Emparejado. Listo para recibir de Windows.</string>
-    <string name="status_checking">Comprobando notificaciones y conexión…</string>
     <string name="send_clipboard">Enviar portapapeles a Windows</string>
     <string name="send_help">Texto o una imagen. Solo se lee al tocar Enviar.</string>
     <string name="connection_heading">Conectar a un equipo</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">La red cambió. Buscando de nuevo…</string>
     <string name="discovery_connected">Equipo emparejado encontrado y verificado.</string>
     <string name="discovery_failed">Error de búsqueda: %1$s</string>
-    <string name="find_computer">Buscar un equipo</string>
-    <string name="check_connection">Comprobar conexión y notificaciones</string>
     <string name="notification_help">Permite notificaciones para recibir contenido. Tras emparejar, no hace falta mantener la app abierta. Pegar imágenes depende de la app de destino.</string>
     <string name="system_settings">Abrir ajustes de la app</string>
     <string name="confirmation_code">Código: %1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">El portapapeles requiere el hilo STA del escritorio.</string>
     <string name="win_text_null">El portapapeles de Windows no admite caracteres nulos.</string>
     <string name="win_service_account">Selecciona un archivo JSON de credenciales de cuenta de servicio.</string>
+    <string name="more_options">Más opciones</string>
+    <string name="change_computer">Cambiar de ordenador</string>
+    <string name="reconnect">Volver a conectar</string>
+    <string name="about">Acerca de</string>
+    <string name="about_version">Versión %1$s · Prueba</string>
+    <string name="notification_required">Activar notificaciones de sincronización</string>
+    <string name="enable_notifications">Activar notificaciones</string>
+    <string name="permission_intro">Las notificaciones muestran el resultado de la sincronización. Android te pedirá permiso. Puedes cambiarlo después.</string>
+    <string name="permission_settings_needed">Android no puede volver a pedir permiso o las notificaciones están desactivadas. Abre los ajustes de notificaciones de esta app, actívalas y vuelve.</string>
+    <string name="continue_permission">Continuar</string>
+    <string name="installer_description">Instala el servicio de Windows, la app de la bandeja y el acceso del menú Inicio. Conserva credenciales y emparejamiento. Esta versión de prueba usa tu proyecto de Firebase para recibir en segundo plano.</string>
+    <string name="installer_ready">Se necesitan permisos de administrador para instalar el servicio.</string>
+    <string name="installer_install">Instalar o actualizar</string>
+    <string name="installer_close">Cerrar</string>
+    <string name="installer_installing">Instalando… Espera.</string>
+    <string name="installer_success">Instalación completada. Abre los ajustes para conectar tu teléfono.</string>
+    <string name="installer_failed">Error de instalación: %1$s</string>
+    <string name="installer_log">Consulta el registro de instalación: %1$s</string>
 </resources>

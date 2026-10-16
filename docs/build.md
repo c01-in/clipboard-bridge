@@ -1,5 +1,7 @@
 # 构建、安装与卸载
 
+普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
+
 ## 环境
 
 | 项目 | 版本 / 条件 |
@@ -23,6 +25,7 @@ cd clipboard-bridge
 $env:JAVA_HOME = 'C:\Tools\jdk-21'
 $env:ANDROID_HOME = 'C:\Tools\android-sdk'
 .\scripts\Build.ps1
+.\scripts\Package.ps1
 ```
 
 如尚未安装 SDK 组件，可使用 Android Studio SDK Manager，或：
@@ -47,7 +50,11 @@ dist/
 
 构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。没有 Firebase 配置也能构建，真实使用再按 [Firebase 配置文档](firebase-setup.md) 配对。
 
+`Package.ps1` 在 `dist/release/` 生成签名 APK、Windows 安装 EXE、手动安装 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+
 ## 安装到 Windows
+
+优先运行下载的 `ClipboardBridge-Windows-x64-Setup.exe`，点击安装／更新，再打开设置。全新安装默认数据路径为 `%ProgramData%\ClipboardBridge`，升级保留既有路径与配对。Windows“已安装的应用”中提供卸载入口，卸载保留配置数据。
 
 在管理员 PowerShell 中：
 

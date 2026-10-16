@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">剪贴板同步</string>
-    <string name="app_description">Windows 复制，手机粘贴。\n手机复制后，点击发送到 Windows。</string>
     <string name="status_unpaired">尚未配对</string>
     <string name="status_paired">已配对，等待 Windows 剪贴板。</string>
-    <string name="status_checking">正在检查推送和电脑连接…</string>
     <string name="send_clipboard">发送剪贴板到 Windows</string>
     <string name="send_help">支持文字和单张图片；只在点击发送时读取手机剪贴板。</string>
     <string name="connection_heading">连接电脑</string>
@@ -15,8 +13,6 @@
     <string name="discovery_retry">网络有变化，正在重新搜索…</string>
     <string name="discovery_connected">已找到并验证配对电脑。</string>
     <string name="discovery_failed">自动发现失败：%1$s</string>
-    <string name="find_computer">查找电脑／重新配对</string>
-    <string name="check_connection">检查连接与推送</string>
     <string name="notification_help">请允许通知以接收剪贴板。配对完成后无需保持 App 打开。图片粘贴取决于目标 App 的支持。</string>
     <string name="system_settings">打开应用系统设置</string>
     <string name="confirmation_code">确认码：%1$s</string>
@@ -124,4 +120,22 @@
     <string name="win_clipboard_sta">剪贴板访问需要桌面 STA 线程。</string>
     <string name="win_text_null">Windows 文字剪贴板不支持空字符。</string>
     <string name="win_service_account">请选择服务账号 JSON 凭据。</string>
+    <string name="more_options">更多选项</string>
+    <string name="change_computer">更换电脑</string>
+    <string name="reconnect">重新连接</string>
+    <string name="about">关于</string>
+    <string name="about_version">版本 %1$s · 测试版</string>
+    <string name="notification_required">启用同步通知</string>
+    <string name="enable_notifications">启用通知</string>
+    <string name="permission_intro">通知用于显示剪贴板同步结果。接下来系统会询问是否允许，你可以随时更改选择。</string>
+    <string name="permission_settings_needed">系统目前无法再次弹出授权提示，或通知已在系统设置中关闭。请打开本 App 的通知设置，确认开启后返回。</string>
+    <string name="continue_permission">继续</string>
+    <string name="installer_description">安装 Windows 后台服务、托盘程序和开始菜单入口。保留已有凭据与配对。此测试版的后台推送仍使用你自己的 Firebase 项目。</string>
+    <string name="installer_ready">安装后台服务需要管理员权限。</string>
+    <string name="installer_install">安装／更新</string>
+    <string name="installer_close">关闭</string>
+    <string name="installer_installing">正在安装，请稍候…</string>
+    <string name="installer_success">安装完成。打开设置即可连接手机。</string>
+    <string name="installer_failed">安装失败：%1$s</string>
+    <string name="installer_log">请查看安装日志：%1$s</string>
 </resources>

@@ -15,4 +15,5 @@ $taskShortcutPath=Join-Path $taskShortcutDirectory '剪贴板同步.lnk'
 if(Test-Path -LiteralPath $taskShortcutPath){Remove-Item -LiteralPath $taskShortcutPath -Force}
 if((Test-Path -LiteralPath $taskShortcutDirectory) -and !(Get-ChildItem -LiteralPath $taskShortcutDirectory -Force)){Remove-Item -LiteralPath $taskShortcutDirectory}
 if (Test-Path -LiteralPath $taskResolved) { Remove-Item -LiteralPath $taskResolved -Recurse -Force }
+Remove-Item -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ClipboardBridge' -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host '程序已卸载；凭据与配对配置所在的数据目录予以保留。'

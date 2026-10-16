@@ -4,6 +4,14 @@ Copy on Windows, paste on Android. Copy on Android, tap Send in the app, then pa
 
 [中文](README.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
+**0.1.0 preview.** Both apps use a 0.x public version while testing continues. Android internal version codes still increase, so existing internal builds can be updated in place.
+
+- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk)
+- [Windows x64 installer EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)
+- [All previews and checksums](https://github.com/c01-in/clipboard-bridge/releases)
+
+Download and install without compiling or enabling debug mode. The Windows installer requests administrator permission and installs the service, tray and Start menu entry. It is not Authenticode-signed. No personal Firebase credentials are bundled: this preview still uses your own Firebase project for background delivery. A public zero-configuration push backend has not been deployed.
+
 ## Features
 
 - Automatic discovery on the same Wi-Fi. No IP address, pairing link or debug mode is required. Compare the six-digit code and confirm on both screens.
@@ -22,8 +30,8 @@ Copy on Windows, paste on Android. Copy on Android, tap Send in the app, then pa
 
 There is no shared hosted backend or maintainer credential in this repository.
 
-1. Install PowerShell 7+, .NET SDK 10, JDK 21 and Android SDK Platform 36 / Build Tools 36.0.0 on Windows.
-2. Clone the repository and build:
+1. Download and run the Windows installer, then choose Install or update. No SDK installation is required for normal use.
+2. Install the Android APK. On first opening, the app explains notifications and requests Android permission. Only if Android can no longer show a prompt does it offer notification settings. The main screen shows Send and status; Change computer, Reconnect and About are in the overflow menu. Source builds are optional:
 
 ```powershell
 git clone https://github.com/c01-in/clipboard-bridge.git
@@ -38,7 +46,7 @@ cd clipboard-bridge
 5. Install `dist/ClipboardBridge.apk` on Android, or use Install or update phone app in Windows settings to scan a download-only QR code. Under Advanced settings, import your service-account JSON and Android Firebase JSON once.
 6. Open the phone app and Windows settings on the same Wi-Fi. Select the discovered device, compare the six-digit code and confirm on both screens. Allow notifications and any local-network permission requested by Android. Optional Tailscale addresses belong in Advanced settings.
 7. Copy text, wait for acknowledgment and paste on the phone. Then test one image.
-8. For the reverse direction, copy text or one image on Android, open the app and tap Send clipboard to Windows. Wait for confirmation, then paste on the computer. Upgrade both sides to 1.1.0+; the Windows tray must be running. Existing pairing remains valid.
+8. For the reverse direction, copy text or one image on Android, open the app and tap Send clipboard to Windows. Wait for confirmation, then paste on the computer. Use matching current previews on both devices; the Windows tray must be running. Existing pairing remains valid.
 
 The Android Firebase configuration is transferred inside the confirmed encrypted pairing session, so builds do not require `google-services.json` in the source tree. Keep the same signing key for APK upgrades. Installation, pairing and normal operation do not require ADB.
 
@@ -50,7 +58,7 @@ Detailed setup, build and troubleshooting instructions are available in the [Chi
 - Longer Windows → Android text, images, acknowledgments and all Android → Windows sends require a reachable LAN or Tailscale connection. Reverse sending does not use FCM. Do not expose port 45871 directly to the public internet.
 - One trusted phone per computer. Android sends require an explicit in-app tap; no Android background clipboard monitoring, arbitrary files, multiple images or iOS support.
 - A destination app must support image pasting. Force-stopped Android apps need to be opened again before receiving push messages.
-- Automatic sync can include sensitive copied text. Pause before copying secrets. Older pairing links remain secrets; version 2 uses ephemeral key agreement and approval on both screens.
+- Automatic sync can include sensitive copied text. Pause before copying secrets. Older internal pairing links remain secrets; this preview uses ephemeral key agreement and approval on both screens.
 
 ## Private local data
 
@@ -68,7 +76,9 @@ dotnet run --project .\windows\Tests\Tests.csproj -c Release
 
 CI builds and checks the code without Firebase credentials. Live delivery and actual pasting require your own configured devices and are not implied by a passing CI build.
 
-Version 2 checks compile the actual Android Java key-agreement implementation and verify interoperability with Windows, approval gates, replacement-key revocation, retry recovery and all locale keys and placeholders. The new discovery flow still requires physical-device validation; earlier successful clipboard tests do not establish that result.
+Checks compile the actual Android Java key-agreement implementation and verify interoperability with Windows, approval gates, replacement-key revocation, retry recovery, download behavior and all locale keys and placeholders. The new phone UI, permission prompts and discovery flow still require physical-device validation; earlier successful clipboard tests do not establish that result.
+
+Pushing a `v0.x.y` tag triggers [GitHub Actions](.github/workflows/release.yml) to check, build signed apps, package and test the Windows installer, and publish a GitHub prerelease with SHA-256 checksums. Maintainers do not need to build each release locally. See [release setup](docs/releases.md).
 
 ## License
 
