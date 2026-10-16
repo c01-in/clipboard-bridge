@@ -47,4 +47,22 @@ jobs:
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build without Firebase credentials and run lint
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug lintDebug --console=plain
+        shell: bash
+        run: |
+          # Fresh runners have intermittently failed to fetch existing Maven artifacts.
+          # Retry dependency resolution only; compiler and lint failures stay failures.
+          refresh=()
+          for attempt in 1 2 3; do
+            set +e
+            ./gradlew --no-daemon assembleDebug lintDebug --console=plain "${refresh[@]}" 2>&1 | tee "$RUNNER_TEMP/android-build.log"
+            result=("${PIPESTATUS[@]}")
+            set -e
+            if (( result[1] != 0 )); then exit "${result[1]}"; fi
+            if (( result[0] == 0 )); then exit 0; fi
+            if (( attempt == 3 )) || ! grep -Eq 'Could not (find [^ ]+:[^ ]+:[^ ]+|resolve|GET|HEAD|download)' "$RUNNER_TEMP/android-build.log"; then
+              exit "${result[0]}"
+            fi
+            echo "::warning::Dependency fetch failed on attempt $attempt; refreshing dependency metadata before retry."
+            refresh=(--refresh-dependencies)
+            sleep 10
+          done
