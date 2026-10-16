@@ -1,59 +1,65 @@
-# Clipboard Bridge · 剪贴板同步
+# Clipboard Bridge
 
-[English](README.en.md)
+[简体中文](README.zh-CN.md)
 
-Windows 复制文字或单张图片后自动发送；Android 在 App 内点击发送，即可在 Windows 粘贴。两端自动发现、确认配对，不需要输入 IP 或配对链接。
+Automatically send Windows clipboard text or one image to Android. On Android, tap Send in the app to place the clipboard on Windows. Devices discover each other and pair with confirmation on both screens; no addresses or pairing links to enter.
 
-## 下载 0.1.2 预览版
+- **No sign-up.** Install and pair your own devices without creating an account.
+- **No need to keep the Android app running in the background.** No permanent foreground service or app-owned connection; Google Play Services wakes the app when needed.
+- **No Google/Firebase developer registration or setup.** No Firebase project, service-account key or self-hosted push server required.
+
+> **Still relies on Google FCM:** Push delivery uses Google FCM infrastructure and requires Google Play Services and Google network connectivity. Regions or networks without access to Google are currently unsupported.
+
+## Download the 0.1.2 preview
 
 - [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk)
-- [Windows x64 安装程序](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
-- [手动安装 ZIP、源码与校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
+- [Windows x64 installer](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
+- [Manual ZIP, library sources and checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
 
-普通使用者无需安装开发工具、自行 build 或开启手机调试。Windows 安装器请求管理员权限，尚未使用 Authenticode 签名。
+Users do not need SDKs, local builds or phone debugging. Windows installation requires administrator permission. The installer is not Authenticode-signed.
 
-## 开始使用
+## Use
 
-1. 安装 Windows 程序，从开始菜单打开“剪贴板同步”的设置。
-2. 安装并打开 Android App，按 App 引导允许通知，两台设备连接同一 Wi-Fi。
-3. 手机选择自动发现的电脑，实际比较两端的六位确认码，在两端确认。不需要输入确认码。
-4. Windows 复制文字或单张图片后自动发送，也可用 `Ctrl+Alt+V` 或托盘菜单手动发送。
-5. Android 复制内容后，在 App 内点击“发送剪贴板到 Windows”。只有 Windows 实际写入并返回确认后，手机才显示发送成功。
+1. Install Windows and open Clipboard Bridge settings from the Start menu.
+2. Install and open Android, allow notifications through the in-app prompt, and connect both devices to the same Wi-Fi.
+3. Select the discovered computer, compare the six-digit code, and confirm on both screens. Do not approve a different code.
+4. Copy text or one image on Windows for automatic sending, or use `Ctrl+Alt+V` or the tray menu.
+5. On Android, copy content and tap Send clipboard to Windows. Success appears only after Windows actually writes its clipboard and acknowledges it.
 
-支持 UTF-8 文字和单张图片，正文最大 16 MiB。图片按 PNG 传输；Android 粘贴图片取决于目标 App 是否支持图片剪贴板。超过限制会明确报错，不截断或缩小内容。
+Supports UTF-8 text and one image, up to 16 MiB. Images are transported as PNG. Android image paste support depends on the receiving app. Oversized content is rejected rather than truncated or resized.
 
-## 自动配置推送
+## Push without Firebase setup
 
-0.1.1 使用 UnifiedPush 嵌入式接收库、Web Push 和 VAPID：Windows 用本机生成的独立密钥，直接发送给 Google，手机由现有 Google Play 服务唤醒。
-**无需 Firebase 项目、服务账号 JSON、共享发送密钥或我们维护的推送后端。** 手机不用保持 App 前台，也不维持自己的常驻连接。
+Version 0.1.1 uses UnifiedPush's embedded receiver, Web Push and VAPID. Each Windows computer generates its own private key and sends directly to Google; existing Google Play Services wakes Android.
+No Firebase project, service-account JSON, shared sender key or maintainer relay is required. The Android app needs no permanent connection or foreground receive service.
 
-长文字和图片仍通过局域网或 Tailscale 从电脑下载。首次发现要求同一 Wi-Fi 广播域；跨网前可在电脑高级设置添加 Tailscale 地址。
-这仍然依赖 Google 网络，不能绕过 Google 连接故障。详情见 [推送与升级说明](docs/webpush.md)。
+Long text and images are fetched directly from Windows over LAN or Tailscale. Initial discovery requires the same Wi-Fi broadcast domain; add a Tailscale address in advanced settings before crossing networks.
+Google connectivity is still required. This transport does not fix Google network failures. See [push and migration](docs/webpush.md).
 
-## 暂停与恢复
+## Pause
 
-- Windows 托盘“暂停自动发送”保留原有语义：只暂停电脑自动发送，仍可手动发送和接收手机内容。
-- 手机主界面“剪贴板同步”开关控制手机的新收发。关闭后保留配对、禁用发送；状态在退出和重启后保留。
-- 手机恢复时使用新的接收会话，旧的排队消息不会补写到剪贴板。恢复完成前会显示等待电脑确认。
+- Windows tray pause affects automatic Windows sending only. Manual sending and receiving from Android remain available.
+- Android's main-screen Clipboard sync switch pauses new sending and receiving without deleting pairing. The choice persists across app and device restarts.
+- Resume creates a new receive session. Previously queued updates are discarded instead of overwriting the clipboard later. Sending becomes available after the computer confirms registration.
 
-手机界面仅保留状态、同步开关、发送和必要的未配对引导；“更换电脑、重新连接、关于”位于更多菜单。正常通知授权在 App 内请求；系统不再允许弹窗或通知通道被关闭时，才引导到系统设置。
+Android shows status, the sync switch and Send, plus pairing when needed. Change computer, Reconnect and About are in the overflow menu. Notification permission is requested in the app; system settings are needed only after a permanent denial or disabled channel.
 
-两端按系统语言支持英语、简体中文、繁体中文、西班牙语、葡萄牙语、法语、德语、日语、韩语，其余语言回退英语。
+Both apps follow the system language: English, Simplified/Traditional Chinese, Spanish, Portuguese, French, German, Japanese and Korean. Other languages fall back to English.
 
-## 升级、隐私与开源
+## Upgrade and privacy
 
-两端可见版本同为 0.1.2，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。
-旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+Windows and Android share version 0.1.2. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically.
+Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
-凭据、配对密钥、接收地址和运行数据都放在本地，不进入公开仓库或安装包。不要分享这些私密文件。剪贴板使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网／Tailscale 网络内使用，详见 [SECURITY.md](SECURITY.md)。
+Keys, subscription endpoints and runtime data stay local and are excluded from source and public installers. Clipboard content is AES-GCM encrypted, but Google can observe push metadata. Use trusted LAN/Tailscale networks. See [SECURITY.md](SECURITY.md).
 
-项目自己的代码采用 [MIT](LICENSE)。UnifiedPush 接收库保留 LGPL-2.1，connector 使用 Apache-2.0；两份完整许可证包含在 APK 中，原始库源码随 Release 提供，见 [第三方组件说明](THIRD_PARTY_NOTICES.md)。0.1.2 修正了 0.1.1 的许可证打包标记，收发逻辑不变。
+Our code is [MIT](LICENSE). The embedded UnifiedPush receiver retains LGPL-2.1; the connector uses Apache-2.0. Both full licenses are inside the APK and original library sources accompany each Release. See [third-party notices](THIRD_PARTY_NOTICES.md). Version 0.1.2 corrects the license packaging in 0.1.1 without changing delivery behavior.
 
-## 开发与验证
+## Development
 
-- [构建、安装和卸载](docs/build.md)
-- [GitHub Actions 自动构建与发布](docs/releases.md)：推送匹配的 `v0.x.y` 标签后自动测试、签名、打包、发布，无需每次本地 build。
-- [协议](docs/protocol.md)、[故障排查](docs/troubleshooting.md)、[贡献指南](CONTRIBUTING.md)
+- [Build, install and uninstall](docs/build.md)
+- [GitHub Actions releases](docs/releases.md): matching `v0.x.y` tags automatically test, sign, package and publish both apps.
+- [Protocol](docs/protocol.md), [troubleshooting](docs/troubleshooting.md), [contributing](CONTRIBUTING.md)
 
-85 项协议、IPC、配对、Web Push、暂停修订号、旧配置迁移、许可、语言及真实 HTTP 下载检查通过。独立原生验证包的 6 条短时推送全部到达，含进程终止和强制深度 Doze，见 [探针记录](experiments/webpush-probe/RESULTS.md)。正式版原配对升级、暂停持久化、旧会话拒收、文字和图片双向收发通过，见 [0.1.1 实机记录](docs/verification-0.1.1.md)。
-尚未验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合；预览版不承诺这些场景的稳定性。
+85 protocol, IPC, pairing, Web Push, pause revision, migration, license, locale and actual HTTP download checks pass. All six short native probe messages arrived, including process termination and forced deep Doze; see [probe evidence](experiments/webpush-probe/RESULTS.md). Production pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions also passed; see [0.1.1 device evidence](docs/verification-0.1.1.md).
+All vendors, prolonged sleep, reboot recovery and cross-network combinations have not been validated. This is a preview, not a guarantee of long-term delivery.

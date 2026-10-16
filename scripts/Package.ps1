@@ -31,7 +31,7 @@ try{
         # Windows PowerShell 5.1 needs a BOM to decode the localized shortcut and messages.
         [IO.File]::WriteAllText((Join-Path $taskStage ('scripts\'+$taskScript)),[IO.File]::ReadAllText((Join-Path $PSScriptRoot $taskScript)),[Text.UTF8Encoding]::new($true))
     }
-    foreach($taskName in @('LICENSE','THIRD_PARTY_NOTICES.md','README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskStage}
+    foreach($taskName in @('LICENSE','THIRD_PARTY_NOTICES.md','README.md','README.zh-CN.md')){Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskStage}
     Copy-Item -LiteralPath $taskApk -Destination $taskStage
     $taskZip=Join-Path $taskRelease 'ClipboardBridge-Windows-x64.zip'
     if(Test-Path -LiteralPath $taskZip){Remove-Item -LiteralPath $taskZip -Force}
