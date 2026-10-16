@@ -36,7 +36,7 @@ Set-Acl -LiteralPath $taskDataDir -AclObject $taskAcl
 if ($LASTEXITCODE -ne 0) { throw '初始化配置失败' }
 $taskServiceCommand = '"'+(Join-Path $InstallRoot 'service\ClipboardBridge.Service.exe')+'" --data-dir "'+$taskDataDir+'"'
 if (!$taskService) {
-    $taskServiceResult=Invoke-CimMethod -ClassName Win32_Service -MethodName Create -Arguments @{Name='ClipboardBridge';DisplayName='Clipboard Bridge';PathName=$taskServiceCommand;StartMode='Automatic';StartName='NT AUTHORITY\LocalService';ServiceType=[uint32]16;ErrorControl=[uint32]1}
+    $taskServiceResult=Invoke-CimMethod -ClassName Win32_Service -MethodName Create -Arguments @{Name='ClipboardBridge';DisplayName='Clipboard Bridge';PathName=$taskServiceCommand;StartMode='Automatic';StartName='NT AUTHORITY\LocalService';ServiceType=[byte]16;ErrorControl=[byte]1}
 } else {
     $taskServiceResult=Invoke-CimMethod -InputObject $taskExistingService -MethodName Change -Arguments @{PathName=$taskServiceCommand}
 }
