@@ -54,13 +54,18 @@ New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Force | Ou
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name ClipboardBridge -Value ('"'+(Join-Path $InstallRoot 'tray\ClipboardBridge.exe')+'"')
 $taskShortcutDirectory=Join-Path ([Environment]::GetFolderPath('Programs')) 'ClipboardBridge'
 New-Item -ItemType Directory -Path $taskShortcutDirectory -Force | Out-Null
+$taskShortcutName=if((Get-UICulture).TwoLetterISOLanguageName -eq 'zh'){'剪贴板同步'}else{'Clipboard Bridge'}
+foreach($taskOldShortcutName in @('剪贴板同步','Clipboard Bridge')){
+    $taskOldShortcut=Join-Path $taskShortcutDirectory ($taskOldShortcutName+'.lnk')
+    if($taskOldShortcutName -ne $taskShortcutName -and (Test-Path -LiteralPath $taskOldShortcut)){Remove-Item -LiteralPath $taskOldShortcut -Force}
+}
 $taskShortcutShell=New-Object -ComObject WScript.Shell
-$taskShortcut=$taskShortcutShell.CreateShortcut((Join-Path $taskShortcutDirectory '剪贴板同步.lnk'))
+$taskShortcut=$taskShortcutShell.CreateShortcut((Join-Path $taskShortcutDirectory ($taskShortcutName+'.lnk')))
 $taskShortcut.TargetPath=Join-Path $InstallRoot 'tray\ClipboardBridge.exe'
 $taskShortcut.Arguments='--settings'
 $taskShortcut.WorkingDirectory=Join-Path $InstallRoot 'tray'
 $taskShortcut.IconLocation=$taskShortcut.TargetPath+',0'
-$taskShortcut.Description='剪贴板同步：Windows 与 Android 互传文字和图片'
+$taskShortcut.Description=if((Get-UICulture).TwoLetterISOLanguageName -eq 'zh'){'剪贴板同步：Windows 与 Android 互传文字和图片'}else{'Clipboard Bridge: share text and images with Android'}
 $taskShortcut.Save()
 Start-Service ClipboardBridge
 if(!$NoStartTray){Start-Process -FilePath (Join-Path $InstallRoot 'tray\ClipboardBridge.exe') -WindowStyle Hidden}
