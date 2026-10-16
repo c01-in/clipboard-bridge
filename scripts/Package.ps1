@@ -32,6 +32,9 @@ try{
         [IO.File]::WriteAllText((Join-Path $taskStage ('scripts\'+$taskScript)),[IO.File]::ReadAllText((Join-Path $PSScriptRoot $taskScript)),[Text.UTF8Encoding]::new($true))
     }
     foreach($taskName in @('LICENSE','THIRD_PARTY_NOTICES.md','README.md','README.zh-CN.md')){Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskStage}
+    # Keep the README illustrations available in the manual installation ZIP.
+    New-Item -ItemType Directory -Path (Join-Path $taskStage 'docs') -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $taskRoot 'docs/assets') -Destination (Join-Path $taskStage 'docs') -Recurse
     Copy-Item -LiteralPath $taskApk -Destination $taskStage
     $taskZip=Join-Path $taskRelease 'ClipboardBridge-Windows-x64.zip'
     if(Test-Path -LiteralPath $taskZip){Remove-Item -LiteralPath $taskZip -Force}

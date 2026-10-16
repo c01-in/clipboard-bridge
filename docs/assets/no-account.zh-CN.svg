@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="280" viewBox="0 0 270 140" role="img" aria-labelledby="title description">
+  <title id="title">无需注册</title>
+  <desc id="description">安装后直接配对自己的设备。</desc>
+  <rect x="1" y="1" width="268" height="138" rx="18" fill="#201537" stroke="#a78bfa" stroke-opacity=".3"/>
+  <path d="M23 32h24" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+  <text x="23" y="56" fill="#a78bfa" font-family="Consolas,monospace" font-size="11" letter-spacing=".6">01 / 无需账号</text>
+  <text x="23" y="86" fill="#f8fafc" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="700">无需注册</text>
+  <text x="23" y="110" fill="#cbd5e1" font-family="Segoe UI,Arial,sans-serif" font-size="12">安装后直接配对自己的设备。</text>
+</svg>
