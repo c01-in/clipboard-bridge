@@ -1,99 +1,59 @@
-# Clipboard Bridge
+# Clipboard Bridge · 剪贴板同步
 
-<img src="windows/Tray/Assets/ClipboardBridge.png" width="72" height="72" alt="Clipboard Bridge 图标">
+[English](README.en.md)
 
-Windows 复制，Android 直接粘贴；Android 复制后，在 App 点击发送，Windows 即可粘贴。支持文字和单张图片，手机不需要运行常驻接收服务。
+Windows 复制文字或单张图片后自动发送；Android 在 App 内点击发送，即可在 Windows 粘贴。两端自动发现、确认配对，不需要输入 IP 或配对链接。
 
-[English](README.en.md) · [配置 Firebase](docs/firebase-setup.md) · [构建与安装](docs/build.md) · [问题排查](docs/troubleshooting.md) · [安全说明](SECURITY.md)
+## 下载 0.1.1 预览版
 
-**0.1.0 测试版**，尚未达到稳定版标准。两端对外版本统一使用 0.x；Android 内部升级编号继续递增，可以覆盖早期内部构建。
+- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge.apk)
+- [Windows x64 安装程序](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge-Windows-x64-Setup.exe)
+- [手动安装 ZIP、源码与校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.1)
 
-- [Android 安装包 APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk)
-- [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)
-- [全部测试版本与校验文件](https://github.com/c01-in/clipboard-bridge/releases)
-
-直接下载安装，无需自己编译或开启调试。Windows 安装器会请求管理员权限，安装后台服务、托盘和开始菜单入口。安装包不含个人 Firebase 凭据；当前后台接收仍需要使用者配置自己的 Firebase 项目，公共免配置推送后端尚未部署。
-
-## 功能
-
-- 同一 Wi-Fi 自动发现手机与电脑，无需输入 IP、链接或开启调试；核对六位确认码后，在两端点击确认。
-- 跟随系统语言：英语、简体中文、繁体中文、西班牙语、葡萄牙语、法语、德语、日语、韩语；其他语言回退英语。Windows 界面也支持这些语言。
-- Windows 托盘自动监听剪贴板；可暂停自动同步，或用 `Ctrl+Alt+V` 手动发送。
-- Android 打开 App，点击“发送剪贴板到 Windows”，通过局域网或 Tailscale 加密上传；电脑确认实际写入后才显示成功。不会在后台监听手机剪贴板。
-- 支持文字、原生剪贴板图片及复制的单个 PNG/JPEG/BMP/GIF 图片文件。图片转换为单张 PNG，内容上限 16 MiB。
-- Android 通过 Firebase Cloud Messaging 唤醒并写入系统剪贴板。每次同步显示普通结果通知，无持续运行的接收前台服务。
-- 剪贴板内容使用 AES-256-GCM 加密；手机检查有效期、序号和 SHA-256。
-- Windows 区分“已提交 FCM”和“手机已确认写入”；失败重试，过期内容不会继续覆盖新剪贴板。
-- 局域网直连，也可使用自己配置的 Tailscale 地址。
-- 手机发来的内容不会被 Windows 自动发回，避免同步回环。暂停 Windows 自动发送不影响接收手机手动发送的内容。
-
-![深色与浅色背景下的托盘图标](windows/Tray/Assets/icon-preview.png)
+普通使用者无需安装开发工具、自行 build 或开启手机调试。Windows 安装器请求管理员权限，尚未使用 Authenticode 签名。
 
 ## 开始使用
 
-**这是自托管工具。每位使用者使用自己的 Firebase 项目，仓库不提供维护者的 Firebase 配置或私钥。**
+1. 安装 Windows 程序，从开始菜单打开“剪贴板同步”的设置。
+2. 安装并打开 Android App，按 App 引导允许通知，两台设备连接同一 Wi-Fi。
+3. 手机选择自动发现的电脑，实际比较两端的六位确认码，在两端确认。不需要输入确认码。
+4. Windows 复制文字或单张图片后自动发送，也可用 `Ctrl+Alt+V` 或托盘菜单手动发送。
+5. Android 复制内容后，在 App 内点击“发送剪贴板到 Windows”。只有 Windows 实际写入并返回确认后，手机才显示发送成功。
 
-1. 下载并运行 Windows 安装 EXE，点击安装／更新；无需安装 .NET SDK、JDK 或 Android SDK。
-2. 下载 Android APK 并覆盖安装。首次打开会说明通知用途并弹出系统授权框；已被系统禁止再次弹窗时，App 才会提供通知设置入口。主页面保留发送与状态，更换电脑、重新连接和关于收进右上角菜单。
-3. 按 [Firebase 配置文档](docs/firebase-setup.md) 创建自己的项目、注册 `com.colin.clipbridge`，取得 Android 配置和专用发送账号 JSON。
-4. 首次部署在托盘“高级设置”导入这两个配置。打开手机 App 和电脑设置，连接同一 Wi-Fi；选择自动发现的设备，核对两端六位确认码，各点击确认。允许手机通知与系统要求的本地网络权限。
-5. 复制文字，等手机确认后实际粘贴；再测试一张图片。
-6. 反向发送：在手机复制文字或单张图片，打开 App 点“发送剪贴板到 Windows”，看到 Windows 确认后在电脑粘贴。两端使用匹配的当前测试版，电脑托盘程序必须运行；已有配对可继续使用。
+支持 UTF-8 文字和单张图片，正文最大 16 MiB。图片按 PNG 传输；Android 粘贴图片取决于目标 App 是否支持图片剪贴板。超过限制会明确报错，不截断或缩小内容。
 
-```powershell
-# 以下仅供源码开发；普通使用者直接下载安装包
-git clone https://github.com/c01-in/clipboard-bridge.git
-cd clipboard-bridge
-.\scripts\Build.ps1 -JavaHome 'C:\Tools\jdk-21' -AndroidSdk 'C:\Tools\android-sdk'
-# 管理员 PowerShell
-.\dist\scripts\Install.ps1
-```
+## 自动配置推送
 
-安装、配对和正常使用均不依赖 ADB。Windows 设置中的“安装或更新手机 App”提供下载二维码，手机扫码后按系统提示安装，再打开 App 自动发现电脑；这个二维码只用于下载安装包。
+0.1.1 使用 UnifiedPush 嵌入式接收库、Web Push 和 VAPID：Windows 用本机生成的独立密钥，直接发送给 Google，手机由现有 Google Play 服务唤醒。
+**无需 Firebase 项目、服务账号 JSON、共享发送密钥或我们维护的推送后端。** 手机不用保持 App 前台，也不维持自己的常驻连接。
 
-## 网络与限制
+长文字和图片仍通过局域网或 Tailscale 从电脑下载。首次发现要求同一 Wi-Fi 广播域；跨网前可在电脑高级设置添加 Tailscale 地址。
+这仍然依赖 Google 网络，不能绕过 Google 连接故障。详情见 [推送与升级说明](docs/webpush.md)。
 
-- FCM 需要可用的 Google Play 服务和 Google 网络，不能保证每条消息立即送达。系统后台限制可能导致延迟；强行停止 App 后需手动打开恢复。
-- Windows 发往 Android 的短文字可直接包含在加密推送中。较长文字、图片、回执，以及 Android 主动发送，都需要手机通过局域网或 Tailscale 访问电脑 TCP 45871。
-- 当前支持一台 Windows 电脑和一台受信任手机双向传输，手机端需点击发送。不支持 Android 后台自动监听、iOS、任意文件或多图同步。
-- 图片粘贴取决于目标 App 是否支持图片剪贴板。
-- 公开源码不等于零配置，也不等于所有 Google 产品免费；是否启用其他产品及相关费用由各使用者自行决定。
+## 暂停与恢复
 
-## 私密文件放在哪里
+- Windows 托盘“暂停自动发送”保留原有语义：只暂停电脑自动发送，仍可手动发送和接收手机内容。
+- 手机主界面“剪贴板同步”开关控制手机的新收发。关闭后保留配对、禁用发送；状态在退出和重启后保留。
+- 手机恢复时使用新的接收会话，旧的排队消息不会补写到剪贴板。恢复完成前会显示等待电脑确认。
 
-```text
-clipboard-bridge/
-├─ windows/              Windows 源码
-├─ android/              Android 源码与 Gradle Wrapper
-├─ scripts/              构建、安装、迁移与发布检查
-├─ docs/                 配置、构建与排错文档
-├─ dist/                 本机构建产物，不提交 Git
-└─ local/                整个目录不提交 Git
-   ├─ runtime/           加密发送凭据、设备配对与备份
-   ├─ signing/           APK 签名密钥与受保护密码
-   └─ credentials/       自己的 Firebase 原始配置
-```
+手机界面仅保留状态、同步开关、发送和必要的未配对引导；“更换电脑、重新连接、关于”位于更多菜单。正常通知授权在 App 内请求；系统不再允许弹窗或通知通道被关闭时，才引导到系统设置。
 
-Windows 程序安装在 `%ProgramFiles%\ClipboardBridge`。从源码仓库安装时，服务使用 `local/runtime/`，升级保留已有数据路径与签名密钥。移动仓库前先停止服务并按新路径重新安装。
+两端按系统语言支持英语、简体中文、繁体中文、西班牙语、葡萄牙语、法语、德语、日语、韩语，其余语言回退英语。
 
-不要公开 `local/`、服务账号文件、签名密钥或旧版本的配对链接。DPAPI 保护依赖原 Windows 环境，重装或换电脑前需按自己的安全流程备份。详见 [安全说明](SECURITY.md)。
+## 升级、隐私与开源
+
+两端可见版本同为 0.1.1，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。
+旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+
+凭据、配对密钥、接收地址和运行数据都放在本地，不进入公开仓库或安装包。不要分享这些私密文件。剪贴板使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网／Tailscale 网络内使用，详见 [SECURITY.md](SECURITY.md)。
+
+项目自己的代码采用 [MIT](LICENSE)。UnifiedPush 库保留 LGPL-2.1；完整许可证包含在 APK 中，原始库源码随 Release 提供，见 [第三方组件说明](THIRD_PARTY_NOTICES.md)。
 
 ## 开发与验证
 
-版本标签 `v0.x.y` 触发 [GitHub Actions 发布流程](.github/workflows/release.yml)，自动检查、构建签名 APK、打包 Windows 安装 EXE、验证 Windows 全新安装和卸载，并发布 GitHub 预发布版本及 SHA-256 校验文件。无需维护者每次在本机构建。配置与发版方法见 [自动发布文档](docs/releases.md)。
+- [构建、安装和卸载](docs/build.md)
+- [GitHub Actions 自动构建与发布](docs/releases.md)：推送匹配的 `v0.x.y` 标签后自动测试、签名、打包、发布，无需每次本地 build。
+- [协议](docs/protocol.md)、[故障排查](docs/troubleshooting.md)、[贡献指南](CONTRIBUTING.md)
 
-```powershell
-dotnet run --project .\windows\Tests\Tests.csproj -c Release
-.\android\gradlew.bat -p .\android assembleDebug lintDebug
-.\scripts\Check-Publish.ps1 -IncludeHistory
-```
-
-早期内部构建验证过 Windows 原生剪贴板读取、真实 FCM 投递、Android 写入与回执，以及文字和图片实际粘贴。0.1.0 测试版包含自动发现、多语言、双方确认配对及精简手机界面；协议检查直接编译 Android Java 密钥协商代码，与 Windows 验证相同密钥及确认码，并检查未批准、伪造确认、重试、替换旧密钥、语言占位符及真实 HTTP 下载。CI 不使用真实 Firebase 凭据；通过构建不能代表新版手机 UI、配对和权限弹窗已通过真机测试。协议细节见 [传输协议](docs/protocol.md)。
-
-早期反向发送实测中，三星 App 按钮发送 Unicode 文字与单张 PNG 后，Windows 读取结果一致，图片尺寸、抽样像素和原始 PNG 字节一致，且未触发自动回环发送。这不是新版手机界面的验收结果。
-
-没有完成全部 Android 版本、厂商、长时间锁屏和跨网组合测试。欢迎按 [贡献指南](CONTRIBUTING.md) 提供可复现反馈。
-
-## 许可证
-
-[MIT](LICENSE)。可以免费使用、修改和分发，也允许商业使用；分发时保留许可证和版权声明。第三方组件遵循各自许可证，见 [组件说明](THIRD_PARTY_NOTICES.md)。
+83 项协议、IPC、配对、Web Push、暂停修订号、旧配置迁移、语言及真实 HTTP 下载检查通过。独立原生验证包的 6 条短时推送全部到达，含进程终止和强制深度 Doze，见 [探针记录](experiments/webpush-probe/RESULTS.md)。正式版原配对升级、暂停持久化、旧会话拒收、文字和图片双向收发通过，见 [0.1.1 实机记录](docs/verification-0.1.1.md)。
+尚未验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合；预览版不承诺这些场景的稳定性。

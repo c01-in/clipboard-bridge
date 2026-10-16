@@ -39,7 +39,6 @@
     <string name="received_text">Texte copié. Prêt à coller.</string>
     <string name="receive_failed">Échec de la réception : %1$s</string>
     <string name="error_save_config">Impossible d’enregistrer l’association.</string>
-    <string name="error_firebase_package">La configuration Firebase ne correspond pas à cette app.</string>
     <string name="error_content_format">Format du contenu invalide.</string>
     <string name="error_image_id">Identifiant d’image invalide.</string>
     <string name="error_receive_size">La taille reçue ne correspond pas.</string>
@@ -79,9 +78,7 @@
     <string name="win_pair_done">Associé</string>
     <string name="win_confirm_here">Confirmer sur cet ordinateur</string>
     <string name="win_advanced">Réglages avancés</string>
-    <string name="win_setup_needed">Première configuration : importez les fichiers Firebase dans les réglages avancés. L’association est ensuite automatique.</string>
-    <string name="win_import_account">Importer les identifiants Firebase</string>
-    <string name="win_import_android">Importer la configuration Firebase Android</string>
+    <string name="win_setup_needed">Ouvrez les deux apps sur le même Wi-Fi et confirmez l’association. Aucun fichier Firebase n’est nécessaire.</string>
     <string name="win_addresses">Adresses supplémentaires Tailscale ou réseaux personnalisés (facultatif)</string>
     <string name="win_save_addresses">Enregistrer les adresses</string>
     <string name="win_phone_update">Installer ou mettre à jour l’app mobile</string>
@@ -100,26 +97,19 @@
     <string name="win_hotkey_busy">Ctrl+Alt+V est déjà utilisé. Envoyez depuis la barre d’état.</string>
     <string name="win_clipboard_written">Contenu du téléphone copié sur Windows. Prêt à coller.</string>
     <string name="win_clipboard_failed">Écriture du presse-papiers impossible : %1$s</string>
-    <string name="win_json_files">Configuration JSON</string>
     <string name="win_ready">Prêt. Copiez du texte ou une image.</string>
-    <string name="win_credentials_saved">Identifiants enregistrés de façon sécurisée.</string>
-    <string name="win_android_saved">Configuration Android enregistrée.</string>
     <string name="win_addresses_saved">Adresses enregistrées. Elles seront transmises lors de la prochaine association.</string>
     <string name="win_wait_ack">Envoyé au service. En attente de confirmation du téléphone.</string>
     <string name="win_delivery_expired">Contenu expiré sans confirmation. Copiez-le à nouveau.</string>
     <string name="win_phone_applied">Le téléphone a confirmé l’écriture (%1$s).</string>
     <string name="win_queued_retry">Enregistré pour réessayer : %1$s</string>
     <string name="win_phone_error">Réception impossible sur le téléphone : %1$s</string>
-    <string name="win_google_auth">Échec de l’authentification Google (%1$s). Vérifiez les identifiants.</string>
-    <string name="win_fcm_error">FCM a renvoyé %1$s %2$s. Réception non confirmée.</string>
     <string name="win_image_type">Une seule image compatible peut être envoyée.</string>
     <string name="win_image_size">L’image dépasse 16 Mio.</string>
-    <string name="error_firebase_project">La configuration Android et les identifiants doivent utiliser le même projet Firebase.</string>
     <string name="error_read_only">Lecture seule.</string>
     <string name="error_content_expired">Le contenu a expiré. Renvoyez-le.</string>
     <string name="win_clipboard_sta">Le presse-papiers nécessite le thread STA du bureau.</string>
     <string name="win_text_null">Le presse-papiers Windows ne prend pas en charge les caractères nuls.</string>
-    <string name="win_service_account">Sélectionnez un fichier JSON d’identifiants de compte de service.</string>
     <string name="more_options">Plus d’options</string>
     <string name="change_computer">Changer d’ordinateur</string>
     <string name="reconnect">Reconnecter</string>
@@ -130,7 +120,7 @@
     <string name="permission_intro">Les notifications affichent le résultat de la synchronisation. Android va demander votre autorisation. Vous pourrez changer ce choix.</string>
     <string name="permission_settings_needed">Android ne peut plus afficher la demande ou les notifications sont désactivées. Ouvrez les paramètres de notification de cette application, activez-les puis revenez.</string>
     <string name="continue_permission">Continuer</string>
-    <string name="installer_description">Installe le service Windows, l’application de notification et le raccourci Démarrer. Conserve les identifiants et l’appairage. Cette version de test utilise votre projet Firebase pour la réception en arrière-plan.</string>
+    <string name="installer_description">Installe le service, l’app de notification et le raccourci du menu Démarrer. Conserve l’association et configure automatiquement les notifications.</string>
     <string name="installer_ready">Les droits administrateur sont requis pour installer le service.</string>
     <string name="installer_install">Installer ou mettre à jour</string>
     <string name="installer_close">Fermer</string>
@@ -138,4 +128,12 @@
     <string name="installer_success">Installation terminée. Ouvrez les paramètres pour connecter votre téléphone.</string>
     <string name="installer_failed">Échec de l’installation : %1$s</string>
     <string name="installer_log">Consultez le journal d’installation : %1$s</string>
+    <string name="sync_enabled">Synchroniser le presse-papiers</string>
+    <string name="sync_paused">Synchronisation en pause</string>
+    <string name="sync_restoring">Reprise… En attente de confirmation de l’ordinateur.</string>
+    <string name="sync_pause_help">Envoi et réception en pause. L’association est conservée ; les anciens contenus ne seront pas appliqués à la reprise.</string>
+    <string name="phone_paused">La synchronisation du téléphone est en pause. Reprenez-la sur le téléphone.</string>
+    <string name="push_not_registered">Ouvrez l’app mise à jour du téléphone pour terminer l’inscription automatique.</string>
+    <string name="webpush_error">Google Web Push a renvoyé HTTP %1$s. La réception par le téléphone n’est pas confirmée.</string>
+    <string name="sync_discarded">Le téléphone a ignoré une mise à jour ancienne ou reçue pendant la pause.</string>
 </resources>

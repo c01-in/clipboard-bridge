@@ -1,10 +1,7 @@
 package com.colin.clipbridge;
 import android.content.Context;
-import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.work.*;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.android.gms.tasks.Tasks;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 
@@ -16,10 +13,18 @@ public class RegistrationWorker extends Worker {
     @NonNull @Override public Result doWork(){
         try {
             if(Config.prefs(getApplicationContext()).contains("pending"))return Result.success();
-            JSONObject config=Config.read(getApplicationContext());Config.initialize(getApplicationContext());
-            String token=Tasks.await(FirebaseMessaging.getInstance().getToken(),20,TimeUnit.SECONDS);
-            JSONObject value=new JSONObject().put("token",token).put("deviceName",Build.MANUFACTURER+" "+Build.MODEL);
+            Config.status(getApplicationContext(),R.string.sync_restoring);
+            Context context=getApplicationContext();JSONObject config=Config.read(context);
+            if(!config.has("vapid")){
+                JSONObject push=Network.pushConfiguration(config);
+                config.put("vapid",push.getString("vapid")).put("computerId",push.getString("computerId")).remove("firebase");
+                Config.updateEndpoints(context,config);
+            }
+            JSONObject subscription=PushRegistration.ensure(context,config);
+            if(isStopped())return Result.success();
+            JSONObject value=SyncState.device(context,subscription);
             Network.register(config,value);
+            SyncState.registered(context,value);
             Config.status(getApplicationContext(),R.string.status_paired);return Result.success();
         }catch(Exception e){Config.status(getApplicationContext(),R.string.registration_failed,e.getMessage());return Result.retry();}
     }

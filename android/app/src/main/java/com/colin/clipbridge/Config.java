@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import javax.crypto.Cipher;
@@ -28,11 +26,21 @@ public final class Config {
     }
     static void savePending(Context c,JSONObject value)throws Exception {persist(c,"pending",value,false);}
     static JSONObject pending(Context c)throws Exception {return decode(c,"pending","pendingIv");}
-    static void updateEndpoints(Context c,JSONObject value)throws Exception {persist(c,"config",value,false);}
+    static void updateEndpoints(Context c,JSONObject value)throws Exception {
+        synchronized(SyncState.LOCK){
+            JSONObject current=read(c);if(!current.getString("key").equals(value.getString("key")))throw new Exception(c.getString(R.string.pair_invalid));
+            current.put("endpoints",value.getJSONArray("endpoints"));
+            if(value.has("computerId"))current.put("computerId",value.getString("computerId"));
+            if(value.has("vapid")){current.put("vapid",value.getString("vapid"));current.remove("firebase");}
+            persist(c,"config",current,false);
+        }
+    }
+    static void saveSubscription(Context c,JSONObject value)throws Exception {persist(c,"subscription",value,false);}
+    static JSONObject subscription(Context c)throws Exception{return decode(c,"subscription","subscriptionIv");}
     private static void persist(Context c,String prefix,JSONObject value,boolean reset) throws Exception {
         Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,storageKey());
         String body=Base64.encodeToString(cipher.doFinal(value.toString().getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP),iv=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP);
-        SharedPreferences.Editor edit=prefs(c).edit().putString(prefix,body).putString(prefix.equals("config")?"iv":"pendingIv",iv);
+        SharedPreferences.Editor edit=prefs(c).edit().putString(prefix,body).putString(prefix.equals("config")?"iv":prefix+"Iv",iv);
         if(reset)edit.remove("lastSequence").remove("latestScheduledSequence");
         if(!edit.commit())throw new Exception(c.getString(R.string.error_save_config));
     }
@@ -45,25 +53,13 @@ public final class Config {
         cipher.init(Cipher.DECRYPT_MODE,storageKey(),new GCMParameterSpec(128,Base64.decode(p.getString(ivName,""),Base64.NO_WRAP)));
         return new JSONObject(new String(cipher.doFinal(Base64.decode(p.getString(name,""),Base64.NO_WRAP)),StandardCharsets.UTF_8));
     }
-    static synchronized void initialize(Context c) throws Exception {
-        initialize(c,read(c));
-    }
-    static synchronized void initialize(Context c,JSONObject configuration)throws Exception {
-        JSONObject fb=configuration.getJSONObject("firebase"),project=fb.getJSONObject("project_info"),client=null;
-        for(int i=0;i<fb.getJSONArray("client").length();i++){JSONObject x=fb.getJSONArray("client").getJSONObject(i);if(x.getJSONObject("client_info").getJSONObject("android_client_info").getString("package_name").equals(c.getPackageName())){client=x;break;}}
-        if(client==null)throw new Exception(c.getString(R.string.error_firebase_package));
-        FirebaseOptions options=new FirebaseOptions.Builder().setApplicationId(client.getJSONObject("client_info").getString("mobilesdk_app_id")).setApiKey(client.getJSONArray("api_key").getJSONObject(0).getString("current_key")).setGcmSenderId(project.getString("project_number")).setProjectId(project.getString("project_id")).build();
-        if(!FirebaseApp.getApps(c).isEmpty()) {
-            if(FirebaseApp.getInstance().getOptions().equals(options))return;
-            for(FirebaseApp app:FirebaseApp.getApps(c))app.delete();
-        }
-        FirebaseApp.initializeApp(c,options);
-    }
     static void status(Context c,int resource,Object... args){
         org.json.JSONArray values=new org.json.JSONArray();for(Object arg:args)values.put(String.valueOf(arg));
         prefs(c).edit().putString("statusKey",c.getResources().getResourceEntryName(resource)).putString("statusArgs",values.toString()).apply();
     }
     static String statusText(Context c){
+        if(SyncState.paused(c))return c.getString(R.string.sync_paused);
+        if(prefs(c).contains("config")&&!SyncState.ready(c)&&!"registration_failed".equals(prefs(c).getString("statusKey","")))return c.getString(R.string.sync_restoring);
         try {
             String name=prefs(c).getString("statusKey","");int id=c.getResources().getIdentifier(name,"string",c.getPackageName());
             if(id==0)return c.getString(prefs(c).contains("config")?R.string.status_paired:R.string.status_unpaired);

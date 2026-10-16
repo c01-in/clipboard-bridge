@@ -1,6 +1,6 @@
 # 构建、安装与卸载
 
-普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
+普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
 
 ## 环境
 
@@ -12,7 +12,7 @@
 | JDK | 21，设置 `JAVA_HOME` |
 | Android SDK | Platform 36、Build Tools 36.0.0，设置 `ANDROID_HOME` |
 | Gradle | 仓库 Wrapper 固定为 8.13，并验证发行包 SHA-256 |
-| Android 手机 | Android 8.0+；自动推送需要可用的 Google Play 服务和 FCM 网络 |
+| Android 手机 | Android 8.0+；自动推送需要可用的 Google Play 服务和 Google 网络 |
 
 Android 8.0+ 是代码的最低版本声明，当前真实设备验证集中在较新的三星设备，不代表全部最低版本或所有厂商均已实测。
 
@@ -48,9 +48,9 @@ dist/
 └─ scripts/
 ```
 
-构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。没有 Firebase 配置也能构建，真实使用再按 [Firebase 配置文档](firebase-setup.md) 配对。
+构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。真实使用按 [自动配置推送文档](webpush.md) 完成两端确认，无需 Firebase 项目。
 
-`Package.ps1` 在 `dist/release/` 生成签名 APK、Windows 安装 EXE、手动安装 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+`Package.ps1` 在 `dist/release/` 生成签名 APK、Windows 安装 EXE、手动安装 ZIP 、UnifiedPush 原始库源码 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
 
 ## 安装到 Windows
 

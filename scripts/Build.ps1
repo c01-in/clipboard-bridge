@@ -33,7 +33,7 @@ if (!(Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)) {
 }
 }
 try {
-    & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease --console=plain
+    & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease bundleUnifiedPushSources --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Android 编译失败' }
 } finally { Remove-Item Env:CLIPBRIDGE_STORE_PASSWORD -ErrorAction SilentlyContinue }
 Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\release\app-release.apk') -Destination (Join-Path $taskDist 'ClipboardBridge.apk') -Force

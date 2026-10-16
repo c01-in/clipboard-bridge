@@ -3,8 +3,6 @@ package com.colin.clipbridge;
 import android.content.Context;
 import android.net.*;
 import android.os.Build;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.messaging.FirebaseMessaging;
 import org.json.*;
 import java.io.*;
 import java.net.*;
@@ -95,23 +93,22 @@ final class AutoPairing implements AutoCloseable {
             if(Base64.getDecoder().decode(configuration.getString("key")).length!=32||configuration.getJSONArray("endpoints").length()==0)throw new IOException(context.getString(R.string.pair_invalid));
             JSONObject pending=new JSONObject().put("configuration",configuration).put("id",pc.id).put("key",pc.key).put("endpoint",pc.endpoint);
             Config.savePending(context,pending);finish(pending,pc.network);
-        }catch(Exception e){if(!closed)listener.status(R.string.pair_failed,e.getMessage());try{Config.initialize(context);}catch(Exception ignored){}}
+        }catch(Exception e){if(!closed)listener.status(R.string.pair_failed,e.getMessage());}
         finally{confirming=false;}
     });}
     private void resume(){try{JSONObject pending=Config.pending(context);finish(pending,wifi());}catch(Exception e){if(!closed)listener.status(R.string.pair_resume);}finally{confirming=false;}}
     private void finish(JSONObject pending,android.net.Network network)throws Exception {
-        JSONObject config=pending.getJSONObject("configuration");listener.status(R.string.pair_registering);Config.initialize(context,config);
-        String token=Tasks.await(FirebaseMessaging.getInstance().getToken(),25,TimeUnit.SECONDS);
-        JSONObject complete=new JSONObject().put("kind","complete").put("sessionId",pending.getString("id")).put("token",token);
+        JSONObject config=pending.getJSONObject("configuration");listener.status(R.string.pair_registering);
+        JSONObject device=SyncState.device(context,PushRegistration.ensure(context,config));
+        JSONObject complete=new JSONObject(device.toString()).put("kind","complete").put("sessionId",pending.getString("id"));
         Computer pc=new Computer(pending.getString("id"),"",pending.getString("key"),pending.getString("endpoint"),0,network);
         boolean done=false;
         try {JSONObject response=new JSONObject(request(pc,"/complete",new JSONObject().put("data",Crypto.seal(complete.toString().getBytes(StandardCharsets.UTF_8),pc.key)).toString()));done=new JSONObject(new String(Crypto.open(response.getString("data"),pc.key),StandardCharsets.UTF_8)).optBoolean("completed");}
         catch(Exception lost){ // If Windows committed before a lost reply/restart, possession of the new permanent key recovers it.
-            JSONObject device=new JSONObject().put("token",token).put("deviceName",Build.MANUFACTURER+" "+Build.MODEL);
             com.colin.clipbridge.Network.register(config,device);done=true;
         }
         if(!done)throw new IOException(context.getString(R.string.pair_invalid));
-        Config.save(context,config);Config.status(context,R.string.status_paired);RegistrationWorker.schedule(context);listener.paired();
+        Config.save(context,config);SyncState.registered(context,device);Config.status(context,R.string.status_paired);RegistrationWorker.schedule(context);listener.paired();
     }
     private static final class PairNotReady extends IOException {}
     private String request(Computer pc,String operation,String body)throws Exception {

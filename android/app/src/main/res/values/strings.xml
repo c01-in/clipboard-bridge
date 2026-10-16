@@ -39,7 +39,6 @@
     <string name="received_text">Text copied. Ready to paste.</string>
     <string name="receive_failed">Receive failed: %1$s</string>
     <string name="error_save_config">Could not save pairing settings.</string>
-    <string name="error_firebase_package">Firebase configuration does not match this app.</string>
     <string name="error_content_format">Unsupported content format.</string>
     <string name="error_image_id">Invalid image identifier.</string>
     <string name="error_receive_size">Received content size does not match.</string>
@@ -79,9 +78,7 @@
     <string name="win_pair_done">Paired</string>
     <string name="win_confirm_here">Confirm on this computer</string>
     <string name="win_advanced">Advanced settings</string>
-    <string name="win_setup_needed">First-time setup: import your Firebase files in Advanced settings. Phone pairing is automatic after that.</string>
-    <string name="win_import_account">Import Firebase sender credentials</string>
-    <string name="win_import_android">Import Android Firebase config</string>
+    <string name="win_setup_needed">Open both apps on the same Wi-Fi and confirm pairing. No Firebase files are needed.</string>
     <string name="win_addresses">Additional addresses for Tailscale or custom networks (optional)</string>
     <string name="win_save_addresses">Save additional addresses</string>
     <string name="win_phone_update">Install or update phone app</string>
@@ -100,26 +97,19 @@
     <string name="win_hotkey_busy">Ctrl+Alt+V is in use. Send from the tray menu instead.</string>
     <string name="win_clipboard_written">Phone content is on the Windows clipboard. Ready to paste.</string>
     <string name="win_clipboard_failed">Could not write the Windows clipboard: %1$s</string>
-    <string name="win_json_files">JSON configuration</string>
     <string name="win_ready">Ready. Copy text or an image to send.</string>
-    <string name="win_credentials_saved">Sender credentials saved securely.</string>
-    <string name="win_android_saved">Android configuration saved.</string>
     <string name="win_addresses_saved">Additional addresses saved. They will be sent during the next pairing.</string>
     <string name="win_wait_ack">Sent to push service. Waiting for the phone to confirm.</string>
     <string name="win_delivery_expired">Content expired without phone confirmation. Copy it again.</string>
     <string name="win_phone_applied">Phone confirmed clipboard write (%1$s).</string>
     <string name="win_queued_retry">Saved for retry: %1$s</string>
     <string name="win_phone_error">Phone could not receive: %1$s</string>
-    <string name="win_google_auth">Google authentication failed (%1$s). Check sender credentials.</string>
-    <string name="win_fcm_error">FCM returned %1$s %2$s. Phone receipt is not confirmed.</string>
     <string name="win_image_type">Only one supported image file can be sent.</string>
     <string name="win_image_size">Image file exceeds 16 MiB.</string>
-    <string name="error_firebase_project">Android config and sender credentials must use the same Firebase project.</string>
     <string name="error_read_only">Read only.</string>
     <string name="error_content_expired">Content expired. Send it again.</string>
     <string name="win_clipboard_sta">Clipboard access requires the desktop STA thread.</string>
     <string name="win_text_null">Windows text clipboard does not support null characters.</string>
-    <string name="win_service_account">Select a service-account JSON credential file.</string>
     <string name="more_options">More options</string>
     <string name="change_computer">Change computer</string>
     <string name="reconnect">Reconnect</string>
@@ -130,7 +120,7 @@
     <string name="permission_intro">Notifications show clipboard sync results. Next, Android will ask you to allow them. You can change this choice later.</string>
     <string name="permission_settings_needed">Android cannot show another permission prompt, or notifications are disabled in system settings. Open this app’s notification settings, enable them, then return.</string>
     <string name="continue_permission">Continue</string>
-    <string name="installer_description">Installs the Windows background service, tray app and Start menu shortcut. Existing credentials and pairing are kept. This preview uses your own Firebase project for background delivery.</string>
+    <string name="installer_description">Installs the background service, tray app and Start menu shortcut. Existing pairing is kept. Push is configured automatically.</string>
     <string name="installer_ready">Administrator permission is required to install the service.</string>
     <string name="installer_install">Install or update</string>
     <string name="installer_close">Close</string>
@@ -138,4 +128,12 @@
     <string name="installer_success">Installed. Open settings to connect your phone.</string>
     <string name="installer_failed">Installation failed: %1$s</string>
     <string name="installer_log">See the installation log: %1$s</string>
+    <string name="sync_enabled">Clipboard sync</string>
+    <string name="sync_paused">Sync paused</string>
+    <string name="sync_restoring">Resuming… Waiting for the computer to confirm.</string>
+    <string name="sync_pause_help">Sending and receiving are paused. Pairing is kept; old updates will not be applied after resuming.</string>
+    <string name="phone_paused">Phone sync is paused. Resume it on the phone.</string>
+    <string name="push_not_registered">Open the updated phone app to finish automatic push registration.</string>
+    <string name="webpush_error">Google Web Push returned HTTP %1$s. Phone receipt is not confirmed.</string>
+    <string name="sync_discarded">The phone discarded an old or paused update.</string>
 </resources>

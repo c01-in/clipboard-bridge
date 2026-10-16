@@ -45,7 +45,7 @@ try
 {
     var vault = new Vault(testDirectory.FullName);
     using var http = new HttpClient();
-    using var broker = new Broker(vault, new FcmSender(http));
+    using var broker = new Broker(vault, new WebPushSender(http));
     var receiving = broker.ReceiveFromAndroid(uploadManifest, unicode, CancellationToken.None);
     Assert(!receiving.IsCompleted, "No Android success before Windows clipboard acknowledgment");
     var duplicate = broker.ReceiveFromAndroid(uploadManifest, unicode, CancellationToken.None);
@@ -63,7 +63,7 @@ try
     Assert(vault.Read().IncomingSequence == 1 && vault.Read().IncomingId == uploadManifest.Id, "Successful Android upload replay protection persists with DPAPI");
     Assert((await broker.ReceiveFromAndroid(uploadManifest, unicode, CancellationToken.None)).Status == "applied" &&
         (await broker.Handle(new Command("receive"), CancellationToken.None)).Value is null, "Completed retry confirms success without rewriting the clipboard");
-    using var restarted = new Broker(new Vault(testDirectory.FullName), new FcmSender(http));
+    using var restarted = new Broker(new Vault(testDirectory.FullName), new WebPushSender(http));
     Assert((await restarted.ReceiveFromAndroid(Manifest(unicode, 1), unicode, CancellationToken.None)).Status == "error", "Old upload is rejected after broker restart");
     var failingManifest = Manifest(unicode, 2);
     var failing = broker.ReceiveFromAndroid(failingManifest, unicode, CancellationToken.None);
@@ -78,7 +78,7 @@ try
     // Use the real listener on an isolated pipe, without production credentials or clipboard writes.
     vault.Update(c => c.OwnerSid = WindowsIdentity.GetCurrent().User!.Value);
     string pipeName = "ClipboardBridge-Tests-" + Guid.NewGuid().ToString("N");
-    using var ipc = new Broker(vault, new FcmSender(http), pipeName);
+    using var ipc = new Broker(vault, new WebPushSender(http), pipeName);
     async Task<Reply> PipeCall(Command command)
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(4));
@@ -114,7 +114,7 @@ try
 
     string blockedName = "ClipboardBridge-Blocked-" + Guid.NewGuid().ToString("N");
     using var blocker = new NamedPipeServerStream(blockedName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-    using var unavailable = new Broker(vault, new FcmSender(http), blockedName);
+    using var unavailable = new Broker(vault, new WebPushSender(http), blockedName);
     bool failureObserved = false;
     try
     {
@@ -131,5 +131,6 @@ finally
     testDirectory.Delete();
 }
 await PairingChecks.Run(Assert);
+await WebPushChecks.Run(Assert);
 await DownloadChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");

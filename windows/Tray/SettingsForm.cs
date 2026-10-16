@@ -40,8 +40,6 @@ sealed class SettingsForm : Form
         content.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
         var advanced = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Top, ColumnCount = 1, Visible = false, Margin = new Padding(0, 14, 0, 0) };
         content.Controls.Add(Button("win_advanced", () => { advanced.Visible = !advanced.Visible; return Task.CompletedTask; }));
-        var imports = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true };
-        imports.Controls.Add(Button("win_import_account", () => Import("account")));imports.Controls.Add(Button("win_import_android", () => Import("android-config")));advanced.Controls.Add(imports);
         var addressLabel = new Label { Text = UiText.Get("win_addresses"), AutoSize = true };wrapping.Add(addressLabel);advanced.Controls.Add(addressLabel);advanced.Controls.Add(addresses);
         advanced.Controls.Add(Button("win_save_addresses", () => Action(new Command("endpoints", Value: addresses.Text))));content.Controls.Add(advanced);
         scroll.SizeChanged += (_, _) => { int width = Math.Max(250, scroll.ClientSize.Width - scroll.Padding.Horizontal - 22);content.Width = width; foreach (var label in wrapping) label.MaximumSize = new Size(width, 0); };
@@ -54,11 +52,6 @@ sealed class SettingsForm : Form
         b.Click += async (_, _) => { b.Enabled = false; try { await action(); } catch (Exception e) { MessageBox.Show(UiText.Translate(e.Message), UiText.Get("app_name")); } finally { if (!b.IsDisposed) b.Enabled = true; } };return b;
     }
     async Task Action(Command command) { var r = await Ipc.Call(command);state.Text = r.Message;if (!r.Ok) MessageBox.Show(r.Message, UiText.Get("app_name")); }
-    async Task Import(string operation)
-    {
-        using var dialog = new OpenFileDialog { Filter = UiText.Get("win_json_files") + "|*.json" };
-        if (dialog.ShowDialog(this) == DialogResult.OK) { await Action(new Command(operation, Value: await File.ReadAllTextAsync(dialog.FileName))); await RefreshStatus(); }
-    }
     async Task Approve()
     {
         if (phones.SelectedItem is not PhoneRow row || row.Peer.Completed) return;

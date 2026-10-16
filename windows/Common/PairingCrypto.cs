@@ -50,4 +50,4 @@ public sealed record KnownHello(string Protocol, string Kind, string ComputerId,
 public sealed record KnownOffer(string Protocol, string Kind, string ComputerId, string RequestComputerId, string Nonce, int Port, string Proof);
 public sealed record PairPeer(string Id, string Name, string Code, bool ComputerApproved, bool PhoneApproved, bool Completed, long ExpiresAt);
 public sealed record PairState(bool Searching, long ExpiresAt, PairPeer[] Phones);
-public sealed record PairCompletion(string Kind, string SessionId, string Token);
+public sealed record PairCompletion(string Kind, string SessionId, PushSubscription Subscription, string ReceiveGeneration, long Revision, bool Paused = false);
