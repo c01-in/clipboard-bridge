@@ -95,7 +95,7 @@ jobs:
 
           Windows sends encrypted Web Push directly to Google using a per-computer VAPID key. No Firebase project, service-account file, shared sender secret or maintainer relay is required. Google Play Services and Google network access are still required. Android has a persistent pause/resume switch; old receive sessions are discarded after resuming. Existing pairs migrate automatically when both apps are updated.
 
-          UnifiedPush library sources and LGPL-2.1 license are provided in ClipboardBridge-Android-Library-Sources.zip. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
+          UnifiedPush library sources and their respective LGPL-2.1 and Apache-2.0 licenses are provided in ClipboardBridge-Android-Library-Sources.zip and the APK assets. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
 
           The Windows installer is not Authenticode-signed. See README and SECURITY.md before testing.
           '@

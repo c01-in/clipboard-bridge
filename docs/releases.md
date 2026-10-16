@@ -11,16 +11,16 @@
 
 ## 每次发版
 
-两端可见版本必须一致，写在 `Directory.Build.props` 和 `android/app/build.gradle`。当前为 `0.1.1`。Android 的 `versionCode` 是独立、持续递增的内部升级编号；从早期内部 2.x 名称改成 0.x 时也必须递增，不能回退该编号或更换签名。
+两端可见版本必须一致，写在 `Directory.Build.props` 和 `android/app/build.gradle`。当前为 `0.1.2`。Android 的 `versionCode` 是独立、持续递增的内部升级编号；从早期内部 2.x 名称改成 0.x 时也必须递增，不能回退该编号或更换签名。
 
 修改源码、两端版本与下载链接，提交并通过 CI 后推送对应标签：
 
 ```powershell
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
-示例下一版需要先把两端可见版本改成 `0.1.2`，并增加 Android `versionCode`；不能直接给旧版本代码打新版本标签。已有标签也可在 Actions 的 **Build and publish preview installers** 中手动运行，输入该标签。已发布版本不覆盖旧资产，应增加版本号重新发布。
+示例下一版需要先把两端可见版本改成 `0.1.3`，并增加 Android `versionCode`；不能直接给旧版本代码打新版本标签。已有标签也可在 Actions 的 **Build and publish preview installers** 中手动运行，输入该标签。已发布版本不覆盖旧资产，应增加版本号重新发布。
 
 发布任务自动检查标签与两端版本、源码及历史隐私、协议、语言、下载行为和 Android lint，然后使用原签名密钥构建 APK、打包 Windows EXE，在一次性 GitHub Windows runner 上执行全新安装及卸载，最后发布预发布版本和 SHA-256 校验文件。任一步失败不会发布安装包。
 

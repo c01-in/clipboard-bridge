@@ -81,6 +81,9 @@ static class PairingChecks
             check(!PairingHub.AllowedAddress(IPAddress.Parse("8.8.8.8")), "Discovery excludes public source addresses");
 
             string resourceRoot = Path.Combine(repo.FullName, "android/app/src/main/res");
+            string licenses = Path.Combine(repo.FullName, "android/app/src/main/assets/third-party");
+            check(File.ReadAllText(Path.Combine(licenses, "UnifiedPush-LGPL-2.1.txt")).Contains("GNU LESSER GENERAL PUBLIC LICENSE"), "Embedded receiver includes the actual LGPL-2.1 license text");
+            check(File.ReadAllText(Path.Combine(licenses, "UnifiedPush-connector-Apache-2.0.txt")).Contains("Apache License"), "Connector includes its distinct Apache-2.0 license text");
             var baseline = XDocument.Load(Path.Combine(resourceRoot, "values/strings.xml")).Root!.Elements("string").ToDictionary(e => e.Attribute("name")!.Value, e => e.Value);
             foreach (string folder in new[] { "values-b+zh+Hans", "values-b+zh+Hant", "values-es", "values-pt", "values-fr", "values-de", "values-ja", "values-ko" })
             {

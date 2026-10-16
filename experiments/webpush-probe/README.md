@@ -34,7 +34,7 @@ ADB 只负责安装、配置公钥和读取证据；`send` 不调用 ADB。测�
 ## 第三方组件与源码
 
 本实验自己编写的文件沿用仓库 MIT 许可证；依赖库按各自许可证使用。
-UnifiedPush 两个库的根许可证为 LGPL-2.1，发布实验 APK 时同时提供对应原始库源码和本实验源码。
+UnifiedPush connector 的根许可证为 Apache-2.0，embedded-fcm-distributor 的根许可证为 LGPL-2.1；发布实验 APK 时同时提供对应许可证、原始库源码和本实验源码。
 
 - https://github.com/UnifiedPush/android-embedded_fcm_distributor
 - https://github.com/UnifiedPush/android-connector

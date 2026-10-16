@@ -4,11 +4,11 @@
 
 Windows 复制文字或单张图片后自动发送；Android 在 App 内点击发送，即可在 Windows 粘贴。两端自动发现、确认配对，不需要输入 IP 或配对链接。
 
-## 下载 0.1.1 预览版
+## 下载 0.1.2 预览版
 
-- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge.apk)
-- [Windows x64 安装程序](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge-Windows-x64-Setup.exe)
-- [手动安装 ZIP、源码与校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.1)
+- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk)
+- [Windows x64 安装程序](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
+- [手动安装 ZIP、源码与校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
 
 普通使用者无需安装开发工具、自行 build 或开启手机调试。Windows 安装器请求管理员权限，尚未使用 Authenticode 签名。
 
@@ -42,12 +42,12 @@ Windows 复制文字或单张图片后自动发送；Android 在 App 内点击�
 
 ## 升级、隐私与开源
 
-两端可见版本同为 0.1.1，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。
+两端可见版本同为 0.1.2，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。
 旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 凭据、配对密钥、接收地址和运行数据都放在本地，不进入公开仓库或安装包。不要分享这些私密文件。剪贴板使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网／Tailscale 网络内使用，详见 [SECURITY.md](SECURITY.md)。
 
-项目自己的代码采用 [MIT](LICENSE)。UnifiedPush 库保留 LGPL-2.1；完整许可证包含在 APK 中，原始库源码随 Release 提供，见 [第三方组件说明](THIRD_PARTY_NOTICES.md)。
+项目自己的代码采用 [MIT](LICENSE)。UnifiedPush 接收库保留 LGPL-2.1，connector 使用 Apache-2.0；两份完整许可证包含在 APK 中，原始库源码随 Release 提供，见 [第三方组件说明](THIRD_PARTY_NOTICES.md)。0.1.2 修正了 0.1.1 的许可证打包标记，收发逻辑不变。
 
 ## 开发与验证
 
@@ -55,5 +55,5 @@ Windows 复制文字或单张图片后自动发送；Android 在 App 内点击�
 - [GitHub Actions 自动构建与发布](docs/releases.md)：推送匹配的 `v0.x.y` 标签后自动测试、签名、打包、发布，无需每次本地 build。
 - [协议](docs/protocol.md)、[故障排查](docs/troubleshooting.md)、[贡献指南](CONTRIBUTING.md)
 
-83 项协议、IPC、配对、Web Push、暂停修订号、旧配置迁移、语言及真实 HTTP 下载检查通过。独立原生验证包的 6 条短时推送全部到达，含进程终止和强制深度 Doze，见 [探针记录](experiments/webpush-probe/RESULTS.md)。正式版原配对升级、暂停持久化、旧会话拒收、文字和图片双向收发通过，见 [0.1.1 实机记录](docs/verification-0.1.1.md)。
+85 项协议、IPC、配对、Web Push、暂停修订号、旧配置迁移、许可、语言及真实 HTTP 下载检查通过。独立原生验证包的 6 条短时推送全部到达，含进程终止和强制深度 Doze，见 [探针记录](experiments/webpush-probe/RESULTS.md)。正式版原配对升级、暂停持久化、旧会话拒收、文字和图片双向收发通过，见 [0.1.1 实机记录](docs/verification-0.1.1.md)。
 尚未验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合；预览版不承诺这些场景的稳定性。
