@@ -45,12 +45,12 @@ public class ReceiveWorker extends Worker {
                     BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;BitmapFactory.decodeByteArray(bytes,0,bytes.length,bounds);
                     if(bounds.outWidth<=0||bounds.outHeight<=0)throw new Exception(LocalText.get(R.string.error_decode_image));
                     File dir=new File(c.getFilesDir(),"clips");dir.mkdirs();File image=new File(dir,id+".png");Files.write(image.toPath(),bytes);
-                    clipboard.setPrimaryClip(ClipData.newUri(c.getContentResolver(),LocalText.get(R.string.clipboard_image_windows),Uri.parse("content://com.colin.clipbridge.images/"+id+".png")));
+                    clipboard.setPrimaryClip(ClipData.newUri(c.getContentResolver(),LocalText.get(R.string.clipboard_image_windows),Uri.parse("content://"+c.getPackageName()+".images/"+id+".png")));
                     File[] old=dir.listFiles();if(old!=null)for(File f:old)if(!f.equals(image)&&System.currentTimeMillis()-f.lastModified()>24*3600*1000L)f.delete();
                 }
                 if(!Config.prefs(c).edit().putLong("lastSequence",seq).putString("lastId",id).putString("lastMime",mime).commit())throw new Exception(LocalText.get(R.string.error_save_receipt));
             }
-            if(!SyncState.paused(c))Notices.show(c,mime.equals("image/png")?R.string.received_image:R.string.received_text);
+            if(!SyncState.paused(c))Notices.received(c,mime.equals("image/png")?R.string.received_image:R.string.received_text);
             ack(c,manifest,"applied",null);return Result.success();
         }catch(Exception e){
             if(isStopped()||SyncState.paused(c))return Result.failure();

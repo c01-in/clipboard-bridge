@@ -143,4 +143,8 @@
     <string name="link_copied">Link copied. Open it on your computer.</string>
     <string name="link_unavailable">No app can open this link. Use Copy link instead.</string>
     <string name="privacy_policy">Privacy policy</string>
+    <string name="share_retry">Retry</string>
+    <string name="share_open_settings">Open Clipboard Bridge</string>
+    <string name="error_share_content">Share text or one image from the original app. Other files and multiple items are not supported.</string>
+    <string name="share_interrupted">Sending was interrupted. Check Windows before retrying.</string>
 </resources>

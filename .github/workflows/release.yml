@@ -108,6 +108,8 @@ jobs:
 
           The Windows installer is not Authenticode-signed. See README and SECURITY.md before testing.
           '@
+          $versionNotes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.md')
+          if(Test-Path -LiteralPath $versionNotes){$notes=Get-Content -LiteralPath $versionNotes -Raw}
           $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
           gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge.aab dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}

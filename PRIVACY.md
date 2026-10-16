@@ -6,7 +6,7 @@ This policy covers the Clipboard Bridge Android app and Windows companion mainta
 
 ## What the app does with your clipboard
 
-Clipboard Bridge transfers text and one image between devices you pair and approve. Windows can send copied content automatically while automatic sending is enabled. Android reads clipboard content only when you tap Send in the foreground app. Receiving content can replace the destination device's clipboard.
+Clipboard Bridge transfers text and one image between devices you pair and approve. Windows can send copied content automatically while automatic sending is enabled. Android reads clipboard content only when you tap Send in the foreground app. You can also explicitly share text or one image from another app by selecting Clipboard Bridge in Android's share menu; this sends the supplied content without reading your clipboard. Receiving content can replace the destination device's clipboard.
 
 Clipboard content can include sensitive information. Pair only devices you trust, and pause automatic sending when you do not want copied content transferred. The Android sync switch pauses new sending and receiving; the Windows tray pause controls automatic Windows sending.
 
@@ -22,7 +22,7 @@ The app does not create a user account, include advertising or analytics SDKs, s
 
 ## Permissions
 
-Internet/network access enables pairing, encrypted transfer and Google push registration. Notifications show receiving and transfer results. AndroidX WorkManager contributes wake-lock, boot and foreground-service permissions for scheduled work and compatibility; this does not mean an always-running receive service. The Android app does not request accessibility, contacts, location, camera, microphone, broad photo-library or all-files access. It reads an image URI only when you choose to send that clipboard image.
+Internet/network access enables pairing, encrypted transfer and Google push registration. Notifications show receiving progress and errors; on Android 13 and later, successful copies rely on system feedback instead of a second app notification. AndroidX WorkManager contributes wake-lock, boot and foreground-service permissions for scheduled work and compatibility; this does not mean an always-running receive service. The Android app does not request accessibility, contacts, location, camera, microphone, broad photo-library or all-files access. It reads an image URI only when you choose to send that clipboard image or explicitly share an image to Clipboard Bridge, using the access granted by the source app.
 
 ## Retention and deletion
 

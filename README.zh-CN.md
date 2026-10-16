@@ -9,7 +9,7 @@
 文字、单张图片，你自己的设备。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![预览版 0.1.3](https://img.shields.io/badge/preview-0.1.3-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
+[![预览版 0.1.4](https://img.shields.io/badge/preview-0.1.4-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -31,23 +31,23 @@
 
 <div align="center">
 
-[![下载 Windows 版](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge-Windows-x64-Setup.exe)
-[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge.apk)
+[![下载 Windows 版](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge-Windows-x64-Setup.exe)
+[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**
 
-[Windows 手动安装 ZIP、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
+[Windows 手动安装 ZIP、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
 
 </div>
 
-**当前版本：0.1.3 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
+**当前版本：0.1.4 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
 
 ## 为剪贴板而做
 
 | | 你可以做什么 |
 | :--- | :--- |
 | **🖥️ Windows 复制即发送** | 自动发送文字或单张图片；也可使用 `Ctrl+Alt+V` 或托盘菜单手动发送。 |
-| **📱 Android 点击发送** | 复制内容后打开 App，点击“发送剪贴板到 Windows”。手机发送由用户主动触发。 |
+| **📱 Android 直接分享** | 在其他 App 分享文字或单张图片，选择“剪贴板同步”；也可打开 App 点击“发送剪贴板到 Windows”。 |
 | **🔗 配对不用输入** | 在同一 Wi-Fi 自动发现电脑，比较六位确认码并在两端确认，无需输入 IP 或配对链接。 |
 | **⏸️ 随时暂停** | Windows 托盘可暂停自动发送；Android 可暂停新的收发，并保留配对。 |
 | **🔐 内容加密传输** | 剪贴板采用 AES-GCM 加密。配对密钥和电脑推送身份保存在本地；Google 仍可看到推送元数据。 |
@@ -59,7 +59,7 @@
 
 1. **安装两端。** 从开始菜单打开 Windows 设置，再打开手机 App。连接同一 Wi-Fi，按手机内的引导允许通知。
 2. **确认设备。** 手机选择自动发现的电脑，比较两端显示的六位确认码，并在两端确认。确认码不同就不要批准。
-3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向则在 Android 复制后，点击“发送剪贴板到 Windows”；只有 Windows 实际写入并返回确认，手机才显示成功。
+3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可在系统分享菜单选择“剪贴板同步”，或复制后打开 App 点击“发送剪贴板到 Windows”；只有 Windows 实际写入并返回确认，手机才显示成功。
 
 还没安装电脑端？Android 的**获取 Windows 版**入口可复制或分享 [GitHub Releases 页面](https://github.com/c01-in/clipboard-bridge/releases)，在电脑上打开后自行选择安装包。
 
@@ -106,7 +106,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-两端可见版本同为 0.1.3，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+两端可见版本同为 0.1.4，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 凭据、配对密钥、接收地址和运行数据保存在本地，不进入公开仓库或安装包。不要分享私密文件。剪贴板内容使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网或私有网络内使用，见 [SECURITY.md](SECURITY.md)。
 
@@ -120,6 +120,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 
 - **原生推送探针：** 6 条短时消息到达，含进程终止和强制深度 Doze。[探针记录](experiments/webpush-probe/RESULTS.md)
 - **正式版实机测试：** 原配对迁移、暂停持久化、旧会话拒收、文字与图片双向收发通过。[实机记录](docs/verification-0.1.1.md)
+- **Android 快捷分享：** 12 项模拟器检查通过，包含其他 App 的图片 URI 授权和屏幕重建后不重复发送。微信里第二条复制 Toast 的来源仍未确认。[分享验证](docs/android-sharing.md)
 - **自动发布：** 发布前执行测试、Android 签名、打包、Windows 全新安装和卸载。[GitHub Actions](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)
 
 **尚未**验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合。预览版不保证长期投递表现。

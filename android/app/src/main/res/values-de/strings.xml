@@ -143,4 +143,8 @@
     <string name="link_copied">Link kopiert. Öffne ihn auf deinem Computer.</string>
     <string name="link_unavailable">Keine App kann diesen Link öffnen. Kopiere den Link.</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="share_retry">Erneut versuchen</string>
+    <string name="share_open_settings">Clipboard Bridge öffnen</string>
+    <string name="error_share_content">Teile Text oder ein einzelnes Bild aus der ursprünglichen App. Andere Dateien und mehrere Elemente werden nicht unterstützt.</string>
+    <string name="share_interrupted">Das Senden wurde unterbrochen. Prüfe Windows, bevor du es erneut versuchst.</string>
 </resources>

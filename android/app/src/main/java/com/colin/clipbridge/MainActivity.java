@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
             .setMessage(getString(R.string.windows_download_help,CompanionLinks.WINDOWS))
             .setPositiveButton(R.string.copy_link,(d,w)->{
                 getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(getString(R.string.download_windows),CompanionLinks.WINDOWS));
-                Toast.makeText(this,R.string.link_copied,Toast.LENGTH_SHORT).show();
+                if(Build.VERSION.SDK_INT<33)Toast.makeText(this,R.string.link_copied,Toast.LENGTH_SHORT).show();
             }).setNeutralButton(R.string.share_link,(d,w)->{
                 Intent share=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,CompanionLinks.WINDOWS);
                 try{startActivity(Intent.createChooser(share,getString(R.string.download_windows)));}catch(ActivityNotFoundException e){Toast.makeText(this,R.string.link_unavailable,Toast.LENGTH_LONG).show();}

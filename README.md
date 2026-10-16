@@ -9,7 +9,7 @@
 Text and one image. Your own devices. Free and open source.
 
 [![Build](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![Preview 0.1.3](https://img.shields.io/badge/preview-0.1.3-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
+[![Preview 0.1.4](https://img.shields.io/badge/preview-0.1.4-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Downloads](#download-and-try-it) · [Quick start](#install-pair-copy) · [Docs](#build-and-contribute)
@@ -31,23 +31,23 @@ Text and one image. Your own devices. Free and open source.
 
 <div align="center">
 
-[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge-Windows-x64-Setup.exe)
-[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge.apk)
+[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge-Windows-x64-Setup.exe)
+[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge.apk)
 
 **Install both. Pair once. Start copying.**
 
-[Manual Windows ZIP, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
+[Manual Windows ZIP, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
 
 </div>
 
-**Current release: 0.1.3 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
+**Current release: 0.1.4 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
 
 ## Made for the clipboard
 
 | | What you get |
 | :--- | :--- |
 | **🖥️ Copy on Windows** | Text or one image is sent automatically. Prefer control? Use `Ctrl+Alt+V` or the tray menu. |
-| **📱 Send from Android** | Copy content, open the app and tap **Send clipboard to Windows**. Android sending is an explicit action. |
+| **📱 Share from Android** | Share text or one image from another app and choose **Clipboard Bridge**. Or open the app and tap **Send clipboard to Windows**. |
 | **🔗 Pair without typing** | Find the computer on the same Wi-Fi, compare the six-digit code and confirm on both devices. No IP address or pairing link to enter. |
 | **⏸️ Pause when you want** | Pause automatic Windows sending from the tray, or pause new sending and receiving on Android without losing your pairing. |
 | **🔐 Keep content encrypted** | Clipboard content uses AES-GCM. Pairing keys and the computer's push identity stay local. Google can still observe push metadata. |
@@ -59,7 +59,7 @@ Supports UTF-8 text and **one image, up to 16 MiB**. Images travel as PNG. Andro
 
 1. **Install both apps.** Open Windows settings from the Start menu and launch Android. Connect both to the same Wi-Fi and allow notifications through the Android prompt.
 2. **Confirm your devices.** Select the discovered computer on Android, compare the six-digit code on both screens and confirm on both. Do not approve a different code.
-3. **Try your clipboard.** Copy text or one image on Windows, then paste on Android. For the other direction, copy on Android and tap **Send clipboard to Windows**; success appears after Windows actually writes the clipboard and acknowledges it.
+3. **Try your clipboard.** Copy text or one image on Windows, then paste on Android. For the other direction, use Android's Share menu and choose **Clipboard Bridge**, or copy and use the app's **Send clipboard to Windows** button. Success appears after Windows actually writes the clipboard and acknowledges it.
 
 Need the companion? Android's **Get the Windows app** entry lets you copy/share the [GitHub Releases page](https://github.com/c01-in/clipboard-bridge/releases) and open it on your computer.
 
@@ -106,7 +106,7 @@ Both apps follow the system language. Other languages fall back to English.
 <details>
 <summary><strong>Upgrading, privacy & licenses</strong></summary>
 
-Windows and Android share version 0.1.3. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
+Windows and Android share version 0.1.4. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
 Keys, subscription endpoints and runtime data stay local and are excluded from source and public installers. Clipboard content is AES-GCM encrypted, but Google can observe push metadata. Use trusted local or private networks. See [SECURITY.md](SECURITY.md).
 
@@ -120,6 +120,7 @@ Our code is [MIT](LICENSE). The embedded UnifiedPush receiver retains LGPL-2.1; 
 
 - **Native push probe:** six short messages arrived, including process termination and forced deep Doze. [Probe evidence](experiments/webpush-probe/RESULTS.md)
 - **Production device tests:** pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions passed. [Device evidence](docs/verification-0.1.1.md)
+- **Android sharing:** 12 emulator checks passed, including separate-app image URI grants and no duplicate submission after activity recreation. The reported second WeChat copy toast is still unattributed. [Sharing verification](docs/android-sharing.md)
 - **Release automation:** tests, Android signing, packaging, fresh Windows installation and uninstallation run before publishing. [GitHub Actions](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)
 
 All vendors, prolonged sleep, reboot recovery and cross-network combinations have **not** been validated. This is a preview, not a guarantee of long-term delivery.

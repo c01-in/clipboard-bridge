@@ -3,7 +3,7 @@ android {
     namespace 'com.colin.clipbridge'
     compileSdk 36
     buildToolsVersion '36.0.0'
-    defaultConfig { applicationId 'com.colin.clipbridge'; minSdk 26; targetSdk 36; versionCode 7; versionName '0.1.3'; testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
+    defaultConfig { applicationId 'com.colin.clipbridge'; minSdk 26; targetSdk 36; versionCode 8; versionName '0.1.4'; testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {
         release {
@@ -12,7 +12,10 @@ android {
             }
         }
     }
-    buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false } }
+    buildTypes {
+        debug { applicationIdSuffix '.debug' }
+        release { signingConfig signingConfigs.release; minifyEnabled false }
+    }
 }
 dependencies {
     implementation 'org.unifiedpush.android:connector:3.0.10'

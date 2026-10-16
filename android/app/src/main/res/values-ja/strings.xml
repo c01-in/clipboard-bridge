@@ -143,4 +143,8 @@
     <string name="link_copied">リンクをコピーしました。パソコンで開いてください。</string>
     <string name="link_unavailable">リンクを開けるアプリがありません。リンクをコピーしてください。</string>
     <string name="privacy_policy">プライバシーポリシー</string>
+    <string name="share_retry">再試行</string>
+    <string name="share_open_settings">Clipboard Bridge を開く</string>
+    <string name="error_share_content">元のアプリからテキストまたは画像1枚を共有してください。他のファイルや複数の項目には対応していません。</string>
+    <string name="share_interrupted">送信が中断されました。再試行する前に Windows を確認してください。</string>
 </resources>

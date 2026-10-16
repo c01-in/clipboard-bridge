@@ -6,6 +6,12 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 
 final class Notices {
+    static void received(Context c,int resource){
+        // Android 13+ already shows clipboard-write feedback. Keep the in-app status,
+        // but remove the progress notification rather than adding a second "copied" result.
+        if(Build.VERSION.SDK_INT>=33){Config.status(c,resource);c.getSystemService(NotificationManager.class).cancel(1);}
+        else show(c,resource);
+    }
     static Notification create(Context c,String text){
         NotificationManager manager=c.getSystemService(NotificationManager.class);
         manager.createNotificationChannel(new NotificationChannel("sync",c.getString(R.string.notification_channel),NotificationManager.IMPORTANCE_LOW));

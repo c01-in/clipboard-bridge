@@ -143,4 +143,8 @@
     <string name="link_copied">連結已複製，請在電腦上開啟。</string>
     <string name="link_unavailable">沒有可用的應用程式開啟連結，請使用「複製連結」。</string>
     <string name="privacy_policy">隱私權政策</string>
+    <string name="share_retry">重試</string>
+    <string name="share_open_settings">開啟剪貼簿同步</string>
+    <string name="error_share_content">請從原 App 分享文字或單張圖片，暫不支援其他檔案或多個項目。</string>
+    <string name="share_interrupted">傳送已中斷，請先檢查 Windows 是否已收到，再決定是否重試。</string>
 </resources>

@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name="com.colin.clipbridge.ShareSourceActivity" android:exported="true" android:theme="@android:style/Theme.Material.Light.NoActionBar"/>
+        <provider android:name="com.colin.clipbridge.ShareImageFixture" android:authorities="${applicationId}.fixture" android:exported="false" android:grantUriPermissions="true"/>
+    </application>
+</manifest>

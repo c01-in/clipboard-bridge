@@ -143,4 +143,8 @@
     <string name="link_copied">Enlace copiado. Ábrelo en tu ordenador.</string>
     <string name="link_unavailable">Ninguna app puede abrir el enlace. Usa Copiar enlace.</string>
     <string name="privacy_policy">Política de privacidad</string>
+    <string name="share_retry">Reintentar</string>
+    <string name="share_open_settings">Abrir Clipboard Bridge</string>
+    <string name="error_share_content">Comparte texto o una sola imagen desde la app original. No se admiten otros archivos ni varios elementos.</string>
+    <string name="share_interrupted">El envío se interrumpió. Comprueba Windows antes de reintentarlo.</string>
 </resources>

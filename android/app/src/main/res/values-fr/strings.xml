@@ -143,4 +143,8 @@
     <string name="link_copied">Lien copié. Ouvrez-le sur votre ordinateur.</string>
     <string name="link_unavailable">Aucune application ne peut ouvrir ce lien. Copiez le lien.</string>
     <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="share_retry">Réessayer</string>
+    <string name="share_open_settings">Ouvrir Clipboard Bridge</string>
+    <string name="error_share_content">Partagez du texte ou une seule image depuis l’application d’origine. Les autres fichiers et les éléments multiples ne sont pas pris en charge.</string>
+    <string name="share_interrupted">L’envoi a été interrompu. Vérifiez Windows avant de réessayer.</string>
 </resources>

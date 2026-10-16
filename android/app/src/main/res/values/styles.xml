@@ -1,0 +1,5 @@
+<resources>
+    <style name="ShareDialog" parent="android:style/Theme.Material.Light.Dialog.NoActionBar">
+        <item name="android:windowCloseOnTouchOutside">false</item>
+    </style>
+</resources>

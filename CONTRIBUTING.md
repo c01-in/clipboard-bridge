@@ -28,6 +28,8 @@ dotnet run --project .\windows\Tests\Tests.csproj -c Release
 
 Debug builds and checks require no maintainer credentials or release signing key. A locally signed release uses your own persistent key; it cannot update an APK signed with the project's release key. Do not delete an existing installation's data or signing material just to make a test pass.
 
+Android debug builds use `com.colin.clipbridge.debug` and separate storage, so they can coexist with the release app. For emulator checks of the system share target and image URI permissions, see [Android sharing verification](docs/android-sharing.md). Instrumentation fixtures are packaged only in the test APK.
+
 ## Verify behavior on real devices
 
 For delivery changes, test with your own Windows PC and Android device on the same Wi-Fi, with working Google connectivity. Pair through the normal app flow; there is no Firebase configuration to import. Record the app versions, Android and Google Play Services versions, network conditions, exact steps and observed result.
