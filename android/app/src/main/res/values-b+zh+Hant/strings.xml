@@ -136,4 +136,11 @@
     <string name="push_not_registered">請開啟更新後的手機 App，自動完成推播註冊。</string>
     <string name="webpush_error">Google Web Push 傳回 HTTP %1$s，手機尚未確認收到。</string>
     <string name="sync_discarded">手機已捨棄舊工作階段或暫停期間的內容。</string>
+    <string name="download_windows">取得 Windows 版</string>
+    <string name="windows_download_help">在電腦上開啟 GitHub Releases 頁面，自行選擇 Windows 安裝程式。可複製或分享此連結：\n\n%1$s</string>
+    <string name="copy_link">複製連結</string>
+    <string name="share_link">分享連結</string>
+    <string name="link_copied">連結已複製，請在電腦上開啟。</string>
+    <string name="link_unavailable">沒有可用的應用程式開啟連結，請使用「複製連結」。</string>
+    <string name="privacy_policy">隱私權政策</string>
 </resources>

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing preview tag, e.g. v0.1.1'
+        description: 'Existing preview tag, e.g. v0.1.3'
         required: true
         type: string
 permissions:
@@ -66,6 +66,13 @@ jobs:
           ./scripts/Package.ps1 -AndroidSdk $env:ANDROID_HOME
           & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify dist/release/ClipboardBridge.apk
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          & "$env:JAVA_HOME/bin/jarsigner.exe" -verify dist/release/ClipboardBridge.aab
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $bundle=[IO.Compression.ZipFile]::OpenRead((Resolve-Path dist/release/ClipboardBridge.aab).Path)
+          try{
+            $entries=@($bundle.Entries.FullName)
+            if('BundleConfig.pb' -notin $entries -or 'base/manifest/AndroidManifest.xml' -notin $entries -or !($entries -match '^META-INF/[^/]+\.(RSA|EC|DSA)$')){throw 'The Play upload artifact is not a signed Android App Bundle.'}
+          }finally{$bundle.Dispose()}
       - name: Verify fresh Windows install and uninstall
         run: |
           $setup=Start-Process -FilePath (Resolve-Path dist/release/ClipboardBridge-Windows-x64-Setup.exe).Path -ArgumentList '--silent' -Wait -PassThru -WindowStyle Hidden
@@ -89,9 +96,11 @@ jobs:
           $notes=@'
           Preview build for installation testing. Windows and Android use the same 0.x version.
 
-          Downloads: ClipboardBridge.apk (Android), ClipboardBridge-Windows-x64-Setup.exe (Windows installer), ClipboardBridge-Windows-x64.zip (manual installation), SHA256SUMS.txt (checksums).
+          Downloads: ClipboardBridge.apk (Android), ClipboardBridge.aab (maintainer upload artifact, not a phone installer), ClipboardBridge-Windows-x64-Setup.exe (Windows installer), ClipboardBridge-Windows-x64.zip (manual installation), SHA256SUMS.txt (checksums).
 
           Automatic local pairing, text and one image, and nine system languages. Android asks for notification permission in the app. No debug mode is required. Existing installs can be updated using the same Android signing key; internal Android version codes continue increasing.
+
+          Android includes a copy/share link to the GitHub Releases page for installing the Windows companion, plus a privacy policy entry. The AAB is built for maintainer evaluation; Google Play approval has not been obtained. See docs/google-play.md for the registration-path review and remaining submission requirements.
 
           Windows sends encrypted Web Push directly to Google using a per-computer VAPID key. No Firebase project, service-account file, shared sender secret or maintainer relay is required. Google Play Services and Google network access are still required. Android has a persistent pause/resume switch; old receive sessions are discarded after resuming. Existing pairs migrate automatically when both apps are updated.
 
@@ -100,7 +109,7 @@ jobs:
           The Windows installer is not Authenticode-signed. See README and SECURITY.md before testing.
           '@
           $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
-          gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
+          gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge.aab dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
       - name: Remove temporary signing material
         if: always()

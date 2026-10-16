@@ -136,4 +136,11 @@
     <string name="push_not_registered">Open the updated phone app to finish automatic push registration.</string>
     <string name="webpush_error">Google Web Push returned HTTP %1$s. Phone receipt is not confirmed.</string>
     <string name="sync_discarded">The phone discarded an old or paused update.</string>
+    <string name="download_windows">Get the Windows app</string>
+    <string name="windows_download_help">Open the GitHub Releases page on your computer and choose the Windows installer. Copy or share this link:\n\n%1$s</string>
+    <string name="copy_link">Copy link</string>
+    <string name="share_link">Share link</string>
+    <string name="link_copied">Link copied. Open it on your computer.</string>
+    <string name="link_unavailable">No app can open this link. Use Copy link instead.</string>
+    <string name="privacy_policy">Privacy policy</string>
 </resources>

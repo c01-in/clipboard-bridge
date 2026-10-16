@@ -9,7 +9,7 @@
 文字、单张图片，你自己的设备。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![预览版 0.1.2](https://img.shields.io/badge/preview-0.1.2-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
+[![预览版 0.1.3](https://img.shields.io/badge/preview-0.1.3-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -31,16 +31,16 @@
 
 <div align="center">
 
-[![下载 Windows 版](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
-[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk)
+[![下载 Windows 版](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge-Windows-x64-Setup.exe)
+[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**
 
-[Windows 手动安装 ZIP、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
+[Windows 手动安装 ZIP、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
 
 </div>
 
-**当前版本：0.1.2 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
+**当前版本：0.1.3 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
 
 ## 为剪贴板而做
 
@@ -60,6 +60,8 @@
 1. **安装两端。** 从开始菜单打开 Windows 设置，再打开手机 App。连接同一 Wi-Fi，按手机内的引导允许通知。
 2. **确认设备。** 手机选择自动发现的电脑，比较两端显示的六位确认码，并在两端确认。确认码不同就不要批准。
 3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向则在 Android 复制后，点击“发送剪贴板到 Windows”；只有 Windows 实际写入并返回确认，手机才显示成功。
+
+还没安装电脑端？Android 的**获取 Windows 版**入口可复制或分享 [GitHub Releases 页面](https://github.com/c01-in/clipboard-bridge/releases)，在电脑上打开后自行选择安装包。
 
 正常使用无需注册 App 账号、申请 Firebase 项目、导入凭据或开启调试模式。通知授权、配对确认和 Android 安装权限仍需用户同意。
 
@@ -104,7 +106,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-两端可见版本同为 0.1.2，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+两端可见版本同为 0.1.3，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 凭据、配对密钥、接收地址和运行数据保存在本地，不进入公开仓库或安装包。不要分享私密文件。剪贴板内容使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网或私有网络内使用，见 [SECURITY.md](SECURITY.md)。
 
@@ -129,6 +131,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 | [构建、安装与卸载](docs/build.md) | [协议](docs/protocol.md) |
 | [GitHub Actions 发布](docs/releases.md) | [故障排查](docs/troubleshooting.md) |
 | [贡献指南](CONTRIBUTING.md) | [安全](SECURITY.md) |
+| [Google Play 发布评估](docs/google-play.md) | [隐私政策](PRIVACY.md) |
 
 推送匹配的 `v0.x.y` 标签后，自动测试、签名、打包并发布两端应用。用户下载安装包；维护者无需每次在本地构建。
 

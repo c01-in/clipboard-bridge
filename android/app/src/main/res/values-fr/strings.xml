@@ -136,4 +136,11 @@
     <string name="push_not_registered">Ouvrez l’app mise à jour du téléphone pour terminer l’inscription automatique.</string>
     <string name="webpush_error">Google Web Push a renvoyé HTTP %1$s. La réception par le téléphone n’est pas confirmée.</string>
     <string name="sync_discarded">Le téléphone a ignoré une mise à jour ancienne ou reçue pendant la pause.</string>
+    <string name="download_windows">Obtenir la version Windows</string>
+    <string name="windows_download_help">Ouvrez la page des versions GitHub sur votre ordinateur et choisissez le programme Windows. Copiez ou partagez ce lien :\n\n%1$s</string>
+    <string name="copy_link">Copier le lien</string>
+    <string name="share_link">Partager le lien</string>
+    <string name="link_copied">Lien copié. Ouvrez-le sur votre ordinateur.</string>
+    <string name="link_unavailable">Aucune application ne peut ouvrir ce lien. Copiez le lien.</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
 </resources>

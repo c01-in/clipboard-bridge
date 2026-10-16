@@ -136,4 +136,11 @@
     <string name="push_not_registered">请打开更新后的手机 App，自动完成推送注册。</string>
     <string name="webpush_error">Google Web Push 返回 HTTP %1$s，手机尚未确认收到。</string>
     <string name="sync_discarded">手机已丢弃过期会话或暂停期间的内容。</string>
+    <string name="download_windows">获取 Windows 版</string>
+    <string name="windows_download_help">在电脑上打开 GitHub Releases 页面，自行选择 Windows 安装包。可复制或分享此链接：\n\n%1$s</string>
+    <string name="copy_link">复制链接</string>
+    <string name="share_link">分享链接</string>
+    <string name="link_copied">链接已复制，请在电脑上打开。</string>
+    <string name="link_unavailable">没有可用的应用打开链接，请使用“复制链接”。</string>
+    <string name="privacy_policy">隐私政策</string>
 </resources>

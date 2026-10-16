@@ -9,7 +9,7 @@
 Text and one image. Your own devices. Free and open source.
 
 [![Build](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![Preview 0.1.2](https://img.shields.io/badge/preview-0.1.2-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
+[![Preview 0.1.3](https://img.shields.io/badge/preview-0.1.3-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Downloads](#download-and-try-it) · [Quick start](#install-pair-copy) · [Docs](#build-and-contribute)
@@ -31,16 +31,16 @@ Text and one image. Your own devices. Free and open source.
 
 <div align="center">
 
-[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)
-[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk)
+[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge-Windows-x64-Setup.exe)
+[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge.apk)
 
 **Install both. Pair once. Start copying.**
 
-[Manual Windows ZIP, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.2)
+[Manual Windows ZIP, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.3)
 
 </div>
 
-**Current release: 0.1.2 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
+**Current release: 0.1.3 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
 
 ## Made for the clipboard
 
@@ -60,6 +60,8 @@ Supports UTF-8 text and **one image, up to 16 MiB**. Images travel as PNG. Andro
 1. **Install both apps.** Open Windows settings from the Start menu and launch Android. Connect both to the same Wi-Fi and allow notifications through the Android prompt.
 2. **Confirm your devices.** Select the discovered computer on Android, compare the six-digit code on both screens and confirm on both. Do not approve a different code.
 3. **Try your clipboard.** Copy text or one image on Windows, then paste on Android. For the other direction, copy on Android and tap **Send clipboard to Windows**; success appears after Windows actually writes the clipboard and acknowledges it.
+
+Need the companion? Android's **Get the Windows app** entry lets you copy/share the [GitHub Releases page](https://github.com/c01-in/clipboard-bridge/releases) and open it on your computer.
 
 No app account, Firebase project, credential import or debug mode is required for normal use. Notification prompts, pairing confirmation and any Android installation permission still need your approval.
 
@@ -104,7 +106,7 @@ Both apps follow the system language. Other languages fall back to English.
 <details>
 <summary><strong>Upgrading, privacy & licenses</strong></summary>
 
-Windows and Android share version 0.1.2. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
+Windows and Android share version 0.1.3. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
 Keys, subscription endpoints and runtime data stay local and are excluded from source and public installers. Clipboard content is AES-GCM encrypted, but Google can observe push metadata. Use trusted local or private networks. See [SECURITY.md](SECURITY.md).
 
@@ -129,6 +131,7 @@ All vendors, prolonged sleep, reboot recovery and cross-network combinations hav
 | [Build, install & uninstall](docs/build.md) | [Protocol](docs/protocol.md) |
 | [GitHub Actions releases](docs/releases.md) | [Troubleshooting](docs/troubleshooting.md) |
 | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) |
+| [Google Play readiness](docs/google-play.md) | [Privacy policy](PRIVACY.md) |
 
 Matching `v0.x.y` tags automatically test, sign, package and publish both apps. Users download installers; maintainers do not need to build every release locally.
 

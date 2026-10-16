@@ -136,4 +136,11 @@
     <string name="push_not_registered">Die aktualisierte Telefon-App öffnen, um die automatische Push-Registrierung abzuschließen.</string>
     <string name="webpush_error">Google Web Push meldet HTTP %1$s. Der Empfang wurde vom Telefon nicht bestätigt.</string>
     <string name="sync_discarded">Das Telefon hat eine alte oder pausierte Aktualisierung verworfen.</string>
+    <string name="download_windows">Windows-App herunterladen</string>
+    <string name="windows_download_help">Öffne die GitHub-Releases auf deinem Computer und wähle das Windows-Installationsprogramm. Kopiere oder teile diesen Link:\n\n%1$s</string>
+    <string name="copy_link">Link kopieren</string>
+    <string name="share_link">Link teilen</string>
+    <string name="link_copied">Link kopiert. Öffne ihn auf deinem Computer.</string>
+    <string name="link_unavailable">Keine App kann diesen Link öffnen. Kopiere den Link.</string>
+    <string name="privacy_policy">Datenschutzerklärung</string>
 </resources>

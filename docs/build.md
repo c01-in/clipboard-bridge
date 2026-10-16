@@ -1,6 +1,6 @@
 # 构建、安装与卸载
 
-普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.2/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
+普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.3/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
 
 ## 环境
 
@@ -41,6 +41,7 @@ $env:ANDROID_HOME = 'C:\Tools\android-sdk'
 ```text
 dist/
 ├─ ClipboardBridge.apk
+├─ ClipboardBridge.aab
 ├─ windows/
 │  ├─ service/ClipboardBridge.Service.exe
 │  ├─ tray/ClipboardBridge.exe
@@ -50,7 +51,7 @@ dist/
 
 构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。真实使用按 [自动配置推送文档](webpush.md) 完成两端确认，无需 Firebase 项目。
 
-`Package.ps1` 在 `dist/release/` 生成签名 APK、Windows 安装 EXE、手动安装 ZIP 、UnifiedPush 原始库源码 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+`Package.ps1` 在 `dist/release/` 生成签名 APK、供 Play 上传的 AAB、Windows 安装 EXE、手动安装 ZIP 、UnifiedPush 原始库源码 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
 
 ## 安装到 Windows
 
