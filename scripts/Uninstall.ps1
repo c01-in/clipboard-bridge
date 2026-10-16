@@ -8,6 +8,7 @@ if ($taskResolved -ne $taskExpected) { throw '卸载脚本只允许删除 Progra
 Get-Process -Name ClipboardBridge -ErrorAction SilentlyContinue | Stop-Process
 if (Get-Service ClipboardBridge -ErrorAction SilentlyContinue) { Stop-Service ClipboardBridge -Force; & sc.exe delete ClipboardBridge | Out-Null }
 Remove-NetFirewallRule -Name ClipboardBridge-In -ErrorAction SilentlyContinue
+Remove-NetFirewallRule -Name ClipboardBridge-Discovery -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name ClipboardBridge -ErrorAction SilentlyContinue
 $taskShortcutDirectory=Join-Path ([Environment]::GetFolderPath('Programs')) 'ClipboardBridge'
 $taskShortcutPath=Join-Path $taskShortcutDirectory '剪贴板同步.lnk'

@@ -19,6 +19,10 @@ jobs:
       - name: Check tracked files and reachable history
         shell: pwsh
         run: ./scripts/Check-Publish.ps1 -IncludeHistory
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: microsoft
+          java-version: '21'
       - name: Build Windows applications and run checks
         shell: pwsh
         run: |

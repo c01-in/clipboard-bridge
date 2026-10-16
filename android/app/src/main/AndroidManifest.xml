@@ -1,10 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <application android:name=".BridgeApplication" android:label="剪贴板同步" android:allowBackup="false" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:icon="@android:drawable/ic_menu_share">
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK"/>
+    <application android:name=".BridgeApplication" android:label="@string/app_name" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:icon="@drawable/clipboard_bridge">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-            <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="clipbridge" android:host="pair"/></intent-filter>
         </activity>
         <service android:name=".MessagingService" android:exported="false"><intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT"/></intent-filter></service>
         <provider android:name=".ImageProvider" android:authorities="com.colin.clipbridge.images" android:exported="false" android:grantUriPermissions="true"/>

@@ -6,6 +6,8 @@ Copy on Windows, paste on Android. Copy on Android, tap Send in the app, then pa
 
 ## Features
 
+- Automatic discovery on the same Wi-Fi. No IP address, pairing link or debug mode is required. Compare the six-digit code and confirm on both screens.
+- System-language UI: English, Simplified and Traditional Chinese, Spanish, Portuguese, French, German, Japanese and Korean. Other locales fall back to English. Windows uses the same translations.
 - Windows tray clipboard monitoring, pause control and `Ctrl+Alt+V` manual sending.
 - Android's **发送剪贴板到 Windows** (Send clipboard to Windows) button uploads encrypted text or one image over LAN/Tailscale. Success requires an actual desktop clipboard-write acknowledgment.
 - Text, native clipboard images and one copied PNG/JPEG/BMP/GIF file; images are converted to PNG. Maximum content size: 16 MiB.
@@ -33,12 +35,12 @@ cd clipboard-bridge
 
 3. Create your own Firebase project. Register the Android package **`com.colin.clipbridge`** and download `google-services.json`. Ensure the FCM HTTP v1 API is enabled.
 4. Create a dedicated service account in the same project with `roles/firebasecloudmessaging.admin`, generate its JSON key and keep it under `local/credentials/`. Do not put the private key on Android.
-5. Install `dist/ClipboardBridge.apk` on Android. In the Windows tray settings, import your service-account JSON and Android Firebase JSON.
-6. Configure a reachable computer endpoint, such as `http://<LAN-IP>:45871` or a Tailscale address. Generate a pairing link and confirm it in the Android app; allow notifications.
+5. Install `dist/ClipboardBridge.apk` on Android, or use Install or update phone app in Windows settings to scan a download-only QR code. Under Advanced settings, import your service-account JSON and Android Firebase JSON once.
+6. Open the phone app and Windows settings on the same Wi-Fi. Select the discovered device, compare the six-digit code and confirm on both screens. Allow notifications and any local-network permission requested by Android. Optional Tailscale addresses belong in Advanced settings.
 7. Copy text, wait for acknowledgment and paste on the phone. Then test one image.
 8. For the reverse direction, copy text or one image on Android, open the app and tap Send clipboard to Windows. Wait for confirmation, then paste on the computer. Upgrade both sides to 1.1.0+; the Windows tray must be running. Existing pairing remains valid.
 
-The Android Firebase configuration is loaded during pairing, so builds do not require `google-services.json` in the source tree. Keep the same signing key for APK upgrades. Normal operation does not use ADB.
+The Android Firebase configuration is transferred inside the confirmed encrypted pairing session, so builds do not require `google-services.json` in the source tree. Keep the same signing key for APK upgrades. Installation, pairing and normal operation do not require ADB.
 
 Detailed setup, build and troubleshooting instructions are available in the [Chinese documentation](docs/firebase-setup.md), with links to official Firebase documentation.
 
@@ -48,7 +50,7 @@ Detailed setup, build and troubleshooting instructions are available in the [Chi
 - Longer Windows → Android text, images, acknowledgments and all Android → Windows sends require a reachable LAN or Tailscale connection. Reverse sending does not use FCM. Do not expose port 45871 directly to the public internet.
 - One trusted phone per computer. Android sends require an explicit in-app tap; no Android background clipboard monitoring, arbitrary files, multiple images or iOS support.
 - A destination app must support image pasting. Force-stopped Android apps need to be opened again before receiving push messages.
-- Automatic sync can include sensitive copied text. Pause before copying secrets; pairing links are also secrets.
+- Automatic sync can include sensitive copied text. Pause before copying secrets. Older pairing links remain secrets; version 2 uses ephemeral key agreement and approval on both screens.
 
 ## Private local data
 
@@ -65,6 +67,8 @@ dotnet run --project .\windows\Tests\Tests.csproj -c Release
 ```
 
 CI builds and checks the code without Firebase credentials. Live delivery and actual pasting require your own configured devices and are not implied by a passing CI build.
+
+Version 2 checks compile the actual Android Java key-agreement implementation and verify interoperability with Windows, approval gates, replacement-key revocation, retry recovery and all locale keys and placeholders. The new discovery flow still requires physical-device validation; earlier successful clipboard tests do not establish that result.
 
 ## License
 

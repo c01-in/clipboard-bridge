@@ -55,7 +55,7 @@ dist/
 .\dist\scripts\Install.ps1
 ```
 
-这会安装 `ClipboardBridge` 系统服务、当前用户登录启动的托盘程序，以及只允许局域网和 Tailscale 来源访问 TCP 45871 的入站规则。默认安装程序位于 `%ProgramFiles%\ClipboardBridge`，仓库部署的数据位于 `local/runtime/`。
+这会安装 `ClipboardBridge` 系统服务、当前用户登录启动的托盘程序、开始菜单入口，以及允许局域网和 Tailscale 来源访问 TCP 45871、允许本地子网访问发现端口 UDP 45872 的入站规则。默认安装程序位于 `%ProgramFiles%\ClipboardBridge`，仓库部署的数据位于 `local/runtime/`。
 
 同一个用户完成安装和日常使用；当前安装脚本为执行安装的 Windows 用户配置托盘启动和 IPC 权限。若需要不同服务管理员和桌面用户的企业部署，应先调整安装脚本的用户绑定逻辑。
 
@@ -69,7 +69,9 @@ dist/
 
 ## 安装到 Android
 
-将 `dist/ClipboardBridge.apk` 传到手机，按系统提示安装。也可以在开发时使用已授权的 ADB：
+打开 Windows 设置，点击“安装或更新手机 App”，用手机相机扫描下载二维码，按系统提示下载并安装。也可自行传送 `dist/ClipboardBridge.apk`。手机打开 App 后，自动发现同一 Wi-Fi 的电脑，两端点击确认即可配对；安装与配对无需开启调试模式。
+
+以下命令仅供开发时使用已授权的 ADB：
 
 ```powershell
 adb install --user 0 -r .\dist\ClipboardBridge.apk

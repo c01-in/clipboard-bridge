@@ -130,4 +130,5 @@ finally
         File.Delete(Path.Combine(testDirectory.FullName, name));
     testDirectory.Delete();
 }
+await PairingChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");

@@ -1,5 +1,6 @@
 package com.colin.clipbridge;
 import android.app.Application;
 public class BridgeApplication extends Application {
-    @Override public void onCreate(){super.onCreate();try{Config.initialize(this);}catch(Exception ignored){}}
+    static android.content.Context context;
+    @Override public void onCreate(){super.onCreate();context=getApplicationContext();try{Config.initialize(this);}catch(Exception ignored){}}
 }

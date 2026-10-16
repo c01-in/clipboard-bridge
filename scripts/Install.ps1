@@ -18,6 +18,8 @@ if ($taskService) { Stop-Service -Name ClipboardBridge -Force; $taskService.Wait
 Get-Process -Name ClipboardBridge -ErrorAction SilentlyContinue | Stop-Process
 New-Item -ItemType Directory -Path $InstallRoot,$taskDataDir -Force | Out-Null
 foreach ($taskPart in @('service','tray','cli')) { Copy-Item -LiteralPath (Join-Path $taskSource $taskPart) -Destination $InstallRoot -Recurse -Force }
+$taskAndroidSource=Join-Path $PackageRoot 'ClipboardBridge.apk'
+if(Test-Path -LiteralPath $taskAndroidSource){New-Item -ItemType Directory -Path (Join-Path $InstallRoot 'android') -Force | Out-Null;Copy-Item -LiteralPath $taskAndroidSource -Destination (Join-Path $InstallRoot 'android\ClipboardBridge.apk') -Force}
 $taskAcl = New-Object Security.AccessControl.DirectorySecurity
 $taskAcl.SetAccessRuleProtection($true,$false)
 foreach ($taskSid in @('S-1-5-18','S-1-5-32-544',$taskOwnerSid)) {
@@ -39,6 +41,9 @@ if (!$taskService) {
 & sc.exe description ClipboardBridge 'FCM 剪贴板发送、加密图片传输及手机接收回执。剪贴板监听由登录用户托盘程序完成。' | Out-Null
 if (!(Get-NetFirewallRule -Name ClipboardBridge-In -ErrorAction SilentlyContinue)) {
     New-NetFirewallRule -Name ClipboardBridge-In -DisplayName 'Clipboard Bridge · LAN and Tailscale' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 45871 -Profile Any -RemoteAddress LocalSubnet,'100.64.0.0/10','fd7a:115c:a1e0::/48' -Program (Join-Path $InstallRoot 'service\ClipboardBridge.Service.exe') | Out-Null
+}
+if (!(Get-NetFirewallRule -Name ClipboardBridge-Discovery -ErrorAction SilentlyContinue)) {
+    New-NetFirewallRule -Name ClipboardBridge-Discovery -DisplayName 'Clipboard Bridge · Local discovery' -Direction Inbound -Action Allow -Protocol UDP -LocalPort 45872 -Profile Any -RemoteAddress LocalSubnet -Program (Join-Path $InstallRoot 'service\ClipboardBridge.Service.exe') | Out-Null
 }
 New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Force | Out-Null
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name ClipboardBridge -Value ('"'+(Join-Path $InstallRoot 'tray\ClipboardBridge.exe')+'"')

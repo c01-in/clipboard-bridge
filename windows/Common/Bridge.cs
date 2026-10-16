@@ -54,7 +54,7 @@ public static class Bridge
 public sealed record Command(string Op, string? Mime = null, string? Data = null, string? Value = null);
 public sealed record Reply(bool Ok, string Message, string? Value = null);
 public sealed record Box(string Data);
-public sealed record Device(string Token, string DeviceName);
+public sealed record Device(string Token, string DeviceName, string? Challenge = null);
 public sealed record Receipt(string Id, long Sequence, string Status, string? Detail);
 public sealed record ClipManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size, string? Inline, string? Blob);
 public sealed record Delivery(string Id, long Sequence, long ExpiresAt, string Envelope, string? BlobFile, bool Submitted = false);
@@ -64,6 +64,7 @@ public sealed record IncomingClip(UploadManifest Manifest, string Data);
 
 public sealed class Configuration
 {
+    public string ComputerId { get; set; } = "";
     public string Key { get; set; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     public string[] Endpoints { get; set; } = Bridge.Addresses().Take(1).ToArray();
     public string OwnerSid { get; set; } = "";

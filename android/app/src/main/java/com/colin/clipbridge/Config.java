@@ -23,22 +23,51 @@ public final class Config {
         return (SecretKey)s.getKey("clipbridge-config",null);
     }
     static void save(Context c,JSONObject value) throws Exception {
+        persist(c,"config",value,true);
+        prefs(c).edit().remove("pending").remove("pendingIv").apply();
+    }
+    static void savePending(Context c,JSONObject value)throws Exception {persist(c,"pending",value,false);}
+    static JSONObject pending(Context c)throws Exception {return decode(c,"pending","pendingIv");}
+    static void updateEndpoints(Context c,JSONObject value)throws Exception {persist(c,"config",value,false);}
+    private static void persist(Context c,String prefix,JSONObject value,boolean reset) throws Exception {
         Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,storageKey());
         String body=Base64.encodeToString(cipher.doFinal(value.toString().getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP),iv=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP);
-        if(!prefs(c).edit().putString("config",body).putString("iv",iv).remove("lastSequence").remove("latestScheduledSequence").commit())throw new Exception("无法保存配对配置");
+        SharedPreferences.Editor edit=prefs(c).edit().putString(prefix,body).putString(prefix.equals("config")?"iv":"pendingIv",iv);
+        if(reset)edit.remove("lastSequence").remove("latestScheduledSequence");
+        if(!edit.commit())throw new Exception(c.getString(R.string.error_save_config));
     }
     static JSONObject read(Context c) throws Exception {
-        SharedPreferences p=prefs(c);if(!p.contains("config"))throw new Exception("请先与 Windows 配对");
-        Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,storageKey(),new GCMParameterSpec(128,Base64.decode(p.getString("iv",""),Base64.NO_WRAP)));
-        return new JSONObject(new String(cipher.doFinal(Base64.decode(p.getString("config",""),Base64.NO_WRAP)),StandardCharsets.UTF_8));
+        return decode(c,"config","iv");
+    }
+    private static JSONObject decode(Context c,String name,String ivName)throws Exception {
+        SharedPreferences p=prefs(c);if(!p.contains(name))throw new Exception(c.getString(R.string.status_unpaired));
+        Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE,storageKey(),new GCMParameterSpec(128,Base64.decode(p.getString(ivName,""),Base64.NO_WRAP)));
+        return new JSONObject(new String(cipher.doFinal(Base64.decode(p.getString(name,""),Base64.NO_WRAP)),StandardCharsets.UTF_8));
     }
     static synchronized void initialize(Context c) throws Exception {
-        if(!FirebaseApp.getApps(c).isEmpty())return;
-        JSONObject fb=read(c).getJSONObject("firebase"),project=fb.getJSONObject("project_info"),client=null;
+        initialize(c,read(c));
+    }
+    static synchronized void initialize(Context c,JSONObject configuration)throws Exception {
+        JSONObject fb=configuration.getJSONObject("firebase"),project=fb.getJSONObject("project_info"),client=null;
         for(int i=0;i<fb.getJSONArray("client").length();i++){JSONObject x=fb.getJSONArray("client").getJSONObject(i);if(x.getJSONObject("client_info").getJSONObject("android_client_info").getString("package_name").equals(c.getPackageName())){client=x;break;}}
-        if(client==null)throw new Exception("Firebase Android 包名不匹配");
+        if(client==null)throw new Exception(c.getString(R.string.error_firebase_package));
         FirebaseOptions options=new FirebaseOptions.Builder().setApplicationId(client.getJSONObject("client_info").getString("mobilesdk_app_id")).setApiKey(client.getJSONArray("api_key").getJSONObject(0).getString("current_key")).setGcmSenderId(project.getString("project_number")).setProjectId(project.getString("project_id")).build();
+        if(!FirebaseApp.getApps(c).isEmpty()) {
+            if(FirebaseApp.getInstance().getOptions().equals(options))return;
+            for(FirebaseApp app:FirebaseApp.getApps(c))app.delete();
+        }
         FirebaseApp.initializeApp(c,options);
     }
-    static void status(Context c,String message){prefs(c).edit().putString("status",message).apply();}
+    static void status(Context c,int resource,Object... args){
+        org.json.JSONArray values=new org.json.JSONArray();for(Object arg:args)values.put(String.valueOf(arg));
+        prefs(c).edit().putString("statusKey",c.getResources().getResourceEntryName(resource)).putString("statusArgs",values.toString()).apply();
+    }
+    static String statusText(Context c){
+        try {
+            String name=prefs(c).getString("statusKey","");int id=c.getResources().getIdentifier(name,"string",c.getPackageName());
+            if(id==0)return c.getString(prefs(c).contains("config")?R.string.status_paired:R.string.status_unpaired);
+            org.json.JSONArray values=new org.json.JSONArray(prefs(c).getString("statusArgs","[]"));Object[] args=new Object[values.length()];for(int i=0;i<args.length;i++)args[i]=values.getString(i);return c.getString(id,args);
+        }catch(Exception e){return c.getString(R.string.status_unpaired);}
+    }
 }

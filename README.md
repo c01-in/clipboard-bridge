@@ -8,6 +8,8 @@ Windows 复制，Android 直接粘贴；Android 复制后，在 App 点击发送
 
 ## 功能
 
+- 同一 Wi-Fi 自动发现手机与电脑，无需输入 IP、链接或开启调试；核对六位确认码后，在两端点击确认。
+- 跟随系统语言：英语、简体中文、繁体中文、西班牙语、葡萄牙语、法语、德语、日语、韩语；其他语言回退英语。Windows 界面也支持这些语言。
 - Windows 托盘自动监听剪贴板；可暂停自动同步，或用 `Ctrl+Alt+V` 手动发送。
 - Android 打开 App，点击“发送剪贴板到 Windows”，通过局域网或 Tailscale 加密上传；电脑确认实际写入后才显示成功。不会在后台监听手机剪贴板。
 - 支持文字、原生剪贴板图片及复制的单个 PNG/JPEG/BMP/GIF 图片文件。图片转换为单张 PNG，内容上限 16 MiB。
@@ -26,7 +28,7 @@ Windows 复制，Android 直接粘贴；Android 复制后，在 App 点击发送
 1. 按 [构建文档](docs/build.md) 准备 Windows、.NET 10、JDK 21 和 Android SDK 36，然后运行 `scripts/Build.ps1`。
 2. 管理员 PowerShell 执行 `dist/scripts/Install.ps1`，在手机安装 `dist/ClipboardBridge.apk`。
 3. 按 [Firebase 配置文档](docs/firebase-setup.md) 创建自己的项目、注册 `com.colin.clipbridge`，取得 Android 配置和专用发送账号 JSON。
-4. 在托盘设置导入这两个配置，填写手机能连接的电脑地址，生成配对链接，在 Android App 中确认配对并允许通知。
+4. 首次部署在托盘“高级设置”导入这两个配置。打开手机 App 和电脑设置，连接同一 Wi-Fi；选择自动发现的设备，核对两端六位确认码，各点击确认。允许手机通知与系统要求的本地网络权限。
 5. 复制文字，等手机确认后实际粘贴；再测试一张图片。
 6. 反向发送：在手机复制文字或单张图片，打开 App 点“发送剪贴板到 Windows”，看到 Windows 确认后在电脑粘贴。两端都需升级到 1.1.0+，电脑托盘程序必须运行；已有配对可继续使用。
 
@@ -38,7 +40,7 @@ cd clipboard-bridge
 .\dist\scripts\Install.ps1
 ```
 
-正常使用不依赖 ADB，也不需要保持无线调试开启。
+安装、配对和正常使用均不依赖 ADB。Windows 设置中的“安装或更新手机 App”提供下载二维码，手机扫码后按系统提示安装，再打开 App 自动发现电脑；这个二维码只用于下载安装包。
 
 ## 网络与限制
 
@@ -65,7 +67,7 @@ clipboard-bridge/
 
 Windows 程序安装在 `%ProgramFiles%\ClipboardBridge`。从源码仓库安装时，服务使用 `local/runtime/`，升级保留已有数据路径与签名密钥。移动仓库前先停止服务并按新路径重新安装。
 
-不要公开 `local/`、服务账号文件、签名密钥或配对二维码。DPAPI 保护依赖原 Windows 环境，重装或换电脑前需按自己的安全流程备份。详见 [安全说明](SECURITY.md)。
+不要公开 `local/`、服务账号文件、签名密钥或旧版本的配对链接。DPAPI 保护依赖原 Windows 环境，重装或换电脑前需按自己的安全流程备份。详见 [安全说明](SECURITY.md)。
 
 ## 开发与验证
 
@@ -75,7 +77,7 @@ dotnet run --project .\windows\Tests\Tests.csproj -c Release
 .\scripts\Check-Publish.ps1 -IncludeHistory
 ```
 
-本地验证过 Windows 原生剪贴板读取、真实 FCM 投递、Android 写入与回执，以及文字和图片实际粘贴。CI 验证构建、lint 和本地协议检查，包括反向上传完整性、写入回执、重复请求和旧请求拦截；不会使用任何人的 Firebase 凭据做真实推送。协议细节见 [传输协议](docs/protocol.md)。
+旧版本本地验证过 Windows 原生剪贴板读取、真实 FCM 投递、Android 写入与回执，以及文字和图片实际粘贴。2.0.0 新增自动发现、多语言和双方确认配对；协议检查直接编译 Android Java 密钥协商代码，与 Windows 验证相同密钥及确认码，并检查未批准、伪造确认、重试、替换旧密钥和全部语言占位符。CI 构建、lint 和协议检查不使用真实 Firebase 凭据，不代表新配对流程已通过真机测试。协议细节见 [传输协议](docs/protocol.md)。
 
 1.1.0 已在三星真机验证 App 按钮反向发送 Unicode 文字与单张 PNG：Windows 读取结果一致，图片尺寸、抽样像素和原始 PNG 字节一致，且接收后未触发自动回环发送。
 

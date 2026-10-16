@@ -21,6 +21,8 @@ builder.WebHost.UseUrls("http://0.0.0.0:45871");
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 12 * 1024);
 builder.Logging.ClearProviders();
 builder.Services.AddSingleton<Vault>();
+builder.Services.AddSingleton<PairingHub>();
+builder.Services.AddHostedService<DiscoveryService>();
 builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(20) });
 builder.Services.AddSingleton<FcmSender>(); builder.Services.AddSingleton<Broker>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Broker>());
@@ -35,15 +37,30 @@ app.Use(async (context, next) =>
     await next(context);
 });
 app.MapGet("/health", () => Results.Json(new { service = "ClipboardBridge", version = 1 }));
-app.MapPost("/api/register", async (Box body, Vault vault) =>
+app.MapGet("/app/android", (HttpContext context) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    string apk = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "android", "ClipboardBridge.apk"));
+    return File.Exists(apk) ? Results.File(apk, "application/vnd.android.package-archive", "ClipboardBridge.apk") : Results.NotFound();
+});
+app.MapPost("/api/pairing/{id}/confirm", (string id, Box body, PairingHub hub, HttpContext context) =>
+    PairResult(() => hub.ConfirmPhone(id, body, context.Connection.RemoteIpAddress!.MapToIPv4())));
+app.MapGet("/api/pairing/{id}/configuration", (string id, PairingHub hub, HttpContext context) =>
+    PairResult(() => hub.Configuration(id, context.Connection.RemoteIpAddress!.MapToIPv4(), "http://" + context.Connection.LocalIpAddress!.MapToIPv4() + ":45871")));
+app.MapPost("/api/pairing/{id}/complete", async (string id, Box body, Broker broker, HttpContext context, CancellationToken ct) =>
+{
+    try { return Results.Json(await broker.CompletePairing(id, body, context.Connection.RemoteIpAddress!.MapToIPv4(), ct), Bridge.Json); }
+    catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Security.Cryptography.CryptographicException or FormatException or System.Text.Json.JsonException or ArgumentException)
+    { return Results.Json(new { error = "配对请求无效、未确认或已过期" }, statusCode: 409); }
+});
+app.MapPost("/api/register", async (Box body, Broker broker, CancellationToken ct) =>
 {
     try
     {
-        var device = Bridge.Decode<Device>(Bridge.Open(body.Data, vault.Read().Key));
-        if (device.Token.Length is < 40 or > 4096 || device.DeviceName.Length > 160) return Results.BadRequest();
-        vault.Update(c => { c.DeviceToken = device.Token; c.DeviceName = device.DeviceName; }); return Results.Ok();
+        var ack = await broker.Register(body, ct);
+        return ack is null ? Results.Ok() : Results.Json(ack, Bridge.Json);
     }
-    catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException) { return Results.BadRequest(); }
+    catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException or InvalidDataException or ArgumentException) { return Results.BadRequest(); }
 });
 app.MapGet("/blob/{id}", async (string id, Broker broker, CancellationToken ct) =>
 {
@@ -68,3 +85,10 @@ app.MapPost("/api/clipboard", async (ClipboardUpload body, Vault vault, Broker b
     { return Results.BadRequest(); }
 });
 await app.RunAsync();
+
+static IResult PairResult(Func<Box> action)
+{
+    try { return Results.Json(action(), Bridge.Json); }
+    catch (Exception e) when (e is InvalidDataException or InvalidOperationException or System.Security.Cryptography.CryptographicException or FormatException or System.Text.Json.JsonException or ArgumentException)
+    { return Results.Json(new { error = "配对请求无效、未确认或已过期" }, statusCode: 409); }
+}
