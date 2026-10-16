@@ -136,4 +136,11 @@
     <string name="push_not_registered">更新したスマートフォンアプリを開き、自動プッシュ登録を完了してください。</string>
     <string name="webpush_error">Google Web Push が HTTP %1$s を返しました。スマートフォンの受信は未確認です。</string>
     <string name="sync_discarded">スマートフォンが古い更新または一時停止中の更新を破棄しました。</string>
+    <string name="download_windows">Windows 版を入手</string>
+    <string name="windows_download_help">パソコンで GitHub のリリースページを開き、Windows のインストーラーを選んでください。リンクをコピーまたは共有できます：\n\n%1$s</string>
+    <string name="copy_link">リンクをコピー</string>
+    <string name="share_link">リンクを共有</string>
+    <string name="link_copied">リンクをコピーしました。パソコンで開いてください。</string>
+    <string name="link_unavailable">リンクを開けるアプリがありません。リンクをコピーしてください。</string>
+    <string name="privacy_policy">プライバシーポリシー</string>
 </resources>

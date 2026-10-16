@@ -49,21 +49,38 @@ public class MainActivity extends Activity {
         sendStatus=text(layout,R.string.send_help,15);
         connection=new LinearLayout(this);connection.setOrientation(LinearLayout.VERTICAL);layout.addView(connection);
         text(connection,R.string.connection_heading,21);text(connection,R.string.discovery_help,15);
+        button(connection,R.string.download_windows,this::showWindowsDownload);
         discoveryStatus=text(connection,R.string.discovery_searching,16);
         computers=new LinearLayout(this);computers.setOrientation(LinearLayout.VERTICAL);connection.addView(computers);
     }
     private void showMenu(android.view.View anchor){
         PopupMenu menu=new PopupMenu(this,anchor);
-        menu.getMenu().add(0,1,0,R.string.change_computer);menu.getMenu().add(0,2,1,R.string.reconnect);menu.getMenu().add(0,3,2,R.string.about);
+        menu.getMenu().add(0,1,0,R.string.change_computer);menu.getMenu().add(0,2,1,R.string.reconnect);menu.getMenu().add(0,4,2,R.string.download_windows);menu.getMenu().add(0,5,3,R.string.privacy_policy);menu.getMenu().add(0,3,4,R.string.about);
         menu.setOnMenuItemClickListener(item->{
             if(item.getItemId()==1){choosingComputer=true;startDiscovery(true);}
             else if(item.getItemId()==2){choosingComputer=false;if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(!Config.prefs(this).contains("config"));}
+            else if(item.getItemId()==4)showWindowsDownload();
+            else if(item.getItemId()==5){try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(CompanionLinks.PRIVACY)));}catch(ActivityNotFoundException e){Toast.makeText(this,R.string.link_unavailable,Toast.LENGTH_LONG).show();}}
             else {String version;try{version=getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(PackageManager.NameNotFoundException e){throw new IllegalStateException(e);}
                 new AlertDialog.Builder(this).setTitle(R.string.about).setMessage(getString(R.string.about_version,version)+"\n\n"+getString(R.string.notification_help)).setPositiveButton(android.R.string.ok,null).show();}
             return true;
         });menu.show();
     }
     private boolean notificationsAllowed(){NotificationManager manager=getSystemService(NotificationManager.class);NotificationChannel channel=manager.getNotificationChannel("sync");return manager.areNotificationsEnabled()&&(channel==null||channel.getImportance()!=NotificationManager.IMPORTANCE_NONE);}
+    private void showWindowsDownload(){
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(R.string.download_windows)
+            .setMessage(getString(R.string.windows_download_help,CompanionLinks.WINDOWS))
+            .setPositiveButton(R.string.copy_link,(d,w)->{
+                getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(getString(R.string.download_windows),CompanionLinks.WINDOWS));
+                Toast.makeText(this,R.string.link_copied,Toast.LENGTH_SHORT).show();
+            }).setNeutralButton(R.string.share_link,(d,w)->{
+                Intent share=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,CompanionLinks.WINDOWS);
+                try{startActivity(Intent.createChooser(share,getString(R.string.download_windows)));}catch(ActivityNotFoundException e){Toast.makeText(this,R.string.link_unavailable,Toast.LENGTH_LONG).show();}
+            }).setNegativeButton(android.R.string.cancel,null).create();
+        dialog.show();
+        TextView message=dialog.findViewById(android.R.id.message);
+        if(message!=null){android.text.util.Linkify.addLinks(message,android.text.util.Linkify.WEB_URLS);message.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());}
+    }
     private void updatePermissionCard(){permissionCard.setVisibility(notificationsAllowed()?android.view.View.GONE:android.view.View.VISIBLE);}
     private void requestNotifications(boolean userInitiated){
         if(notificationsAllowed()||permissionDialog||isFinishing())return;

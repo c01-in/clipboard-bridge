@@ -136,4 +136,11 @@
     <string name="push_not_registered">Abra o app atualizado do celular para concluir o registro automático.</string>
     <string name="webpush_error">Google Web Push retornou HTTP %1$s. O celular não confirmou o recebimento.</string>
     <string name="sync_discarded">O celular descartou uma atualização antiga ou pausada.</string>
+    <string name="download_windows">Obter o app para Windows</string>
+    <string name="windows_download_help">Abra a página de versões do GitHub no computador e escolha o instalador para Windows. Copie ou compartilhe este link:\n\n%1$s</string>
+    <string name="copy_link">Copiar link</string>
+    <string name="share_link">Compartilhar link</string>
+    <string name="link_copied">Link copiado. Abra no computador.</string>
+    <string name="link_unavailable">Nenhum app pode abrir este link. Use Copiar link.</string>
+    <string name="privacy_policy">Política de privacidade</string>
 </resources>

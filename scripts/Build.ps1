@@ -33,10 +33,11 @@ if (!(Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)) {
 }
 }
 try {
-    & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease bundleUnifiedPushSources --console=plain
+    & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease bundleRelease bundleUnifiedPushSources --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Android 编译失败' }
 } finally { Remove-Item Env:CLIPBRIDGE_STORE_PASSWORD -ErrorAction SilentlyContinue }
 Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\release\app-release.apk') -Destination (Join-Path $taskDist 'ClipboardBridge.apk') -Force
+Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\bundle\release\app-release.aab') -Destination (Join-Path $taskDist 'ClipboardBridge.aab') -Force
 Copy-Item -LiteralPath $PSScriptRoot -Destination $taskDist -Recurse -Force
 foreach ($taskNotice in @('LICENSE','THIRD_PARTY_NOTICES.md')) { Copy-Item -LiteralPath (Join-Path $taskRoot $taskNotice) -Destination $taskDist -Force }
 Write-Host "构建完成：$taskDist"

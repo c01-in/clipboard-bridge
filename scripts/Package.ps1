@@ -31,7 +31,7 @@ try{
         # Windows PowerShell 5.1 needs a BOM to decode the localized shortcut and messages.
         [IO.File]::WriteAllText((Join-Path $taskStage ('scripts\'+$taskScript)),[IO.File]::ReadAllText((Join-Path $PSScriptRoot $taskScript)),[Text.UTF8Encoding]::new($true))
     }
-    foreach($taskName in @('LICENSE','THIRD_PARTY_NOTICES.md','README.md','README.zh-CN.md')){Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskStage}
+    foreach($taskName in @('LICENSE','THIRD_PARTY_NOTICES.md','PRIVACY.md','README.md','README.zh-CN.md')){Copy-Item -LiteralPath (Join-Path $taskRoot $taskName) -Destination $taskStage}
     # Keep the README illustrations available in the manual installation ZIP.
     New-Item -ItemType Directory -Path (Join-Path $taskStage 'docs') -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $taskRoot 'docs/assets') -Destination (Join-Path $taskStage 'docs') -Recurse
@@ -51,8 +51,9 @@ try{
     & (Join-Path $taskFramework 'csc.exe') @taskArguments
     if($LASTEXITCODE -ne 0){throw 'Windows installer compilation failed.'}
     Copy-Item -LiteralPath $taskApk -Destination (Join-Path $taskRelease 'ClipboardBridge.apk') -Force
+    Copy-Item -LiteralPath (Join-Path $taskDist 'ClipboardBridge.aab') -Destination $taskRelease -Force
     Copy-Item -LiteralPath (Join-Path $taskDist 'ClipboardBridge-Android-Library-Sources.zip') -Destination $taskRelease -Force
-    $taskChecksums=foreach($taskName in @('ClipboardBridge.apk','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip')){(Get-FileHash (Join-Path $taskRelease $taskName)).Hash.ToLowerInvariant()+'  '+$taskName}
+    $taskChecksums=foreach($taskName in @('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip')){(Get-FileHash (Join-Path $taskRelease $taskName)).Hash.ToLowerInvariant()+'  '+$taskName}
     [IO.File]::WriteAllLines((Join-Path $taskRelease 'SHA256SUMS.txt'),$taskChecksums,[Text.UTF8Encoding]::new($false))
     Write-Host "Release packages ready: $taskRelease"
 }finally{
