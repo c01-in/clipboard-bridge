@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([string]$JavaHome=$env:JAVA_HOME,[string]$AndroidSdk=$env:ANDROID_HOME,[string]$Gradle)
+param([string]$JavaHome=$env:JAVA_HOME,[string]$AndroidSdk=$env:ANDROID_HOME,[string]$Gradle,[switch]$UseEnvironmentSigning)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 if (!$JavaHome -or !(Test-Path -LiteralPath (Join-Path $JavaHome 'bin\java.exe'))) { throw '请设置 JAVA_HOME 或通过 -JavaHome 指定 JDK 21 目录。' }
@@ -14,6 +14,9 @@ foreach ($taskProject in @(@('Service','service'),@('Tray','tray'),@('Cli','cli'
 }
 $env:JAVA_HOME=$JavaHome;$env:ANDROID_HOME=$AndroidSdk
 $env:Path=(Join-Path $JavaHome 'bin')+';'+$env:Path
+if($UseEnvironmentSigning){
+    if(!$env:CLIPBRIDGE_KEYSTORE -or !(Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE) -or !$env:CLIPBRIDGE_STORE_PASSWORD){throw 'CI signing requires CLIPBRIDGE_KEYSTORE and CLIPBRIDGE_STORE_PASSWORD.'}
+}else{
 $taskSigning=Join-Path $taskRoot 'local\signing'
 New-Item -ItemType Directory -Path $taskSigning -Force | Out-Null
 $taskSigningAcl=Get-Acl -LiteralPath $taskSigning;$taskSigningAcl.SetAccessRuleProtection($true,$false)
@@ -27,6 +30,7 @@ $env:CLIPBRIDGE_KEYSTORE=Join-Path $taskSigning 'release.jks'
 if (!(Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)) {
     & (Join-Path $JavaHome 'bin\keytool.exe') -genkeypair -keystore $env:CLIPBRIDGE_KEYSTORE -alias clipbridge -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=Clipboard Bridge, O=Clipboard Bridge Contributors' -storepass:env CLIPBRIDGE_STORE_PASSWORD -keypass:env CLIPBRIDGE_STORE_PASSWORD
     if ($LASTEXITCODE -ne 0) { throw '无法生成持久签名密钥' }
+}
 }
 try {
     & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease --console=plain

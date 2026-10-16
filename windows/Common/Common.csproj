@@ -1,1 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" /></ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../android/app/src/main/res/values/strings.xml" LogicalName="ClipboardBridge.Locale.en.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-b+zh+Hans/strings.xml" LogicalName="ClipboardBridge.Locale.zh-Hans.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-b+zh+Hant/strings.xml" LogicalName="ClipboardBridge.Locale.zh-Hant.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-es/strings.xml" LogicalName="ClipboardBridge.Locale.es.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-pt/strings.xml" LogicalName="ClipboardBridge.Locale.pt.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-fr/strings.xml" LogicalName="ClipboardBridge.Locale.fr.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-de/strings.xml" LogicalName="ClipboardBridge.Locale.de.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-ja/strings.xml" LogicalName="ClipboardBridge.Locale.ja.xml" />
+    <EmbeddedResource Include="../../android/app/src/main/res/values-ko/strings.xml" LogicalName="ClipboardBridge.Locale.ko.xml" />
+  </ItemGroup>
+</Project>

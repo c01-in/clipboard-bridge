@@ -17,7 +17,7 @@ public final class Crypto {
         return Base64.encodeToString(result,Base64.NO_WRAP);
     }
     public static byte[] open(String box,String key) throws Exception {
-        byte[] data=Base64.decode(box,Base64.NO_WRAP); if(data.length<28 || data.length>16*1024*1024+28)throw new Exception("密文大小无效");
+        byte[] data=Base64.decode(box,Base64.NO_WRAP); if(data.length<28 || data.length>16*1024*1024+28)throw new Exception(LocalText.get(R.string.error_response_size));
         Cipher c=Cipher.getInstance("AES/GCM/NoPadding"); c.init(Cipher.DECRYPT_MODE,new SecretKeySpec(Base64.decode(key,Base64.NO_WRAP),"AES"),new GCMParameterSpec(128,Arrays.copyOfRange(data,0,12))); c.updateAAD(AAD);return c.doFinal(data,12,data.length-12);
     }
 }

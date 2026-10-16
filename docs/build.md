@@ -1,5 +1,7 @@
 # 构建、安装与卸载
 
+普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
+
 ## 环境
 
 | 项目 | 版本 / 条件 |
@@ -23,6 +25,7 @@ cd clipboard-bridge
 $env:JAVA_HOME = 'C:\Tools\jdk-21'
 $env:ANDROID_HOME = 'C:\Tools\android-sdk'
 .\scripts\Build.ps1
+.\scripts\Package.ps1
 ```
 
 如尚未安装 SDK 组件，可使用 Android Studio SDK Manager，或：
@@ -47,7 +50,11 @@ dist/
 
 构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。没有 Firebase 配置也能构建，真实使用再按 [Firebase 配置文档](firebase-setup.md) 配对。
 
+`Package.ps1` 在 `dist/release/` 生成签名 APK、Windows 安装 EXE、手动安装 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+
 ## 安装到 Windows
+
+优先运行下载的 `ClipboardBridge-Windows-x64-Setup.exe`，点击安装／更新，再打开设置。全新安装默认数据路径为 `%ProgramData%\ClipboardBridge`，升级保留既有路径与配对。Windows“已安装的应用”中提供卸载入口，卸载保留配置数据。
 
 在管理员 PowerShell 中：
 
@@ -55,7 +62,7 @@ dist/
 .\dist\scripts\Install.ps1
 ```
 
-这会安装 `ClipboardBridge` 系统服务、当前用户登录启动的托盘程序，以及只允许局域网和 Tailscale 来源访问 TCP 45871 的入站规则。默认安装程序位于 `%ProgramFiles%\ClipboardBridge`，仓库部署的数据位于 `local/runtime/`。
+这会安装 `ClipboardBridge` 系统服务、当前用户登录启动的托盘程序、开始菜单入口，以及允许局域网和 Tailscale 来源访问 TCP 45871、允许本地子网访问发现端口 UDP 45872 的入站规则。默认安装程序位于 `%ProgramFiles%\ClipboardBridge`，仓库部署的数据位于 `local/runtime/`。
 
 同一个用户完成安装和日常使用；当前安装脚本为执行安装的 Windows 用户配置托盘启动和 IPC 权限。若需要不同服务管理员和桌面用户的企业部署，应先调整安装脚本的用户绑定逻辑。
 
@@ -69,7 +76,9 @@ dist/
 
 ## 安装到 Android
 
-将 `dist/ClipboardBridge.apk` 传到手机，按系统提示安装。也可以在开发时使用已授权的 ADB：
+打开 Windows 设置，点击“安装或更新手机 App”，用手机相机扫描下载二维码，按系统提示下载并安装。也可自行传送 `dist/ClipboardBridge.apk`。手机打开 App 后，自动发现同一 Wi-Fi 的电脑，两端点击确认即可配对；安装与配对无需开启调试模式。
+
+以下命令仅供开发时使用已授权的 ADB：
 
 ```powershell
 adb install --user 0 -r .\dist\ClipboardBridge.apk

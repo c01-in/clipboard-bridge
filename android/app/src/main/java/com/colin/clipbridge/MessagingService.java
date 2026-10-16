@@ -5,7 +5,7 @@ import androidx.work.*;
 import org.json.JSONObject;
 
 public class MessagingService extends FirebaseMessagingService {
-    @Override public void onNewToken(String token){RegistrationWorker.schedule(this);}
+    @Override public void onNewToken(String token){if(!Config.prefs(this).contains("pending"))RegistrationWorker.schedule(this);}
     @Override public void onMessageReceived(RemoteMessage message){
         String box=message.getData().get("box");if(box==null||!"1".equals(message.getData().get("v")))return;
         try {
@@ -16,9 +16,9 @@ public class MessagingService extends FirebaseMessagingService {
                 if(sequence<=Config.prefs(this).getLong("latestScheduledSequence",0))return;
                 Config.prefs(this).edit().putLong("latestScheduledSequence",sequence).commit();
             }
-            Notices.show(this,"正在接收电脑剪贴板…");
+            Notices.show(this,R.string.receiving);
             OneTimeWorkRequest request=new OneTimeWorkRequest.Builder(ReceiveWorker.class).setInputData(new Data.Builder().putString("box",box).build()).setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build();
             WorkManager.getInstance(this).enqueueUniqueWork("receive-clipboard",ExistingWorkPolicy.REPLACE,request);
-        }catch(Exception e){Notices.show(this,"接收校验失败，请检查配对配置");}
+        }catch(Exception e){Notices.show(this,R.string.receive_verify_failed);}
     }
 }

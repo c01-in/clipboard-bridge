@@ -2,6 +2,8 @@ using ClipboardBridge;
 using System.Security.Cryptography;
 using System.Text;
 using System.Buffers.Binary;
+using System.IO.Pipes;
+using System.Security.Principal;
 
 int checks = 0;
 void Assert(bool ok, string label) { if (!ok) throw new Exception(label); checks++; Console.WriteLine("PASS " + label); }
@@ -72,6 +74,55 @@ try
     cancellation.Cancel();
     Assert((await abandoned).Status == "error" && (await broker.Handle(new Command("receive"), CancellationToken.None)).Value is null,
         "Disconnected sender does not leave stale clipboard work queued");
+
+    // Use the real listener on an isolated pipe, without production credentials or clipboard writes.
+    vault.Update(c => c.OwnerSid = WindowsIdentity.GetCurrent().User!.Value);
+    string pipeName = "ClipboardBridge-Tests-" + Guid.NewGuid().ToString("N");
+    using var ipc = new Broker(vault, new FcmSender(http), pipeName);
+    async Task<Reply> PipeCall(Command command)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+        using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await client.ConnectAsync(2000, timeout.Token);
+        await Bridge.WriteFrame(client, Bridge.Encode(command), timeout.Token);
+        return Bridge.Decode<Reply>(await Bridge.ReadFrame(client, timeout.Token));
+    }
+    await ipc.StartAsync(CancellationToken.None);
+    try
+    {
+        Assert((await PipeCall(new Command("status"))).Ok, "Real named-pipe listener answers status");
+        foreach (int invalidLength in new[] { 0, -1, Bridge.MaxBytes * 2 + 1 })
+        {
+            using (var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+            {
+                await client.ConnectAsync(2000);
+                byte[] invalidPrefix = new byte[4]; BinaryPrimitives.WriteInt32BigEndian(invalidPrefix, invalidLength);
+                await client.WriteAsync(invalidPrefix); await client.FlushAsync();
+            }
+            Assert((await PipeCall(new Command("status"))).Ok, "Listener survives invalid frame length " + invalidLength);
+        }
+        using (var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+        {
+            await client.ConnectAsync(2000);
+            await Bridge.WriteFrame(client, Encoding.UTF8.GetBytes("null"));
+        }
+        Assert((await PipeCall(new Command("status"))).Ok, "Listener survives a null command");
+        Assert(!(await PipeCall(new Command("unknown-operation"))).Ok && (await PipeCall(new Command("status"))).Ok,
+            "Rejected command does not disable later status requests");
+    }
+    finally { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)); await ipc.StopAsync(timeout.Token); }
+
+    string blockedName = "ClipboardBridge-Blocked-" + Guid.NewGuid().ToString("N");
+    using var blocker = new NamedPipeServerStream(blockedName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+    using var unavailable = new Broker(vault, new FcmSender(http), blockedName);
+    bool failureObserved = false;
+    try
+    {
+        await unavailable.StartAsync(CancellationToken.None);
+        await unavailable.ExecuteTask!.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+    catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failureObserved = true; }
+    Assert(failureObserved, "An unavailable IPC listener faults the background service instead of leaving HTTP-only success");
 }
 finally
 {
@@ -79,4 +130,6 @@ finally
         File.Delete(Path.Combine(testDirectory.FullName, name));
     testDirectory.Delete();
 }
+await PairingChecks.Run(Assert);
+await DownloadChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");
