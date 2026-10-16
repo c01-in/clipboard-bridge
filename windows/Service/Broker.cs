@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ClipboardBridge;
 
-public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
+public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Bridge.PipeName) : BackgroundService
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly string pendingPath = Path.Combine(vault.DataDir, "pending.json");
@@ -21,7 +21,13 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
         if (initial.ServiceAccountJson is not null && initial.DeviceToken is not null) status = "已配置，等待复制内容";
         if (File.Exists(pendingPath))
             try { pending = Bridge.Decode<Delivery>(File.ReadAllBytes(pendingPath)); } catch (Exception e) when (e is JsonException or IOException) { status = "上次待发送记录损坏，请重新复制内容"; }
-        await Task.WhenAll(PipeLoop(stoppingToken), RetryLoop(stoppingToken));
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var pipe = PipeLoop(lifetime.Token);
+        var retry = RetryLoop(lifetime.Token);
+        // A failed IPC listener must not leave a healthy-looking HTTP-only service running forever.
+        await Task.WhenAny(pipe, retry);
+        lifetime.Cancel();
+        await Task.WhenAll(pipe, retry);
     }
     private async Task RetryLoop(CancellationToken ct)
     {
@@ -49,7 +55,7 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
             security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
             var owner = vault.Read().OwnerSid;
             if (owner.Length > 0) security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(owner), PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance, AccessControlType.Allow));
-            using var pipe = NamedPipeServerStreamAcl.Create(Bridge.PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 4096, 4096, security);
+            using var pipe = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 4096, 4096, security);
             try
             {
                 await pipe.WaitForConnectionAsync(ct);
@@ -60,7 +66,7 @@ public sealed class Broker(Vault vault, FcmSender sender) : BackgroundService
                 catch (Exception e) when (e is not OperationCanceledException) { reply = new Reply(false, e.Message); }
                 await Bridge.WriteFrame(pipe, Bridge.Encode(reply), timeout.Token);
             }
-            catch (Exception e) when (e is IOException or OperationCanceledException or JsonException) { if (ct.IsCancellationRequested) break; }
+            catch (Exception e) when (e is IOException or InvalidDataException or OperationCanceledException or JsonException) { if (ct.IsCancellationRequested) break; }
         }
     }
     public async Task<Reply> Handle(Command c, CancellationToken ct)

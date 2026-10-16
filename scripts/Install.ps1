@@ -42,6 +42,16 @@ if (!(Get-NetFirewallRule -Name ClipboardBridge-In -ErrorAction SilentlyContinue
 }
 New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Force | Out-Null
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name ClipboardBridge -Value ('"'+(Join-Path $InstallRoot 'tray\ClipboardBridge.exe')+'"')
+$taskShortcutDirectory=Join-Path ([Environment]::GetFolderPath('Programs')) 'ClipboardBridge'
+New-Item -ItemType Directory -Path $taskShortcutDirectory -Force | Out-Null
+$taskShortcutShell=New-Object -ComObject WScript.Shell
+$taskShortcut=$taskShortcutShell.CreateShortcut((Join-Path $taskShortcutDirectory '剪贴板同步.lnk'))
+$taskShortcut.TargetPath=Join-Path $InstallRoot 'tray\ClipboardBridge.exe'
+$taskShortcut.Arguments='--settings'
+$taskShortcut.WorkingDirectory=Join-Path $InstallRoot 'tray'
+$taskShortcut.IconLocation=$taskShortcut.TargetPath+',0'
+$taskShortcut.Description='剪贴板同步：Windows 与 Android 互传文字和图片'
+$taskShortcut.Save()
 Start-Service ClipboardBridge
 Start-Process -FilePath (Join-Path $InstallRoot 'tray\ClipboardBridge.exe') -WindowStyle Hidden
 Write-Host "已安装并启动。Firebase 凭据与配对密钥保存在 $taskDataDir，后续升级会保留。"

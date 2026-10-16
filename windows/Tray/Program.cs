@@ -7,13 +7,24 @@ using QRCoder;
 
 static class Program
 {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string? className, string title);
+    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam);
     [STAThread]
-    public static void Main()
+    public static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
         using var mutex = new Mutex(true, "Local\\ClipboardBridge.Tray", out bool first);
-        if (!first) return;
-        Application.Run(new TrayContext());
+        bool showSettings = args.Contains("--settings");
+        if (!first)
+        {
+            if (showSettings)
+            {
+                var existing = FindWindowEx(new IntPtr(-3), IntPtr.Zero, null, "ClipboardBridge.Clipboard");
+                if (existing != IntPtr.Zero) PostMessage(existing, ClipboardWindow.OpenSettingsMessage, IntPtr.Zero, IntPtr.Zero);
+            }
+            return;
+        }
+        Application.Run(new TrayContext(showSettings));
     }
 }
 
@@ -41,9 +52,10 @@ sealed class TrayContext : ApplicationContext
     uint? receivedClipboardSequence;
     string? lastHash;
     string status = "正在连接后台服务…";
-    public TrayContext()
+    public TrayContext(bool showSettings = false)
     {
         window = new ClipboardWindow(); window.Changed += () => { if (!paused && receivedClipboardSequence != ClipboardWindow.Sequence) { debounce.Stop(); debounce.Start(); } }; window.ManualSend += async () => await Send(true);
+        window.SettingsRequested += ShowSettings;
         var menu = new ContextMenuStrip();
         menu.Items.Add("立即发送剪贴板  Ctrl+Alt+V", null, async (_, _) => await Send(true));
         var toggle = new ToolStripMenuItem("暂停 Windows 自动发送") { CheckOnClick = true };
@@ -56,7 +68,7 @@ sealed class TrayContext : ApplicationContext
         receiveTimer.Tick += async (_, _) => await Receive(); receiveTimer.Start();
         var pref = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge", "paused.txt");
         paused = File.Exists(pref) && File.ReadAllText(pref) == "true"; toggle.Checked = paused;
-        if (!File.Exists(pref)) ShowSettings();
+        if (showSettings || !File.Exists(pref)) ShowSettings();
         if (!window.HotkeyRegistered) Notify("Ctrl+Alt+V 已被其他程序占用；可从托盘菜单手动发送", true);
     }
     void SavePreferences()
@@ -82,7 +94,7 @@ sealed class TrayContext : ApplicationContext
             if (reply.Ok && sequence == ClipboardWindow.Sequence) lastHash = hash;
             if (manual || !reply.Ok) Notify(reply.Message, !reply.Ok);
         }
-        catch (Exception e) { status = e is TimeoutException ? "后台服务未启动，请运行安装脚本" : e.Message; if (manual || e is not ExternalException) Notify(status, true); }
+        catch (Exception e) { status = e is TimeoutException ? "暂时无法连接后台服务，请稍后重试" : e.Message; if (manual || e is not ExternalException) Notify(status, true); }
         finally { sending.Release(); if (sendAgain) { sendAgain = false; debounce.Stop(); debounce.Start(); } }
     }
     async Task Receive()
@@ -149,16 +161,17 @@ sealed class TrayContext : ApplicationContext
 
 sealed class ClipboardWindow : NativeWindow, IDisposable
 {
+    public const uint OpenSettingsMessage = 0x8001;
     [DllImport("user32.dll")] static extern bool AddClipboardFormatListener(IntPtr hwnd);
     [DllImport("user32.dll")] static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
     [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr hwnd, int id);
     [DllImport("user32.dll")] static extern uint GetClipboardSequenceNumber();
     public static uint Sequence => GetClipboardSequenceNumber();
-    public event Action? Changed, ManualSend;
+    public event Action? Changed, ManualSend, SettingsRequested;
     public bool HotkeyRegistered { get; }
     public ClipboardWindow() { CreateHandle(new CreateParams { Caption = "ClipboardBridge.Clipboard", Parent = new IntPtr(-3) }); AddClipboardFormatListener(Handle); HotkeyRegistered = RegisterHotKey(Handle, 1, 0x4000 | 0x0001 | 0x0002, 0x56); }
-    protected override void WndProc(ref Message m) { if (m.Msg == 0x031D) Changed?.Invoke(); if (m.Msg == 0x0312) ManualSend?.Invoke(); base.WndProc(ref m); }
+    protected override void WndProc(ref Message m) { if (m.Msg == 0x031D) Changed?.Invoke(); if (m.Msg == 0x0312) ManualSend?.Invoke(); if (m.Msg == OpenSettingsMessage) SettingsRequested?.Invoke(); base.WndProc(ref m); }
     public void Dispose() { RemoveClipboardFormatListener(Handle); UnregisterHotKey(Handle, 1); DestroyHandle(); }
 }
 
@@ -169,12 +182,15 @@ sealed class SettingsForm : Form
     readonly Label state = new() { AutoSize = true, MaximumSize = new Size(610, 0) };
     readonly PictureBox qr = new() { SizeMode = PictureBoxSizeMode.Zoom, Size = new Size(280, 280) };
     readonly System.Windows.Forms.Timer timer = new() { Interval = 2500 };
+    bool refreshing;
     public SettingsForm(Func<string> lastStatus)
     {
         Text = "剪贴板同步 · 设置与手机配对"; Icon = AppIcons.Application; ClientSize = new Size(660, 710); MinimumSize = new Size(680, 740); Font = new Font("Microsoft YaHei UI", 10); StartPosition = FormStartPosition.CenterScreen;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 9 };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 292)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-        layout.Controls.Add(new Label { Text = "Windows 自动发送 · Android 点击发送", Font = new Font(Font.FontFamily, 17, FontStyle.Bold), AutoSize = true });
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 292)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        var heading = new Label { Text = "Windows 自动发送 · Android 点击发送", Font = new Font(Font.FontFamily, 17, FontStyle.Bold), AutoSize = true };
+        layout.Controls.Add(heading);
+        layout.SizeChanged += (_, _) => { var width = Math.Max(100, layout.ClientSize.Width - layout.Padding.Horizontal - 6); heading.MaximumSize = new Size(width, 0); state.MaximumSize = new Size(width, 0); };
         layout.Controls.Add(state);
         var imports = new FlowLayoutPanel { Dock = DockStyle.Fill };
         imports.Controls.Add(Button("导入 Firebase 发送凭据", async () => await Import("account")));
@@ -194,9 +210,11 @@ sealed class SettingsForm : Form
     async Task Import(string op) { using var d = new OpenFileDialog { Filter = "JSON 配置|*.json" }; if (d.ShowDialog(this) == DialogResult.OK) await Action(new Command(op, Value: await File.ReadAllTextAsync(d.FileName))); }
     async Task RefreshStatus()
     {
+        if (refreshing || IsDisposed) return;
+        refreshing = true;
         try
         {
-            var r = await Ipc.Call(new Command("status")); state.Text = r.Message;
+            var r = await Ipc.Call(new Command("status")); if (IsDisposed) return; state.Text = r.Message;
             if (r.Value is not null && !endpoints.Focused)
             {
                 using var value = System.Text.Json.JsonDocument.Parse(r.Value);
@@ -204,6 +222,15 @@ sealed class SettingsForm : Form
                 var device = value.RootElement.GetProperty("device"); state.Text = (device.ValueKind == System.Text.Json.JsonValueKind.String ? device.GetString() + " · " : "尚未配对手机 · ") + r.Message;
             }
         }
-        catch (Exception) { state.Text = "后台服务未启动。请先以管理员身份运行 Install.ps1。"; }
+        catch (Exception e)
+        {
+            if (!IsDisposed) state.Text = e switch
+            {
+                TimeoutException or OperationCanceledException => "暂时无法连接后台服务，正在重试…",
+                UnauthorizedAccessException => "当前 Windows 用户无权连接后台服务，请检查安装时的用户配置。",
+                _ => "读取后台状态失败：" + e.Message
+            };
+        }
+        finally { refreshing = false; }
     }
 }
