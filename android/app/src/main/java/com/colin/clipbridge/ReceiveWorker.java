@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 
 public class ReceiveWorker extends Worker {
-    private static final Object CLIP_LOCK=new Object();
     public ReceiveWorker(Context c,WorkerParameters p){super(c,p);}
     @NonNull @Override public ListenableFuture<ForegroundInfo> getForegroundInfoAsync(){return CallbackToFutureAdapter.getFuture(completer->{completer.set(new ForegroundInfo(1,Notices.create(getApplicationContext(),getApplicationContext().getString(R.string.receiving))));return "clipboard-foreground-info";});}
     @NonNull @Override public Result doWork(){
@@ -22,9 +21,10 @@ public class ReceiveWorker extends Worker {
         try {
             config=Config.read(c);manifest=new JSONObject(new String(Crypto.open(getInputData().getString("box"),config.getString("key")),StandardCharsets.UTF_8));
             long seq=manifest.getLong("sequence");String id=manifest.getString("id"),mime=manifest.getString("mime");
+            if(!SyncState.accepts(c,manifest.optString("receiveGeneration"))){ack(c,manifest,"discarded",null);return Result.success();}
             if(!id.matches("[0-9a-f]{32}")||(!mime.equals("text/plain")&&!mime.equals("image/png")))throw new Exception(LocalText.get(R.string.error_content_format));
             if(manifest.getLong("expiresAt")<=System.currentTimeMillis())return Result.success();
-            synchronized(CLIP_LOCK){if(seq<=Config.prefs(c).getLong("lastSequence",0)){ack(c,manifest,"applied",null);return Result.success();}}
+            synchronized(SyncState.LOCK){if(seq<=Config.prefs(c).getLong("lastSequence",0)){ack(c,manifest,"applied",null);return Result.success();}}
             byte[] bytes;
             if(!manifest.isNull("inline")) bytes=android.util.Base64.decode(manifest.getString("inline"),android.util.Base64.NO_WRAP);
             else {
@@ -36,7 +36,8 @@ public class ReceiveWorker extends Worker {
             StringBuilder hash=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))hash.append(String.format("%02x",b&255));
             if(!hash.toString().equals(manifest.getString("sha256")))throw new Exception(LocalText.get(R.string.error_integrity));
             if(isStopped()||manifest.getLong("expiresAt")<=System.currentTimeMillis())return Result.success();
-            synchronized(CLIP_LOCK){
+            synchronized(SyncState.LOCK){
+                if(!SyncState.accepts(c,manifest.optString("receiveGeneration"))){ack(c,manifest,"discarded",null);return Result.success();}
                 if(seq<=Config.prefs(c).getLong("lastSequence",0))return Result.success();
                 ClipboardManager clipboard=c.getSystemService(ClipboardManager.class);
                 if(mime.equals("text/plain"))clipboard.setPrimaryClip(ClipData.newPlainText(LocalText.get(R.string.clipboard_from_windows),new String(bytes,StandardCharsets.UTF_8)));
@@ -49,10 +50,10 @@ public class ReceiveWorker extends Worker {
                 }
                 if(!Config.prefs(c).edit().putLong("lastSequence",seq).putString("lastId",id).putString("lastMime",mime).commit())throw new Exception(LocalText.get(R.string.error_save_receipt));
             }
-            Notices.show(c,mime.equals("image/png")?R.string.received_image:R.string.received_text);
+            if(!SyncState.paused(c))Notices.show(c,mime.equals("image/png")?R.string.received_image:R.string.received_text);
             ack(c,manifest,"applied",null);return Result.success();
         }catch(Exception e){
-            if(isStopped())return Result.failure();
+            if(isStopped()||SyncState.paused(c))return Result.failure();
             Notices.show(c,R.string.receive_failed,e.getMessage());
             if(manifest!=null&&getRunAttemptCount()<3&&manifest.optLong("expiresAt")>System.currentTimeMillis())return Result.retry();
             if(manifest!=null)ack(c,manifest,"error",e.getMessage());return Result.failure();

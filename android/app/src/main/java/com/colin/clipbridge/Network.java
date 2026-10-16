@@ -36,6 +36,15 @@ final class Network {
         String challenge=java.util.Base64.getEncoder().encodeToString(random);device.put("challenge",challenge);
         JSONObject box=new JSONObject(request(config,"/api/register",encryptedBody(config,device),2048));
         JSONObject ack=new JSONObject(new String(Crypto.open(box.getString("data"),config.getString("key")),StandardCharsets.UTF_8));
-        if(!ack.optBoolean("registered")||!challenge.equals(ack.optString("challenge")))throw new Exception(LocalText.get(R.string.pair_invalid));
+        if(!ack.optBoolean("registered")||!challenge.equals(ack.optString("challenge"))||!device.getString("receiveGeneration").equals(ack.optString("receiveGeneration"))||
+            device.getLong("revision")!=ack.optLong("revision")||device.getBoolean("paused")!=ack.optBoolean("paused"))throw new Exception(LocalText.get(R.string.pair_invalid));
+    }
+    static JSONObject pushConfiguration(JSONObject config)throws Exception {
+        byte[] random=new byte[32];new java.security.SecureRandom().nextBytes(random);String challenge=java.util.Base64.getEncoder().encodeToString(random);
+        JSONObject response=new JSONObject(request(config,"/api/push-configuration",encryptedBody(config,new JSONObject().put("challenge",challenge)),2048));
+        JSONObject data=new JSONObject(new String(Crypto.open(response.getString("data"),config.getString("key")),StandardCharsets.UTF_8));
+        if(!challenge.equals(data.optString("challenge"))||!data.optString("vapid").matches("[A-Za-z0-9_-]{87}"))throw new Exception(LocalText.get(R.string.pair_invalid));
+        String known=config.optString("computerId","");if(!known.isEmpty()&&!known.equals(data.getString("computerId")))throw new Exception(LocalText.get(R.string.pair_invalid));
+        return data;
     }
 }

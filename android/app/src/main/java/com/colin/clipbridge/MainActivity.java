@@ -13,12 +13,19 @@ public class MainActivity extends Activity {
     private final ExecutorService sender=Executors.newSingleThreadExecutor();
     private TextView status,sendStatus,discoveryStatus;
     private Button sendButton;
+    private Switch syncSwitch;
+    private boolean updatingSwitch;
     private LinearLayout computers,connection,permissionCard;
     private boolean choosingComputer,permissionDialog;
     private AutoPairing pairing;
     private boolean visible,sending;
     private int discoveryGeneration;
-    private final Runnable refresh=new Runnable(){public void run(){if(visible){status.setText(Config.statusText(MainActivity.this));if(!sending)sendButton.setEnabled(Config.prefs(MainActivity.this).contains("config"));handler.postDelayed(this,1500);}}};
+    private final Runnable refresh=new Runnable(){public void run(){if(visible){refreshSync();handler.postDelayed(this,1500);}}};
+    private void refreshSync(){
+        status.setText(Config.statusText(this));updatingSwitch=true;syncSwitch.setChecked(!SyncState.paused(this));updatingSwitch=false;
+        if(SyncState.paused(this))sendStatus.setText(R.string.sync_pause_help);
+        if(!sending)sendButton.setEnabled(Config.prefs(this).contains("config")&&SyncState.ready(this));
+    }
     private Button button(LinearLayout parent,int text,Runnable action){Button b=new Button(this);b.setText(text);b.setAllCaps(false);b.setOnClickListener(v->action.run());parent.addView(b,new LinearLayout.LayoutParams(-1,-2));return b;}
     private TextView text(LinearLayout parent,int resource,int size){TextView t=new TextView(this);t.setText(resource);t.setTextSize(size);t.setPadding(0,12,0,12);parent.addView(t);return t;}
     @Override public void onCreate(Bundle saved){
@@ -29,6 +36,13 @@ public class MainActivity extends Activity {
         TextView title=new TextView(this);title.setText(R.string.app_name);title.setTextSize(27);heading.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         Button more=new Button(this);more.setText("⋮");more.setContentDescription(getString(R.string.more_options));heading.addView(more,new LinearLayout.LayoutParams(-2,-2));more.setOnClickListener(v->showMenu(more));
         status=text(layout,R.string.status_unpaired,17);
+        syncSwitch=new Switch(this);syncSwitch.setText(R.string.sync_enabled);layout.addView(syncSwitch,new LinearLayout.LayoutParams(-1,-2));
+        syncSwitch.setOnCheckedChangeListener((view,enabled)->{
+            if(updatingSwitch)return;
+            try{SyncState.setPaused(this,!enabled);sendStatus.setText(enabled?R.string.send_help:R.string.sync_pause_help);}
+            catch(Exception e){sendStatus.setText(getString(R.string.send_failed,e.getMessage()));}
+            refreshSync();
+        });
         permissionCard=new LinearLayout(this);permissionCard.setOrientation(LinearLayout.VERTICAL);layout.addView(permissionCard);
         text(permissionCard,R.string.notification_required,15);button(permissionCard,R.string.enable_notifications,()->requestNotifications(true));
         sendButton=button(layout,R.string.send_clipboard,this::sendClipboard);
@@ -43,7 +57,7 @@ public class MainActivity extends Activity {
         menu.getMenu().add(0,1,0,R.string.change_computer);menu.getMenu().add(0,2,1,R.string.reconnect);menu.getMenu().add(0,3,2,R.string.about);
         menu.setOnMenuItemClickListener(item->{
             if(item.getItemId()==1){choosingComputer=true;startDiscovery(true);}
-            else if(item.getItemId()==2){choosingComputer=false;if(Config.prefs(this).contains("config"))RegistrationWorker.schedule(this);startDiscovery(!Config.prefs(this).contains("config"));}
+            else if(item.getItemId()==2){choosingComputer=false;if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(!Config.prefs(this).contains("config"));}
             else {String version;try{version=getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(PackageManager.NameNotFoundException e){throw new IllegalStateException(e);}
                 new AlertDialog.Builder(this).setTitle(R.string.about).setMessage(getString(R.string.about_version,version)+"\n\n"+getString(R.string.notification_help)).setPositiveButton(android.R.string.ok,null).show();}
             return true;
@@ -95,11 +109,11 @@ public class MainActivity extends Activity {
                 try{ClipboardSender.send(context,input);result=getString(R.string.send_success);}
                 catch(OutOfMemoryError e){result=getString(R.string.error_image_memory);}
                 catch(Exception e){result=getString(R.string.send_failed,e.getMessage());}
-                final String message=result;runOnUiThread(()->{sending=false;if(!isDestroyed()){sendStatus.setText(message);sendButton.setEnabled(Config.prefs(MainActivity.this).contains("config"));}});
+                final String message=result;runOnUiThread(()->{sending=false;if(!isDestroyed()){sendStatus.setText(message);refreshSync();}});
             });
         }catch(Exception e){sendStatus.setText(getString(R.string.send_failed,e.getMessage()));}
     }
-    @Override protected void onResume(){super.onResume();visible=true;handler.post(refresh);updatePermissionCard();startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));handler.post(()->{if(visible)requestNotifications(false);});}
+    @Override protected void onResume(){super.onResume();visible=true;handler.post(refresh);updatePermissionCard();if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));handler.post(()->{if(visible)requestNotifications(false);});}
     @Override protected void onPause(){visible=false;++discoveryGeneration;handler.removeCallbacks(refresh);if(pairing!=null){pairing.close();pairing=null;}super.onPause();}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);updatePermissionCard();if(visible)startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));}
     @Override protected void onDestroy(){if(pairing!=null)pairing.close();sender.shutdown();super.onDestroy();}

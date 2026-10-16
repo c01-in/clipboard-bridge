@@ -43,7 +43,7 @@ if (!$taskService) {
 if($taskServiceResult.ReturnValue -ne 0){throw ('配置后台服务失败：'+$taskServiceResult.ReturnValue)}
 New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\ClipboardBridge' -Name DelayedAutoStart -Value 1 -PropertyType DWord -Force | Out-Null
 & sc.exe failure ClipboardBridge reset= 86400 actions= restart/5000/restart/15000/restart/60000 | Out-Null
-& sc.exe description ClipboardBridge 'FCM 剪贴板发送、加密图片传输及手机接收回执。剪贴板监听由登录用户托盘程序完成。' | Out-Null
+& sc.exe description ClipboardBridge 'Web Push 剪贴板发送、加密图片传输及手机接收回执。剪贴板监听由登录用户托盘程序完成。' | Out-Null
 if (!(Get-NetFirewallRule -Name ClipboardBridge-In -ErrorAction SilentlyContinue)) {
     New-NetFirewallRule -Name ClipboardBridge-In -DisplayName 'Clipboard Bridge · LAN and Tailscale' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 45871 -Profile Any -RemoteAddress LocalSubnet,'100.64.0.0/10','fd7a:115c:a1e0::/48' -Program (Join-Path $InstallRoot 'service\ClipboardBridge.Service.exe') | Out-Null
 }
@@ -69,4 +69,4 @@ $taskShortcut.Description=if((Get-UICulture).TwoLetterISOLanguageName -eq 'zh'){
 $taskShortcut.Save()
 Start-Service ClipboardBridge
 if(!$NoStartTray){Start-Process -FilePath (Join-Path $InstallRoot 'tray\ClipboardBridge.exe') -WindowStyle Hidden}
-Write-Host "已安装并启动。Firebase 凭据与配对密钥保存在 $taskDataDir，后续升级会保留。"
+Write-Host "已安装并启动。推送身份与配对密钥保存在 $taskDataDir，后续升级会保留。"

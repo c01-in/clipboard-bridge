@@ -39,7 +39,6 @@
     <string name="received_text">テキストをコピーしました。貼り付けできます。</string>
     <string name="receive_failed">受信に失敗しました：%1$s</string>
     <string name="error_save_config">ペアリング設定を保存できません。</string>
-    <string name="error_firebase_package">Firebase の設定がこのアプリと一致しません。</string>
     <string name="error_content_format">内容の形式が無効です。</string>
     <string name="error_image_id">画像の識別子が無効です。</string>
     <string name="error_receive_size">受信サイズが一致しません。</string>
@@ -79,9 +78,7 @@
     <string name="win_pair_done">ペアリング完了</string>
     <string name="win_confirm_here">パソコンで確認</string>
     <string name="win_advanced">詳細設定</string>
-    <string name="win_setup_needed">初回のみ詳細設定で Firebase ファイルを読み込んでください。その後は自動検出でペアリングできます。</string>
-    <string name="win_import_account">Firebase 送信認証情報を読み込む</string>
-    <string name="win_import_android">Android の Firebase 設定を読み込む</string>
+    <string name="win_setup_needed">同じ Wi-Fi で両方のアプリを開き、ペアリングを確認してください。Firebase ファイルは不要です。</string>
     <string name="win_addresses">Tailscale・独自ネットワーク用の追加アドレス（任意）</string>
     <string name="win_save_addresses">追加アドレスを保存</string>
     <string name="win_phone_update">スマートフォンのアプリをインストール・更新</string>
@@ -100,26 +97,19 @@
     <string name="win_hotkey_busy">Ctrl+Alt+V は使用中です。トレイメニューから送信してください。</string>
     <string name="win_clipboard_written">スマートフォンの内容を Windows にコピーしました。</string>
     <string name="win_clipboard_failed">Windows のクリップボードに書き込めません：%1$s</string>
-    <string name="win_json_files">JSON 設定ファイル</string>
     <string name="win_ready">準備完了。テキストや画像をコピーしてください。</string>
-    <string name="win_credentials_saved">送信認証情報を安全に保存しました。</string>
-    <string name="win_android_saved">Android の設定を保存しました。</string>
     <string name="win_addresses_saved">追加アドレスを保存しました。次のペアリング時に送信します。</string>
     <string name="win_wait_ack">通知サービスに送信済み。スマートフォンの確認待ちです。</string>
     <string name="win_delivery_expired">未確認のまま期限が切れました。もう一度コピーしてください。</string>
     <string name="win_phone_applied">スマートフォンへの書き込みを確認しました（%1$s）。</string>
     <string name="win_queued_retry">再試行のため保存しました：%1$s</string>
     <string name="win_phone_error">スマートフォンで受信できません：%1$s</string>
-    <string name="win_google_auth">Google 認証に失敗しました（%1$s）。認証情報を確認してください。</string>
-    <string name="win_fcm_error">FCM 応答：%1$s %2$s。受信は未確認です。</string>
     <string name="win_image_type">対応画像は一度に1枚だけ送信できます。</string>
     <string name="win_image_size">画像ファイルが16 MiBを超えています。</string>
-    <string name="error_firebase_project">Android 設定と送信認証情報は同じ Firebase プロジェクトを使用してください。</string>
     <string name="error_read_only">読み取り専用です。</string>
     <string name="error_content_expired">内容の有効期限が切れました。もう一度送信してください。</string>
     <string name="win_clipboard_sta">クリップボードにはデスクトップの STA スレッドが必要です。</string>
     <string name="win_text_null">Windows のテキストクリップボードはヌル文字に対応していません。</string>
-    <string name="win_service_account">サービスアカウントの JSON 認証情報を選択してください。</string>
     <string name="more_options">その他のオプション</string>
     <string name="change_computer">接続先を変更</string>
     <string name="reconnect">再接続</string>
@@ -130,7 +120,7 @@
     <string name="permission_intro">通知で同期の結果を確認できます。次に Android が許可を求めます。設定は後で変更できます。</string>
     <string name="permission_settings_needed">Android が再度の許可画面を表示できないか、通知が無効になっています。このアプリの通知設定で有効にしてから戻ってください。</string>
     <string name="continue_permission">続行</string>
-    <string name="installer_description">Windows サービス、トレイアプリ、スタートメニューをインストールします。認証情報とペアリングを保持します。このテスト版のバックグラウンド受信には、自分の Firebase プロジェクトを使用します。</string>
+    <string name="installer_description">バックグラウンドサービス、トレイアプリ、スタートメニューのショートカットをインストールします。ペアリングを維持し、プッシュを自動設定します。</string>
     <string name="installer_ready">サービスのインストールには管理者権限が必要です。</string>
     <string name="installer_install">インストール／更新</string>
     <string name="installer_close">閉じる</string>
@@ -138,4 +128,12 @@
     <string name="installer_success">インストールが完了しました。設定を開いてスマートフォンを接続してください。</string>
     <string name="installer_failed">インストールに失敗しました：%1$s</string>
     <string name="installer_log">インストールログを確認してください：%1$s</string>
+    <string name="sync_enabled">クリップボード同期</string>
+    <string name="sync_paused">同期は一時停止中です</string>
+    <string name="sync_restoring">再開中… PC の確認を待っています。</string>
+    <string name="sync_pause_help">送受信を一時停止しました。ペアリングは維持され、再開後に古い内容は適用されません。</string>
+    <string name="phone_paused">スマートフォンの同期は一時停止中です。スマートフォンで再開してください。</string>
+    <string name="push_not_registered">更新したスマートフォンアプリを開き、自動プッシュ登録を完了してください。</string>
+    <string name="webpush_error">Google Web Push が HTTP %1$s を返しました。スマートフォンの受信は未確認です。</string>
+    <string name="sync_discarded">スマートフォンが古い更新または一時停止中の更新を破棄しました。</string>
 </resources>

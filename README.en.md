@@ -1,85 +1,59 @@
 # Clipboard Bridge
 
-Copy on Windows, paste on Android. Copy on Android, tap Send in the app, then paste on Windows. Text and one image at a time, without a persistent Android receiver service.
+[简体中文](README.md)
 
-[中文](README.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+Automatically send Windows clipboard text or one image to Android. On Android, tap Send in the app to place the clipboard on Windows. Devices discover each other and pair with confirmation on both screens; no addresses or pairing links to enter.
 
-**0.1.0 preview.** Both apps use a 0.x public version while testing continues. Android internal version codes still increase, so existing internal builds can be updated in place.
+## Download the 0.1.1 preview
 
-- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge.apk)
-- [Windows x64 installer EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.0/ClipboardBridge-Windows-x64-Setup.exe)
-- [All previews and checksums](https://github.com/c01-in/clipboard-bridge/releases)
+- [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge.apk)
+- [Windows x64 installer](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.1/ClipboardBridge-Windows-x64-Setup.exe)
+- [Manual ZIP, library sources and checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.1)
 
-Download and install without compiling or enabling debug mode. The Windows installer requests administrator permission and installs the service, tray and Start menu entry. It is not Authenticode-signed. No personal Firebase credentials are bundled: this preview still uses your own Firebase project for background delivery. A public zero-configuration push backend has not been deployed.
+Users do not need SDKs, local builds or phone debugging. Windows installation requires administrator permission. The installer is not Authenticode-signed.
 
-## Features
+## Use
 
-- Automatic discovery on the same Wi-Fi. No IP address, pairing link or debug mode is required. Compare the six-digit code and confirm on both screens.
-- System-language UI: English, Simplified and Traditional Chinese, Spanish, Portuguese, French, German, Japanese and Korean. Other locales fall back to English. Windows uses the same translations.
-- Windows tray clipboard monitoring, pause control and `Ctrl+Alt+V` manual sending.
-- Android's **发送剪贴板到 Windows** (Send clipboard to Windows) button uploads encrypted text or one image over LAN/Tailscale. Success requires an actual desktop clipboard-write acknowledgment.
-- Text, native clipboard images and one copied PNG/JPEG/BMP/GIF file; images are converted to PNG. Maximum content size: 16 MiB.
-- AES-256-GCM encrypted content, integrity checks, expiry and sequence protection.
-- Separate states for FCM submission and Android clipboard-write acknowledgment.
-- LAN access, with optional user-configured Tailscale endpoints.
-- Desktop echo suppression prevents received phone content from being automatically sent back. Pausing Windows automatic sending still allows incoming phone transfers.
+1. Install Windows and open Clipboard Bridge settings from the Start menu.
+2. Install and open Android, allow notifications through the in-app prompt, and connect both devices to the same Wi-Fi.
+3. Select the discovered computer, compare the six-digit code, and confirm on both screens. Do not approve a different code.
+4. Copy text or one image on Windows for automatic sending, or use `Ctrl+Alt+V` or the tray menu.
+5. On Android, copy content and tap Send clipboard to Windows. Success appears only after Windows actually writes its clipboard and acknowledges it.
 
-![Tray icons](windows/Tray/Assets/icon-preview.png)
+Supports UTF-8 text and one image, up to 16 MiB. Images are transported as PNG. Android image paste support depends on the receiving app. Oversized content is rejected rather than truncated or resized.
 
-## Bring your own Firebase project
+## Push without Firebase setup
 
-There is no shared hosted backend or maintainer credential in this repository.
+Version 0.1.1 uses UnifiedPush's embedded receiver, Web Push and VAPID. Each Windows computer generates its own private key and sends directly to Google; existing Google Play Services wakes Android.
+No Firebase project, service-account JSON, shared sender key or maintainer relay is required. The Android app needs no permanent connection or foreground receive service.
 
-1. Download and run the Windows installer, then choose Install or update. No SDK installation is required for normal use.
-2. Install the Android APK. On first opening, the app explains notifications and requests Android permission. Only if Android can no longer show a prompt does it offer notification settings. The main screen shows Send and status; Change computer, Reconnect and About are in the overflow menu. Source builds are optional:
+Long text and images are fetched directly from Windows over LAN or Tailscale. Initial discovery requires the same Wi-Fi broadcast domain; add a Tailscale address in advanced settings before crossing networks.
+Google connectivity is still required. This transport does not fix Google network failures. See [push and migration](docs/webpush.md).
 
-```powershell
-git clone https://github.com/c01-in/clipboard-bridge.git
-cd clipboard-bridge
-.\scripts\Build.ps1 -JavaHome 'C:\Tools\jdk-21' -AndroidSdk 'C:\Tools\android-sdk'
-# Administrator PowerShell:
-.\dist\scripts\Install.ps1
-```
+## Pause
 
-3. Create your own Firebase project. Register the Android package **`com.colin.clipbridge`** and download `google-services.json`. Ensure the FCM HTTP v1 API is enabled.
-4. Create a dedicated service account in the same project with `roles/firebasecloudmessaging.admin`, generate its JSON key and keep it under `local/credentials/`. Do not put the private key on Android.
-5. Install `dist/ClipboardBridge.apk` on Android, or use Install or update phone app in Windows settings to scan a download-only QR code. Under Advanced settings, import your service-account JSON and Android Firebase JSON once.
-6. Open the phone app and Windows settings on the same Wi-Fi. Select the discovered device, compare the six-digit code and confirm on both screens. Allow notifications and any local-network permission requested by Android. Optional Tailscale addresses belong in Advanced settings.
-7. Copy text, wait for acknowledgment and paste on the phone. Then test one image.
-8. For the reverse direction, copy text or one image on Android, open the app and tap Send clipboard to Windows. Wait for confirmation, then paste on the computer. Use matching current previews on both devices; the Windows tray must be running. Existing pairing remains valid.
+- Windows tray pause affects automatic Windows sending only. Manual sending and receiving from Android remain available.
+- Android's main-screen Clipboard sync switch pauses new sending and receiving without deleting pairing. The choice persists across app and device restarts.
+- Resume creates a new receive session. Previously queued updates are discarded instead of overwriting the clipboard later. Sending becomes available after the computer confirms registration.
 
-The Android Firebase configuration is transferred inside the confirmed encrypted pairing session, so builds do not require `google-services.json` in the source tree. Keep the same signing key for APK upgrades. Installation, pairing and normal operation do not require ADB.
+Android shows status, the sync switch and Send, plus pairing when needed. Change computer, Reconnect and About are in the overflow menu. Notification permission is requested in the app; system settings are needed only after a permanent denial or disabled channel.
 
-Detailed setup, build and troubleshooting instructions are available in the [Chinese documentation](docs/firebase-setup.md), with links to official Firebase documentation.
+Both apps follow the system language: English, Simplified/Traditional Chinese, Spanish, Portuguese, French, German, Japanese and Korean. Other languages fall back to English.
 
-## Important limits
+## Upgrade and privacy
 
-- FCM and Google Play services must be available; instant delivery is not guaranteed.
-- Longer Windows → Android text, images, acknowledgments and all Android → Windows sends require a reachable LAN or Tailscale connection. Reverse sending does not use FCM. Do not expose port 45871 directly to the public internet.
-- One trusted phone per computer. Android sends require an explicit in-app tap; no Android background clipboard monitoring, arbitrary files, multiple images or iOS support.
-- A destination app must support image pasting. Force-stopped Android apps need to be opened again before receiving push messages.
-- Automatic sync can include sensitive copied text. Pause before copying secrets. Older internal pairing links remain secrets; this preview uses ephemeral key agreement and approval on both screens.
+Windows and Android share version 0.1.1. Android internal version codes keep increasing and the existing signing key is reused. Update Windows first, then Android and open it once; existing pairing migrates automatically.
+Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
-## Private local data
+Keys, subscription endpoints and runtime data stay local and are excluded from source and public installers. Clipboard content is AES-GCM encrypted, but Google can observe push metadata. Use trusted LAN/Tailscale networks. See [SECURITY.md](SECURITY.md).
 
-`local/` and `dist/` are ignored by Git. Runtime credentials and pairing live in `local/runtime/`; APK signing lives in `local/signing/`; original Firebase JSON files belong in `local/credentials/`.
+Our code is [MIT](LICENSE). UnifiedPush libraries retain LGPL-2.1; the full license is inside the APK and original library sources accompany each Release. See [third-party notices](THIRD_PARTY_NOTICES.md).
 
-Runtime Windows configuration uses machine-bound DPAPI plus filesystem permissions; Android pairing uses Keystore protection. Ignoring a file is not encryption. Read [SECURITY.md](SECURITY.md) before backing up or publishing files.
+## Development
 
-## Checks
+- [Build, install and uninstall](docs/build.md)
+- [GitHub Actions releases](docs/releases.md): matching `v0.x.y` tags automatically test, sign, package and publish both apps.
+- [Protocol](docs/protocol.md), [troubleshooting](docs/troubleshooting.md), [contributing](CONTRIBUTING.md)
 
-```powershell
-dotnet run --project .\windows\Tests\Tests.csproj -c Release
-.\android\gradlew.bat -p .\android assembleDebug lintDebug
-.\scripts\Check-Publish.ps1 -IncludeHistory
-```
-
-CI builds and checks the code without Firebase credentials. Live delivery and actual pasting require your own configured devices and are not implied by a passing CI build.
-
-Checks compile the actual Android Java key-agreement implementation and verify interoperability with Windows, approval gates, replacement-key revocation, retry recovery, download behavior and all locale keys and placeholders. The new phone UI, permission prompts and discovery flow still require physical-device validation; earlier successful clipboard tests do not establish that result.
-
-Pushing a `v0.x.y` tag triggers [GitHub Actions](.github/workflows/release.yml) to check, build signed apps, package and test the Windows installer, and publish a GitHub prerelease with SHA-256 checksums. Maintainers do not need to build each release locally. See [release setup](docs/releases.md).
-
-## License
-
-[MIT](LICENSE): free to use, modify and redistribute, including commercial use, with the license notice retained. Third-party dependencies keep their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+83 protocol, IPC, pairing, Web Push, pause revision, migration, locale and actual HTTP download checks pass. All six short native probe messages arrived, including process termination and forced deep Doze; see [probe evidence](experiments/webpush-probe/RESULTS.md). Production pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions also passed; see [0.1.1 device evidence](docs/verification-0.1.1.md).
+All vendors, prolonged sleep, reboot recovery and cross-network combinations have not been validated. This is a preview, not a guarantee of long-term delivery.

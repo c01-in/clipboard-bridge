@@ -6,11 +6,11 @@ using System.Text.Json;
 
 namespace ClipboardBridge;
 
-public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Bridge.PipeName, PairingHub? pairing = null) : BackgroundService
+public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = Bridge.PipeName, PairingHub? pairing = null) : BackgroundService
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly string pendingPath = Path.Combine(vault.DataDir, "pending.json");
-    private string status = "等待配置 Firebase 和配对手机";
+    private string status = "等待配对手机";
     private Delivery? pending;
     private PendingIncoming? incoming;
     private sealed record PendingIncoming(UploadManifest Manifest, byte[] Bytes, long Deadline, TaskCompletionSource<Receipt> Completion);
@@ -18,7 +18,7 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var initial = vault.Read();
-        if (initial.ServiceAccountJson is not null && initial.DeviceToken is not null) status = "已配置，等待复制内容";
+        if (initial.Subscription is not null) status = initial.PhonePaused ? UiText.Get("phone_paused") : "已配置，等待复制内容";
         if (File.Exists(pendingPath))
             try { pending = Bridge.Decode<Delivery>(File.ReadAllBytes(pendingPath)); } catch (Exception e) when (e is JsonException or IOException) { status = "上次待发送记录损坏，请重新复制内容"; }
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
@@ -39,6 +39,7 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
             {
                 if (pending is null) continue;
                 if (pending.ExpiresAt <= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) { ClearPending(); status = "同步内容已过期，请重新复制；手机未确认接收"; continue; }
+                if (vault.Read().PhonePaused) { ClearPending(); status = UiText.Get("phone_paused"); continue; }
                 if (!pending.Submitted) await Submit(ct);
             }
             catch (Exception e) when (e is not OperationCanceledException) { status = e.Message; }
@@ -73,7 +74,9 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
     {
         switch (c.Op)
         {
-            case "status": return new Reply(true, status, JsonSerializer.Serialize(new { device = vault.Read().DeviceName, configured = vault.Read().ServiceAccountJson is not null && vault.Read().FirebaseAndroidJson is not null, endpoints = vault.Read().Endpoints }, Bridge.Json));
+            case "status":
+                var state = vault.Read();
+                return new Reply(true, state.PhonePaused ? UiText.Get("phone_paused") : status, JsonSerializer.Serialize(new { device = state.DeviceName, configured = state.Subscription is not null, phonePaused = state.PhonePaused, endpoints = state.Endpoints }, Bridge.Json));
             case "pairing-open": return PairReply(pairing?.Open());
             case "pairing-status": return PairReply(pairing?.State());
             case "pairing-approve": return PairReply(pairing?.Approve(c.Value ?? "", true));
@@ -105,33 +108,6 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
                     return new Reply(true, status);
                 }
                 finally { gate.Release(); }
-            case "account":
-                using (var a = JsonDocument.Parse(c.Value ?? ""))
-                {
-                    if (a.RootElement.GetProperty("type").GetString() != "service_account") throw new InvalidDataException("请选择服务账号 JSON 凭据");
-                    using var rsa = RSA.Create(); rsa.ImportFromPem(a.RootElement.GetProperty("private_key").GetString()!);
-                    var project = a.RootElement.GetProperty("project_id").GetString();
-                    var android = vault.Read().FirebaseAndroidJson;
-                    if (android is not null && JsonDocument.Parse(android).RootElement.GetProperty("project_info").GetProperty("project_id").GetString() != project) throw new InvalidDataException("Android 配置与发送凭据必须属于同一 Firebase 项目");
-                }
-                vault.Update(x => x.ServiceAccountJson = c.Value); return new Reply(true, "发送凭据已加密保存");
-            case "android-config":
-                using (var a = JsonDocument.Parse(c.Value ?? ""))
-                {
-                    _ = a.RootElement.GetProperty("project_info").GetProperty("project_number");
-                    var project = a.RootElement.GetProperty("project_info").GetProperty("project_id").GetString();
-                    var client = a.RootElement.GetProperty("client").EnumerateArray().FirstOrDefault(x => x.GetProperty("client_info").GetProperty("android_client_info").GetProperty("package_name").GetString() == "com.colin.clipbridge");
-                    if (client.ValueKind == JsonValueKind.Undefined) throw new InvalidDataException(UiText.Get("error_firebase_package"));
-                    _ = client.GetProperty("client_info").GetProperty("mobilesdk_app_id").GetString();
-                    _ = client.GetProperty("api_key")[0].GetProperty("current_key").GetString();
-                    var account = vault.Read().ServiceAccountJson;
-                    if (account is not null)
-                    {
-                        using var senderConfig = JsonDocument.Parse(account);
-                        if (senderConfig.RootElement.GetProperty("project_id").GetString() != project) throw new InvalidDataException(UiText.Get("error_firebase_project"));
-                    }
-                }
-                vault.Update(x => x.FirebaseAndroidJson = c.Value); return new Reply(true, "Android Firebase 配置已保存");
             case "endpoints":
                 var urls = (c.Value ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (urls.Length == 0 || urls.Any(u => !Uri.TryCreate(u, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https") || uri.AbsolutePath != "/" || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)) throw new InvalidDataException("请输入 http://电脑IP:45871；多个地址用逗号分隔");
@@ -141,7 +117,8 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
                 try
                 {
                     var cfg = vault.Read();
-                    if (cfg.ServiceAccountJson is null || cfg.DeviceToken is null) throw new InvalidOperationException("尚未完成 Firebase 配置或手机配对");
+                    if (cfg.Subscription is null) throw new InvalidOperationException(UiText.Get("push_not_registered"));
+                    if (cfg.PhonePaused) return new Reply(false, UiText.Get("phone_paused"));
                     var bytes = Convert.FromBase64String(c.Data ?? "");
                     if (bytes.Length == 0 || bytes.Length > Bridge.MaxBytes) throw new InvalidDataException("仅支持 1 字节至 16 MiB 的内容");
                     if (c.Mime != "text/plain" && c.Mime != "image/png") throw new InvalidDataException("仅支持文字和单张 PNG 图片");
@@ -152,7 +129,7 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
                     string? inline = bytes.Length <= 900 && c.Mime == "text/plain" ? Convert.ToBase64String(bytes) : null;
                     string? file = inline is null ? id + ".blob" : null;
                     if (file is not null) File.WriteAllText(Path.Combine(vault.DataDir, file), Bridge.Seal(bytes, cfg.Key));
-                    var manifest = new ClipManifest(id, seq, c.Mime, expiry, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), bytes.Length, inline, file is null ? null : id);
+                    var manifest = new ClipManifest(id, seq, c.Mime, expiry, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), bytes.Length, inline, file is null ? null : id, cfg.PhoneGeneration);
                     var next = new Delivery(id, seq, expiry, Bridge.Seal(Bridge.Encode(manifest), cfg.Key), file);
                     ClearPending(); pending = next; SavePending();
                     try { await Submit(ct); return new Reply(true, status); }
@@ -171,11 +148,20 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
             // Share the pairing-commit gate: an old registration must not overwrite a newly paired token.
             string key = vault.Read().Key;
             var device = Bridge.Decode<Device>(Bridge.Open(body.Data, key));
-            if (device.Token is null || device.Token.Length is < 40 or > 4096 || device.DeviceName is null || device.DeviceName.Length > 160 ||
-                device.Challenge is not null && (device.Challenge.Length != 44 || Convert.FromBase64String(device.Challenge).Length != 32))
-                throw new InvalidDataException("推送注册请求无效");
-            vault.Update(c => { c.DeviceToken = device.Token; c.DeviceName = device.DeviceName; });
-            return device.Challenge is null ? null : new Box(Bridge.Seal(Bridge.Encode(new { registered = true, challenge = device.Challenge }), key));
+            PairingHub.ValidateDevice(device);
+            var old = vault.Read();
+            if (device.Revision < old.PhoneRevision || device.Revision == old.PhoneRevision &&
+                (device.ReceiveGeneration != old.PhoneGeneration || device.Paused != old.PhonePaused))
+                throw new InvalidDataException("手机同步状态已更新，请重试注册");
+            if (device.ReceiveGeneration != old.PhoneGeneration || device.Paused)
+            {
+                ClearPending();
+                if (incoming is not null) incoming.Completion.TrySetResult(new Receipt(incoming.Manifest.Id, incoming.Manifest.Sequence, "error", UiText.Get("phone_paused")));
+                incoming = null;
+            }
+            SaveDevice(device);
+            status = device.Paused ? UiText.Get("phone_paused") : "已配置，等待复制内容";
+            return device.Challenge is null ? null : new Box(Bridge.Seal(Bridge.Encode(new { registered = true, challenge = device.Challenge, receiveGeneration = device.ReceiveGeneration, revision = device.Revision, paused = device.Paused }), key));
         }
         finally { gate.Release(); }
     }
@@ -187,18 +173,26 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
         {
             return pairing.Complete(id, body, address, (key, device) =>
             {
-                vault.Update(c => { c.Key = key; c.DeviceToken = device.Token; c.DeviceName = device.DeviceName; c.IncomingSequence = 0; c.IncomingId = null; });
+                vault.Update(c => { c.Key = key; c.IncomingSequence = 0; c.IncomingId = null; ApplyDevice(c, device); });
+                if (incoming is not null) incoming.Completion.TrySetResult(new Receipt(incoming.Manifest.Id, incoming.Manifest.Sequence, "error", "手机配对已更换"));
+                incoming = null;
                 ClearPending(); status = "已安全配对，等待复制内容";
             });
         }
         finally { gate.Release(); }
+    }
+    private void SaveDevice(Device device) => vault.Update(c => ApplyDevice(c, device));
+    private static void ApplyDevice(Configuration c, Device device)
+    {
+        c.Subscription = device.Subscription; c.DeviceName = device.DeviceName;
+        c.PhoneGeneration = device.ReceiveGeneration; c.PhoneRevision = device.Revision; c.PhonePaused = device.Paused;
     }
     private async Task Submit(CancellationToken ct)
     {
         if (pending is null) return;
         await sender.Send(vault.Read(), pending.Envelope, ct);
         pending = pending with { Submitted = true }; SavePending();
-        status = "已提交 FCM，等待手机确认写入剪贴板";
+        status = "已提交 Web Push，等待手机确认写入剪贴板";
     }
     public async Task<Receipt> ReceiveFromAndroid(UploadManifest manifest, byte[] bytes, CancellationToken ct)
     {
@@ -207,6 +201,8 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
         try
         {
             var cfg = vault.Read();
+            if (cfg.PhonePaused || cfg.PhoneGeneration.Length > 0 && manifest.ReceiveGeneration != cfg.PhoneGeneration)
+                return new Receipt(manifest.Id, manifest.Sequence, "error", UiText.Get("phone_paused"));
             if (manifest.Sequence == cfg.IncomingSequence && manifest.Id == cfg.IncomingId)
                 return new Receipt(manifest.Id, manifest.Sequence, "applied", null);
             if (manifest.Sequence <= cfg.IncomingSequence)
@@ -261,8 +257,8 @@ public sealed class Broker(Vault vault, FcmSender sender, string pipeName = Brid
         try
         {
             if (pending?.Id != receipt.Id || pending.Sequence != receipt.Sequence) return;
-            status = receipt.Status == "applied" ? "手机已确认：剪贴板已写入（" + DateTime.Now.ToString("HH:mm:ss") + "）" : "手机接收失败：" + receipt.Detail;
-            if (receipt.Status == "applied") ClearPending();
+            status = receipt.Status == "applied" ? "手机已确认：剪贴板已写入（" + DateTime.Now.ToString("HH:mm:ss") + "）" : receipt.Status == "discarded" ? UiText.Get("sync_discarded") : "手机接收失败：" + receipt.Detail;
+            if (receipt.Status is "applied" or "discarded") ClearPending();
         }
         finally { gate.Release(); }
     }

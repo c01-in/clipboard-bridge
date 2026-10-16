@@ -21,7 +21,7 @@ public sealed class PairingHub
         public required string TransportKey;
         public string? DeviceKey;
         public bool ComputerApproved, PhoneApproved, Completed;
-        public string? CompletedToken;
+        public Device? CompletedDevice;
     }
     public PairingHub(Vault vault)
     {
@@ -95,13 +95,9 @@ public sealed class PairingHub
         lock (sync)
         {
             var s = Find(id, address); RequireApproved(s); var c = vault.Read();
-            if (c.ServiceAccountJson is null || c.FirebaseAndroidJson is null) throw new InvalidOperationException("电脑尚未完成 Firebase 配置，请在高级设置中导入");
             s.DeviceKey ??= Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            using var fb = JsonDocument.Parse(c.FirebaseAndroidJson); var root = fb.RootElement;
-            var client = root.GetProperty("client").EnumerateArray().First(x => x.GetProperty("client_info").GetProperty("android_client_info").GetProperty("package_name").GetString() == "com.colin.clipbridge");
-            var minimal = new { project_info = root.GetProperty("project_info"), client = new[] { new { client_info = client.GetProperty("client_info"), api_key = client.GetProperty("api_key") } } };
             var addresses = new[] { endpoint }.Concat(c.Endpoints).Distinct().ToArray();
-            return Encrypt(s, new { key = s.DeviceKey, computerId = c.ComputerId, computerName = Environment.MachineName, endpoints = addresses, firebase = minimal });
+            return Encrypt(s, new { key = s.DeviceKey, computerId = c.ComputerId, computerName = Environment.MachineName, endpoints = addresses, vapid = WebPush.PublicKey(c.VapidPrivateKey) });
         }
     }
     // Caller holds Broker's send/receive gate. The old pairing is retained until an authenticated completion.
@@ -111,11 +107,21 @@ public sealed class PairingHub
         {
             var s = Find(id, address); RequireApproved(s);
             var request = Bridge.Decode<PairCompletion>(Bridge.Open(body.Data, s.TransportKey));
-            if (request.Kind != "complete" || request.SessionId != id || request.Token is null || request.Token.Length is < 40 or > 4096 || s.DeviceKey is null) throw new InvalidDataException("推送注册尚未完成");
-            if (!s.Completed) { commit(s.DeviceKey, new Device(request.Token, s.Hello.Name)); s.CompletedToken = request.Token; s.Completed = true; }
-            else if (request.Token != s.CompletedToken) throw new InvalidDataException("配对完成请求不匹配");
+            if (request.Kind != "complete" || request.SessionId != id || s.DeviceKey is null) throw new InvalidDataException("推送注册尚未完成");
+            var device = new Device(request.Subscription, s.Hello.Name, request.ReceiveGeneration, request.Revision, request.Paused);
+            ValidateDevice(device);
+            if (!s.Completed) { commit(s.DeviceKey, device); s.CompletedDevice = device; s.Completed = true; }
+            else if (device != s.CompletedDevice) throw new InvalidDataException("配对完成请求不匹配");
             return Encrypt(s, new { completed = true });
         }
+    }
+    public static void ValidateDevice(Device device)
+    {
+        WebPush.Validate(device.Subscription);
+        if (device.DeviceName is null || device.DeviceName.Length > 160 || device.ReceiveGeneration is null || device.ReceiveGeneration.Length != 32 ||
+            device.ReceiveGeneration.Any(c => !Uri.IsHexDigit(c)) || device.Revision <= 0 ||
+            device.Challenge is not null && (device.Challenge.Length != 44 || Convert.FromBase64String(device.Challenge).Length != 32))
+            throw new InvalidDataException("推送注册请求无效");
     }
     Session Find(string id, IPAddress address)
     {

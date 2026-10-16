@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing preview tag, e.g. v0.1.0'
+        description: 'Existing preview tag, e.g. v0.1.1'
         required: true
         type: string
 permissions:
@@ -93,12 +93,14 @@ jobs:
 
           Automatic local pairing, text and one image, and nine system languages. Android asks for notification permission in the app. No debug mode is required. Existing installs can be updated using the same Android signing key; internal Android version codes continue increasing.
 
-          This release is self-hosted: background delivery requires your own Firebase configuration on Windows. No maintainer Firebase credentials or pairing data are included. A public push backend has not been deployed. Physical-device pairing and long-term delivery still need testing.
+          Windows sends encrypted Web Push directly to Google using a per-computer VAPID key. No Firebase project, service-account file, shared sender secret or maintainer relay is required. Google Play Services and Google network access are still required. Android has a persistent pause/resume switch; old receive sessions are discarded after resuming. Existing pairs migrate automatically when both apps are updated.
+
+          UnifiedPush library sources and LGPL-2.1 license are provided in ClipboardBridge-Android-Library-Sources.zip. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
 
           The Windows installer is not Authenticode-signed. See README and SECURITY.md before testing.
           '@
           $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
-          gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
+          gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
       - name: Remove temporary signing material
         if: always()

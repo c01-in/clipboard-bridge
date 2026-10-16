@@ -39,7 +39,6 @@
     <string name="received_text">Texto copiado. Listo para pegar.</string>
     <string name="receive_failed">Error de recepción: %1$s</string>
     <string name="error_save_config">No se pudo guardar el emparejamiento.</string>
-    <string name="error_firebase_package">La configuración de Firebase no coincide con esta app.</string>
     <string name="error_content_format">Formato de contenido no válido.</string>
     <string name="error_image_id">Identificador de imagen no válido.</string>
     <string name="error_receive_size">El tamaño recibido no coincide.</string>
@@ -79,9 +78,7 @@
     <string name="win_pair_done">Emparejado</string>
     <string name="win_confirm_here">Confirmar en este equipo</string>
     <string name="win_advanced">Configuración avanzada</string>
-    <string name="win_setup_needed">Primera configuración: importa los archivos Firebase en ajustes avanzados. Después, el emparejamiento es automático.</string>
-    <string name="win_import_account">Importar credenciales Firebase</string>
-    <string name="win_import_android">Importar configuración Firebase Android</string>
+    <string name="win_setup_needed">Abre ambas apps en la misma red Wi-Fi y confirma el emparejamiento. No se necesitan archivos de Firebase.</string>
     <string name="win_addresses">Direcciones adicionales para Tailscale o redes personalizadas (opcional)</string>
     <string name="win_save_addresses">Guardar direcciones adicionales</string>
     <string name="win_phone_update">Instalar o actualizar la app móvil</string>
@@ -100,26 +97,19 @@
     <string name="win_hotkey_busy">Ctrl+Alt+V está en uso. Envía desde la bandeja.</string>
     <string name="win_clipboard_written">Contenido del teléfono copiado en Windows. Listo para pegar.</string>
     <string name="win_clipboard_failed">No se pudo escribir el portapapeles: %1$s</string>
-    <string name="win_json_files">Configuración JSON</string>
     <string name="win_ready">Listo. Copia texto o una imagen.</string>
-    <string name="win_credentials_saved">Credenciales guardadas de forma segura.</string>
-    <string name="win_android_saved">Configuración Android guardada.</string>
     <string name="win_addresses_saved">Direcciones guardadas. Se enviarán en el próximo emparejamiento.</string>
     <string name="win_wait_ack">Enviado al servicio. Esperando confirmación del teléfono.</string>
     <string name="win_delivery_expired">El contenido caducó sin confirmación. Cópialo de nuevo.</string>
     <string name="win_phone_applied">El teléfono confirmó la escritura (%1$s).</string>
     <string name="win_queued_retry">Guardado para reintentar: %1$s</string>
     <string name="win_phone_error">El teléfono no pudo recibir: %1$s</string>
-    <string name="win_google_auth">Falló la autenticación de Google (%1$s). Comprueba las credenciales.</string>
-    <string name="win_fcm_error">FCM devolvió %1$s %2$s. Recepción no confirmada.</string>
     <string name="win_image_type">Solo puede enviarse una imagen compatible.</string>
     <string name="win_image_size">La imagen supera 16 MiB.</string>
-    <string name="error_firebase_project">La configuración de Android y las credenciales deben usar el mismo proyecto de Firebase.</string>
     <string name="error_read_only">Solo lectura.</string>
     <string name="error_content_expired">El contenido ha caducado. Vuelve a enviarlo.</string>
     <string name="win_clipboard_sta">El portapapeles requiere el hilo STA del escritorio.</string>
     <string name="win_text_null">El portapapeles de Windows no admite caracteres nulos.</string>
-    <string name="win_service_account">Selecciona un archivo JSON de credenciales de cuenta de servicio.</string>
     <string name="more_options">Más opciones</string>
     <string name="change_computer">Cambiar de ordenador</string>
     <string name="reconnect">Volver a conectar</string>
@@ -130,7 +120,7 @@
     <string name="permission_intro">Las notificaciones muestran el resultado de la sincronización. Android te pedirá permiso. Puedes cambiarlo después.</string>
     <string name="permission_settings_needed">Android no puede volver a pedir permiso o las notificaciones están desactivadas. Abre los ajustes de notificaciones de esta app, actívalas y vuelve.</string>
     <string name="continue_permission">Continuar</string>
-    <string name="installer_description">Instala el servicio de Windows, la app de la bandeja y el acceso del menú Inicio. Conserva credenciales y emparejamiento. Esta versión de prueba usa tu proyecto de Firebase para recibir en segundo plano.</string>
+    <string name="installer_description">Instala el servicio, la app de bandeja y el acceso del menú Inicio. Conserva el emparejamiento y configura las notificaciones automáticamente.</string>
     <string name="installer_ready">Se necesitan permisos de administrador para instalar el servicio.</string>
     <string name="installer_install">Instalar o actualizar</string>
     <string name="installer_close">Cerrar</string>
@@ -138,4 +128,12 @@
     <string name="installer_success">Instalación completada. Abre los ajustes para conectar tu teléfono.</string>
     <string name="installer_failed">Error de instalación: %1$s</string>
     <string name="installer_log">Consulta el registro de instalación: %1$s</string>
+    <string name="sync_enabled">Sincronizar portapapeles</string>
+    <string name="sync_paused">Sincronización en pausa</string>
+    <string name="sync_restoring">Reanudando… Esperando confirmación del equipo.</string>
+    <string name="sync_pause_help">Envío y recepción en pausa. Se conserva el emparejamiento; al reanudar no se aplicarán contenidos antiguos.</string>
+    <string name="phone_paused">La sincronización del teléfono está en pausa. Reanúdala en el teléfono.</string>
+    <string name="push_not_registered">Abre la app actualizada del teléfono para completar el registro automático.</string>
+    <string name="webpush_error">Google Web Push devolvió HTTP %1$s. El teléfono no confirmó la recepción.</string>
+    <string name="sync_discarded">El teléfono descartó una actualización antigua o en pausa.</string>
 </resources>

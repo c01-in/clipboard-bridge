@@ -23,6 +23,7 @@ final class ClipboardSender {
 
     // Clipboard access happens only in the focused Activity, after the user's tap.
     static Input capture(Context context)throws Exception {
+        if(!SyncState.ready(context))throw new Exception(LocalText.get(R.string.sync_paused));
         ClipData clip=context.getSystemService(ClipboardManager.class).getPrimaryClip();
         if(clip==null||clip.getItemCount()==0)throw new Exception(LocalText.get(R.string.error_clip_empty));
         if(clip.getItemCount()!=1)throw new Exception(LocalText.get(R.string.error_one_item));
@@ -38,6 +39,8 @@ final class ClipboardSender {
     }
 
     static void send(Context context,Input input)throws Exception {
+        if(!SyncState.ready(context))throw new Exception(LocalText.get(R.string.sync_paused));
+        String generation=SyncState.generation(context);
         JSONObject config=Config.read(context);
         byte[] bytes=input.image==null?input.text.getBytes(StandardCharsets.UTF_8):readImage(context,input.image);
         if(bytes.length==0||bytes.length>MAX_BYTES)throw new Exception(LocalText.get(R.string.error_content_size));
@@ -45,9 +48,10 @@ final class ClipboardSender {
         long sequence=nextSequence(context);
         StringBuilder hash=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))hash.append(String.format("%02x",b&255));
         JSONObject manifest=new JSONObject().put("id",id).put("sequence",sequence).put("mime",input.image==null?"text/plain":"image/png")
-            .put("expiresAt",System.currentTimeMillis()+120000).put("size",bytes.length).put("sha256",hash.toString());
+            .put("expiresAt",System.currentTimeMillis()+120000).put("size",bytes.length).put("sha256",hash.toString()).put("receiveGeneration",generation);
         String key=config.getString("key");
         String body=new JSONObject().put("envelope",Crypto.seal(manifest.toString().getBytes(StandardCharsets.UTF_8),key)).put("data",Crypto.seal(bytes,key)).toString();
+        if(!SyncState.accepts(context,generation))throw new Exception(LocalText.get(R.string.sync_paused));
         JSONObject response=new JSONObject(Network.request(config,"/api/clipboard",body,16384,30000));
         JSONObject receipt=new JSONObject(new String(Crypto.open(response.getString("data"),key),StandardCharsets.UTF_8));
         if(!id.equals(receipt.getString("id"))||sequence!=receipt.getLong("sequence"))throw new Exception(LocalText.get(R.string.error_receipt));

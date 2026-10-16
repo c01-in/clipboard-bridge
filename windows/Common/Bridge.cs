@@ -54,11 +54,11 @@ public static class Bridge
 public sealed record Command(string Op, string? Mime = null, string? Data = null, string? Value = null);
 public sealed record Reply(bool Ok, string Message, string? Value = null);
 public sealed record Box(string Data);
-public sealed record Device(string Token, string DeviceName, string? Challenge = null);
+public sealed record Device(PushSubscription Subscription, string DeviceName, string ReceiveGeneration, long Revision, bool Paused = false, string? Challenge = null);
 public sealed record Receipt(string Id, long Sequence, string Status, string? Detail);
-public sealed record ClipManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size, string? Inline, string? Blob);
+public sealed record ClipManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size, string? Inline, string? Blob, string ReceiveGeneration);
 public sealed record Delivery(string Id, long Sequence, long ExpiresAt, string Envelope, string? BlobFile, bool Submitted = false);
-public sealed record UploadManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size);
+public sealed record UploadManifest(string Id, long Sequence, string Mime, long ExpiresAt, string Sha256, int Size, string ReceiveGeneration = "");
 public sealed record ClipboardUpload(string Envelope, string Data);
 public sealed record IncomingClip(UploadManifest Manifest, string Data);
 
@@ -68,10 +68,12 @@ public sealed class Configuration
     public string Key { get; set; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     public string[] Endpoints { get; set; } = Bridge.Addresses().Take(1).ToArray();
     public string OwnerSid { get; set; } = "";
-    public string? ServiceAccountJson { get; set; }
-    public string? DeviceToken { get; set; }
+    public string VapidPrivateKey { get; set; } = WebPush.GeneratePrivateKey();
+    public PushSubscription? Subscription { get; set; }
     public string? DeviceName { get; set; }
-    public string? FirebaseAndroidJson { get; set; }
+    public string PhoneGeneration { get; set; } = "";
+    public long PhoneRevision { get; set; }
+    public bool PhonePaused { get; set; }
     public long OutgoingSequence { get; set; }
     public long IncomingSequence { get; set; }
     public string? IncomingId { get; set; }
@@ -88,7 +90,17 @@ public sealed class Vault
         lock (gate)
         {
             if (!File.Exists(path)) { var first = new Configuration(); Write(first); return first; }
-            return Bridge.Decode<Configuration>(ProtectedData.Unprotect(File.ReadAllBytes(path), null, DataProtectionScope.LocalMachine));
+            byte[] bytes = ProtectedData.Unprotect(File.ReadAllBytes(path), null, DataProtectionScope.LocalMachine);
+            var value = Bridge.Decode<Configuration>(bytes);
+            using var document = JsonDocument.Parse(bytes);
+            if (!document.RootElement.TryGetProperty("vapidPrivateKey", out _))
+            {
+                // Preserve old credentials in an encrypted local backup before removing obsolete fields.
+                string backup = Path.Combine(DataDir, "configuration.pre-webpush.dpapi");
+                if (!File.Exists(backup)) File.Copy(path, backup);
+                Write(value);
+            }
+            return value;
         }
     }
     public void Write(Configuration value)

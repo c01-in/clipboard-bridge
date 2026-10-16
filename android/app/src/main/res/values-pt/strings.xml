@@ -39,7 +39,6 @@
     <string name="received_text">Texto copiado. Pronto para colar.</string>
     <string name="receive_failed">Falha no recebimento: %1$s</string>
     <string name="error_save_config">Não foi possível salvar o pareamento.</string>
-    <string name="error_firebase_package">A configuração do Firebase não corresponde a este app.</string>
     <string name="error_content_format">Formato de conteúdo inválido.</string>
     <string name="error_image_id">Identificador de imagem inválido.</string>
     <string name="error_receive_size">O tamanho recebido não corresponde.</string>
@@ -79,9 +78,7 @@
     <string name="win_pair_done">Pareado</string>
     <string name="win_confirm_here">Confirmar neste computador</string>
     <string name="win_advanced">Configurações avançadas</string>
-    <string name="win_setup_needed">Na primeira configuração, importe os arquivos Firebase nas configurações avançadas. Depois, o pareamento é automático.</string>
-    <string name="win_import_account">Importar credenciais Firebase</string>
-    <string name="win_import_android">Importar configuração Firebase Android</string>
+    <string name="win_setup_needed">Abra os dois apps no mesmo Wi-Fi e confirme o pareamento. Não são necessários arquivos do Firebase.</string>
     <string name="win_addresses">Endereços adicionais para Tailscale ou redes personalizadas (opcional)</string>
     <string name="win_save_addresses">Salvar endereços adicionais</string>
     <string name="win_phone_update">Instalar ou atualizar o app móvel</string>
@@ -100,26 +97,19 @@
     <string name="win_hotkey_busy">Ctrl+Alt+V está em uso. Envie pelo menu da bandeja.</string>
     <string name="win_clipboard_written">Conteúdo do celular copiado no Windows. Pronto para colar.</string>
     <string name="win_clipboard_failed">Não foi possível gravar na área de transferência: %1$s</string>
-    <string name="win_json_files">Configuração JSON</string>
     <string name="win_ready">Pronto. Copie texto ou uma imagem.</string>
-    <string name="win_credentials_saved">Credenciais salvas com segurança.</string>
-    <string name="win_android_saved">Configuração Android salva.</string>
     <string name="win_addresses_saved">Endereços salvos. Serão enviados no próximo pareamento.</string>
     <string name="win_wait_ack">Enviado ao serviço. Aguardando confirmação do celular.</string>
     <string name="win_delivery_expired">O conteúdo expirou sem confirmação. Copie novamente.</string>
     <string name="win_phone_applied">O celular confirmou a gravação (%1$s).</string>
     <string name="win_queued_retry">Salvo para tentar novamente: %1$s</string>
     <string name="win_phone_error">O celular não recebeu: %1$s</string>
-    <string name="win_google_auth">Falha na autenticação do Google (%1$s). Verifique as credenciais.</string>
-    <string name="win_fcm_error">O FCM retornou %1$s %2$s. Recebimento não confirmado.</string>
     <string name="win_image_type">Só é possível enviar uma imagem compatível.</string>
     <string name="win_image_size">A imagem excede 16 MiB.</string>
-    <string name="error_firebase_project">A configuração Android e as credenciais devem usar o mesmo projeto Firebase.</string>
     <string name="error_read_only">Somente leitura.</string>
     <string name="error_content_expired">O conteúdo expirou. Envie novamente.</string>
     <string name="win_clipboard_sta">A área de transferência exige a thread STA da área de trabalho.</string>
     <string name="win_text_null">A área de transferência do Windows não aceita caracteres nulos.</string>
-    <string name="win_service_account">Selecione um arquivo JSON de credenciais da conta de serviço.</string>
     <string name="more_options">Mais opções</string>
     <string name="change_computer">Trocar de computador</string>
     <string name="reconnect">Reconectar</string>
@@ -130,7 +120,7 @@
     <string name="permission_intro">As notificações mostram o resultado da sincronização. O Android pedirá sua permissão. Você pode alterar isso depois.</string>
     <string name="permission_settings_needed">O Android não pode pedir permissão novamente ou as notificações estão desativadas. Abra as configurações de notificações deste app, ative-as e volte.</string>
     <string name="continue_permission">Continuar</string>
-    <string name="installer_description">Instala o serviço Windows, o app da bandeja e o atalho do menu Iniciar. Preserva credenciais e emparelhamento. Esta versão de teste usa seu projeto Firebase para receber em segundo plano.</string>
+    <string name="installer_description">Instala o serviço, o app de bandeja e o atalho do menu Iniciar. Mantém o pareamento e configura as notificações automaticamente.</string>
     <string name="installer_ready">É necessário ser administrador para instalar o serviço.</string>
     <string name="installer_install">Instalar ou atualizar</string>
     <string name="installer_close">Fechar</string>
@@ -138,4 +128,12 @@
     <string name="installer_success">Instalação concluída. Abra as configurações para conectar seu celular.</string>
     <string name="installer_failed">Falha na instalação: %1$s</string>
     <string name="installer_log">Consulte o log de instalação: %1$s</string>
+    <string name="sync_enabled">Sincronizar área de transferência</string>
+    <string name="sync_paused">Sincronização pausada</string>
+    <string name="sync_restoring">Retomando… Aguardando confirmação do computador.</string>
+    <string name="sync_pause_help">Envio e recebimento pausados. O pareamento é mantido; conteúdos antigos não serão aplicados ao retomar.</string>
+    <string name="phone_paused">A sincronização do celular está pausada. Retome no celular.</string>
+    <string name="push_not_registered">Abra o app atualizado do celular para concluir o registro automático.</string>
+    <string name="webpush_error">Google Web Push retornou HTTP %1$s. O celular não confirmou o recebimento.</string>
+    <string name="sync_discarded">O celular descartou uma atualização antiga ou pausada.</string>
 </resources>

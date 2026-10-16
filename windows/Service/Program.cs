@@ -23,8 +23,8 @@ builder.Logging.ClearProviders();
 builder.Services.AddSingleton<Vault>();
 builder.Services.AddSingleton<PairingHub>();
 builder.Services.AddHostedService<DiscoveryService>();
-builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(20) });
-builder.Services.AddSingleton<FcmSender>(); builder.Services.AddSingleton<Broker>();
+builder.Services.AddSingleton(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(20) });
+builder.Services.AddSingleton<WebPushSender>(); builder.Services.AddSingleton<Broker>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Broker>());
 var app = builder.Build();
 app.Use(async (context, next) =>
@@ -56,6 +56,18 @@ app.MapPost("/api/register", async (Box body, Broker broker, CancellationToken c
         return ack is null ? Results.Ok() : Results.Json(ack, Bridge.Json);
     }
     catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException or InvalidDataException or ArgumentException) { return Results.BadRequest(); }
+});
+app.MapPost("/api/push-configuration", (Box body, Vault vault) =>
+{
+    try
+    {
+        var config = vault.Read();
+        using var request = System.Text.Json.JsonDocument.Parse(Bridge.Open(body.Data, config.Key));
+        string challenge = request.RootElement.GetProperty("challenge").GetString()!;
+        if (challenge.Length != 44 || Convert.FromBase64String(challenge).Length != 32) return Results.BadRequest();
+        return Results.Json(new Box(Bridge.Seal(Bridge.Encode(new { challenge, vapid = WebPush.PublicKey(config.VapidPrivateKey), computerId = config.ComputerId }), config.Key)), Bridge.Json);
+    }
+    catch (Exception e) when (e is FormatException or System.Security.Cryptography.CryptographicException or System.Text.Json.JsonException or InvalidDataException or KeyNotFoundException) { return Results.BadRequest(); }
 });
 app.MapGet("/blob/{id}", async (string id, Broker broker, CancellationToken ct) =>
 {

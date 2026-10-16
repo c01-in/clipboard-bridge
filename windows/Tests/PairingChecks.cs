@@ -33,11 +33,9 @@ static class PairingChecks
             string[] fields = (await java.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(5)))!.Split(' ');
             var hello = new PairHello(PairingCrypto.Protocol, "hello", Guid.NewGuid().ToString("N"), "Protocol test phone", fields[1], fields[0]);
             var vault = new Vault(directory.FullName);string oldKey = vault.Read().Key;
-            vault.Update(c =>
-            {
-                c.DeviceName = "Existing test phone";c.DeviceToken = new string('o', 80);c.ServiceAccountJson = "{}";
-                c.FirebaseAndroidJson = """{"project_info":{"project_number":"123456","project_id":"test-project"},"client":[{"client_info":{"mobilesdk_app_id":"test-app-id","android_client_info":{"package_name":"com.colin.clipbridge"}},"api_key":[{"current_key":"test-public-api-key"}]}]}""";
-            });
+            vault.Update(c => c.DeviceName = "Existing test phone");
+            var subscription = WebPushChecks.Subscription();
+            string generation = Guid.NewGuid().ToString("N");
             var hub = new PairingHub(vault);var address = IPAddress.Parse("127.0.0.2");byte[] announcement = Bridge.Encode(hello);
             check(hub.Discovery(announcement, address) is null, "Unpaired discovery is closed until the local settings window opens it");
             hub.Open();byte[] response = hub.Discovery(announcement, address)!;var offer = Bridge.Decode<PairOffer>(response);
@@ -58,30 +56,23 @@ static class PairingChecks
             string newKey = config.RootElement.GetProperty("key").GetString()!;
             check(newKey != oldKey && vault.Read().Key == oldKey, "A replacement key is prepared without overwriting the working pairing");
             check(!config.RootElement.TryGetProperty("serviceAccountJson", out _) && !config.RootElement.ToString().Contains("private_key"), "Phone bootstrap never includes sender credentials");
-            using var http = new HttpClient();using var broker = new Broker(vault, new FcmSender(http), pairing: hub);
-            string currentAndroid = vault.Read().FirebaseAndroidJson!;
-            vault.Update(c => c.ServiceAccountJson = "{\"project_id\":\"test-project\"}");
-            bool rejectedProject = false, rejectedPackage = false;
-            try { await broker.Handle(new Command("android-config", Value: currentAndroid.Replace("test-project", "different-project")), CancellationToken.None); }
-            catch (InvalidDataException) { rejectedProject = true; }
-            try { await broker.Handle(new Command("android-config", Value: currentAndroid.Replace("com.colin.clipbridge", "com.example.other")), CancellationToken.None); }
-            catch (InvalidDataException) { rejectedPackage = true; }
-            check(rejectedProject && rejectedPackage && vault.Read().FirebaseAndroidJson == currentAndroid, "Mismatched Firebase project or package imports cannot overwrite the working configuration");
-            string token = new string('t', 80);var completion = new Box(Bridge.Seal(Bridge.Encode(new PairCompletion("complete", offer.Id, token)), transport));
+            using var http = new HttpClient();using var broker = new Broker(vault, new WebPushSender(http), pairing: hub);
+            check(config.RootElement.GetProperty("vapid").GetString() == WebPush.PublicKey(vault.Read().VapidPrivateKey) && !config.RootElement.TryGetProperty("firebase", out _), "Pairing requires no Firebase files and releases only this PC's VAPID public key");
+            var completion = new Box(Bridge.Seal(Bridge.Encode(new PairCompletion("complete", offer.Id, subscription, generation, 1)), transport));
             var completed = await broker.CompletePairing(offer.Id, completion, address, CancellationToken.None);
-            check(vault.Read().Key == newKey && vault.Read().DeviceToken == token, "Authenticated completion commits the new phone and revokes the old pairing key");
+            check(vault.Read().Key == newKey && vault.Read().Subscription == subscription, "Authenticated completion commits the new phone and revokes the old pairing key");
             check(JsonDocument.Parse(Bridge.Open(completed.Data, transport)).RootElement.GetProperty("completed").GetBoolean(), "Pair completion is confirmed inside the encrypted session");
             await broker.CompletePairing(offer.Id, completion, address, CancellationToken.None);
             check(vault.Read().Key == newKey, "A completion retry after a lost response is idempotent");
             string registrationChallenge = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            var registered = await broker.Register(new Box(Bridge.Seal(Bridge.Encode(new Device(token, hello.Name, registrationChallenge)), newKey)), CancellationToken.None);
+            var registered = await broker.Register(new Box(Bridge.Seal(Bridge.Encode(new Device(subscription, hello.Name, generation, 1, Challenge: registrationChallenge)), newKey)), CancellationToken.None);
             using var registration = JsonDocument.Parse(Bridge.Open(registered!.Data, newKey));
             check(registration.RootElement.GetProperty("registered").GetBoolean() && registration.RootElement.GetProperty("challenge").GetString() == registrationChallenge,
                 "Registration recovery requires an encrypted acknowledgment bound to a fresh phone challenge");
             bool rejectedOldRegistration = false;
-            try { await broker.Register(new Box(Bridge.Seal(Bridge.Encode(new Device(new string('o', 80), "Old phone")), oldKey)), CancellationToken.None); }
+            try { await broker.Register(new Box(Bridge.Seal(Bridge.Encode(new Device(subscription, "Old phone", generation, 1)), oldKey)), CancellationToken.None); }
             catch (CryptographicException) { rejectedOldRegistration = true; }
-            check(rejectedOldRegistration && vault.Read().DeviceToken == token, "The revoked pairing key cannot overwrite the new phone registration");
+            check(rejectedOldRegistration && vault.Read().Subscription == subscription, "The revoked pairing key cannot overwrite the new phone registration");
             var restarted = new PairingHub(vault);string nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             var reconnect = new KnownHello(PairingCrypto.Protocol, "reconnect", "", nonce, PairingCrypto.Proof(newKey, "reconnect\n\n" + nonce));
             var known = Bridge.Decode<KnownOffer>(restarted.Discovery(Bridge.Encode(reconnect), address)!);
