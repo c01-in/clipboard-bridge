@@ -4,7 +4,7 @@ Google Play provides an official publishing API. It uses OAuth, not a plain API 
 
 ## Current deployment status
 
-The 0.1.4 signed AAB is available in GitHub Releases. The publishing workflow is implemented separately from the installer build, so uploading 0.1.4 does not require another build. Google Play publisher authorization is not yet configured for this repository; automatic Play uploads remain disabled until that authorization is verified. GitHub release publication does not mean Google Play submission or approval.
+The 0.1.4 signed AAB is available in GitHub Releases. The publishing workflow is implemented separately from the installer build, so uploading 0.1.4 does not require another build. The dedicated publisher is now configured for this repository, with an encrypted GitHub secret and a local DPAPI backup; automatic Play uploads are enabled. Forks must configure their own publisher. [The first real API submission](https://github.com/c01-in/clipboard-bridge/actions/runs/38984131014) uploaded and committed 0.1.4 (version code 8) to production on 16 October 2026. Play Console showed automatic pre-review checks; approval/public availability has not been confirmed. GitHub release publication does not mean Google Play approval.
 
 ## One-time authorization
 

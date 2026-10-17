@@ -6,7 +6,7 @@ Users install the Android APK or Windows setup EXE from [GitHub Releases](https:
 
 1. Keep the persistent Android signing key and its encrypted backup in ignored `local/signing/`.
 2. With repository administration access through GitHub CLI, run `scripts/Configure-CISigning.ps1`. It saves the existing keystore/password as encrypted `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` repository secrets via standard input.
-3. Configure the dedicated Google Play publisher once using [Google Play CI setup](google-play-ci.md). No Play publishing credential is currently configured, so automatic Play uploads remain disabled until access is verified.
+3. Configure the dedicated Google Play publisher once using [Google Play CI setup](google-play-ci.md). This repository has verified publisher access and automatic Play uploads enabled; forks need their own authorization. The first real API submission of 0.1.4 succeeded; Google review and approval remain separate.
 4. Restrict workflow modifications, release tags and secret access to trusted maintainers. Never expose publishing secrets to untrusted PRs. Firebase credentials, device tokens, clipboard data and pairing keys are not build inputs.
 
 ## Each release
