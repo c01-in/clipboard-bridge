@@ -44,6 +44,8 @@
 
 **当前版本：0.1.4 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
 
+[代码签名政策（Code signing policy）](CODE_SIGNING_POLICY.md)：正在申请 SignPath Foundation 免费签名；现有 Windows 下载仍未签名。
+
 ## 为剪贴板而做
 
 | | 你可以做什么 |

@@ -130,7 +130,8 @@
     <string name="installer_log">请查看安装日志：%1$s</string>
     <string name="sync_enabled">剪贴板同步</string>
     <string name="sync_paused">同步已暂停</string>
-    <string name="sync_restoring">正在恢复，等待电脑确认。</string>
+    <string name="sync_restoring">正在自动恢复连接…</string>
+    <string name="registration_timeout">推送服务未响应注册请求，请重试。</string>
     <string name="sync_pause_help">已暂停发送和接收，保留配对。恢复后不会补写旧内容。</string>
     <string name="phone_paused">手机同步已暂停，请在手机上恢复。</string>
     <string name="push_not_registered">请打开更新后的手机 App，自动完成推送注册。</string>

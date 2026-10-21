@@ -130,7 +130,8 @@
     <string name="installer_log">Consulta el registro de instalación: %1$s</string>
     <string name="sync_enabled">Sincronizar portapapeles</string>
     <string name="sync_paused">Sincronización en pausa</string>
-    <string name="sync_restoring">Reanudando… Esperando confirmación del equipo.</string>
+    <string name="sync_restoring">Reconectando automáticamente…</string>
+    <string name="registration_timeout">El servicio de notificaciones no respondió al registro. Vuelve a intentarlo.</string>
     <string name="sync_pause_help">Envío y recepción en pausa. Se conserva el emparejamiento; al reanudar no se aplicarán contenidos antiguos.</string>
     <string name="phone_paused">La sincronización del teléfono está en pausa. Reanúdala en el teléfono.</string>
     <string name="push_not_registered">Abre la app actualizada del teléfono para completar el registro automático.</string>

@@ -1,25 +1,36 @@
-name: Build and publish preview installers
+name: Build, sign and optionally publish installers
 on:
   push:
     tags: ['v0.*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing preview tag, e.g. v0.1.4'
-        required: true
+        description: 'Existing preview tag when publishing; leave empty for a build review'
+        required: false
         type: string
+      sign:
+        description: 'Request SignPath signing (requires approved project configuration)'
+        type: boolean
+        default: false
+      publish:
+        description: 'Publish a GitHub release and enable the configured Play upload'
+        type: boolean
+        default: false
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: release-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 jobs:
   release:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 270
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
       CLIPBRIDGE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      SIGN_WINDOWS: ${{ github.event_name == 'push' || inputs.sign || inputs.publish }}
+      PUBLISH_RELEASE: ${{ github.event_name == 'push' || inputs.publish }}
     defaults:
       run:
         shell: pwsh
@@ -31,10 +42,29 @@ jobs:
       - name: Validate preview tag and versions
         run: |
           $version=([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version
-          if($env:RELEASE_TAG -notmatch '^v0\.\d+\.\d+$' -or $env:RELEASE_TAG -ne ('v'+$version)){throw 'Tag must match the declared 0.x.y preview version.'}
+          if($env:PUBLISH_RELEASE -eq 'true' -and ($env:RELEASE_TAG -notmatch '^v0\.\d+\.\d+$' -or $env:RELEASE_TAG -ne ('v'+$version))){throw 'Tag must match the declared 0.x.y preview version.'}
+          if($version -notmatch '^0\.\d+\.\d+$'){throw 'Preview version must use 0.x.y.'}
           $android=Get-Content android/app/build.gradle -Raw
           if($android -notmatch ('versionName '''+[regex]::Escape($version)+'''')){throw 'Android and Windows versions differ.'}
           ./scripts/Check-Publish.ps1 -IncludeHistory
+      - name: Check requested signing configuration
+        env:
+          SIGNPATH_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORG: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_POLICY: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_APPS: ${{ vars.SIGNPATH_APPLICATIONS_CONFIGURATION }}
+          SIGNPATH_INSTALLER: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
+          SIGNPATH_SUBJECT: ${{ vars.SIGNPATH_PUBLISHER }}
+        run: |
+          if($env:SIGN_WINDOWS -eq 'true'){
+            foreach($name in @('SIGNPATH_TOKEN','SIGNPATH_ORG','SIGNPATH_PROJECT','SIGNPATH_POLICY','SIGNPATH_APPS','SIGNPATH_INSTALLER','SIGNPATH_SUBJECT')){
+              if(![Environment]::GetEnvironmentVariable($name)){throw "SignPath approval/configuration is required for signed builds: $name is missing. Use sign=false, publish=false for an unsigned review."}
+            }
+            "CLIPBRIDGE_WINDOWS_SHARE_PUBLISHER=$env:SIGNPATH_SUBJECT" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          }else{
+            'Unsigned build review. SignPath is not called and nothing is published.' | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: '10.0.x'
@@ -60,10 +90,42 @@ jobs:
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
           ./android/gradlew.bat -p android lintDebug --no-daemon --console=plain
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-      - name: Build signed apps and Windows installer
+      - name: Build Windows applications and signed Android apps
         run: |
           ./scripts/Build.ps1 -UseEnvironmentSigning -JavaHome $env:JAVA_HOME -AndroidSdk $env:ANDROID_HOME
-          ./scripts/Package.ps1 -AndroidSdk $env:ANDROID_HOME
+          ./scripts/Test-SignPath.ps1
+      - name: Sign first-party Windows binaries and Share identity
+        if: env.SIGN_WINDOWS == 'true'
+        uses: ./.github/actions/sign-windows
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_APPLICATIONS_CONFIGURATION }}
+          publisher: ${{ vars.SIGNPATH_PUBLISHER }}
+          stage: applications
+      - name: Package installer with the verified payload
+        run: |
+          $arguments=@{AndroidSdk=$env:ANDROID_HOME}
+          if($env:SIGN_WINDOWS -eq 'true'){$arguments.ForPublication=$true}
+          ./scripts/Package.ps1 @arguments
+      - name: Sign the final Windows installer
+        if: env.SIGN_WINDOWS == 'true'
+        uses: ./.github/actions/sign-windows
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
+          publisher: ${{ vars.SIGNPATH_PUBLISHER }}
+          stage: installer
+      - name: Verify Android signatures and update final checksums
+        run: |
+          $names=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip')
+          $checksums=foreach($name in $names){(Get-FileHash (Join-Path 'dist/release' $name)).Hash.ToLowerInvariant()+'  '+$name}
+          [IO.File]::WriteAllLines((Join-Path $PWD 'dist/release/SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
           & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify dist/release/ClipboardBridge.apk
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
           & "$env:JAVA_HOME/bin/jarsigner.exe" -verify dist/release/ClipboardBridge.aab
@@ -90,6 +152,7 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
       - name: Publish GitHub prerelease
+        if: env.PUBLISH_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -106,7 +169,7 @@ jobs:
 
           UnifiedPush library sources and their respective LGPL-2.1 and Apache-2.0 licenses are provided in ClipboardBridge-Android-Library-Sources.zip and the APK assets. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
 
-          The Windows installer is not Authenticode-signed. See README and SECURITY.md before testing.
+          Windows binaries, the Share identity and installer are verified against the approved SignPath publisher. See CODE_SIGNING_POLICY.md for the signing process.
           '@
           $versionNotes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.md')
           if(Test-Path -LiteralPath $versionNotes){$notes=Get-Content -LiteralPath $versionNotes -Raw}
@@ -119,7 +182,7 @@ jobs:
           if($env:CLIPBRIDGE_KEYSTORE -and (Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)){Remove-Item -LiteralPath $env:CLIPBRIDGE_KEYSTORE -Force}
   play:
     needs: release
-    if: vars.GOOGLE_PLAY_UPLOAD_ENABLED == 'true'
+    if: (github.event_name == 'push' || inputs.publish) && vars.GOOGLE_PLAY_UPLOAD_ENABLED == 'true'
     permissions:
       contents: read
       id-token: write

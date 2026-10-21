@@ -1,0 +1,90 @@
+name: Sign Windows artifacts with SignPath
+description: Submit GitHub-hosted build artifacts to SignPath; verify returned signatures before using them.
+inputs:
+  api-token:
+    description: SignPath submitter token
+    required: true
+  organization-id:
+    description: SignPath organization UUID
+    required: true
+  project-slug:
+    description: Approved SignPath project
+    required: true
+  policy-slug:
+    description: Manually approved production signing policy
+    required: true
+  artifact-configuration-slug:
+    description: Approved artifact configuration
+    required: true
+  publisher:
+    description: Exact certificate subject approved by SignPath
+    required: true
+  stage:
+    description: applications or installer
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Select first-party signing inputs
+      id: inputs
+      shell: pwsh
+      env:
+        SIGNING_STAGE: ${{ inputs.stage }}
+      run: |
+        if($env:SIGNING_STAGE -eq 'applications'){
+          $paths=@('windows/service/ClipboardBridge.Service.exe','windows/service/ClipboardBridge.Service.dll','windows/tray/ClipboardBridge.exe','windows/tray/ClipboardBridge.dll','windows/cli/ClipboardBridge.Cli.exe','windows/cli/ClipboardBridge.Cli.dll','windows/share/ClipboardBridge.Share.msix')
+          $target=Join-Path $PWD 'dist'
+        }elseif($env:SIGNING_STAGE -eq 'installer'){
+          $paths=@('release/ClipboardBridge-Windows-x64-Setup.exe')
+          $target=Join-Path $PWD 'dist/release'
+        }else{throw 'Unknown signing stage.'}
+        $stage=Join-Path $env:RUNNER_TEMP ('signpath-input-'+$env:SIGNING_STAGE)
+        New-Item -ItemType Directory -Path $stage -Force | Out-Null
+        foreach($path in $paths){
+          $relative=if($env:SIGNING_STAGE -eq 'installer'){Split-Path $path -Leaf}else{$path}
+          $destination=Join-Path $stage $relative
+          New-Item -ItemType Directory -Path (Split-Path $destination -Parent) -Force | Out-Null
+          Copy-Item -LiteralPath (Join-Path 'dist' $path) -Destination $destination
+        }
+        "input=$stage" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+        "target=$target" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+        $version=([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version
+        "version=$version" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      id: unsigned
+      with:
+        name: signpath-unsigned-${{ inputs.stage }}-${{ github.run_attempt }}
+        path: ${{ steps.inputs.outputs.input }}/
+        if-no-files-found: error
+        retention-days: 7
+    - uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+      id: sign
+      with:
+        api-token: ${{ inputs.api-token }}
+        organization-id: ${{ inputs.organization-id }}
+        project-slug: ${{ inputs.project-slug }}
+        signing-policy-slug: ${{ inputs.policy-slug }}
+        artifact-configuration-slug: ${{ inputs.artifact-configuration-slug }}
+        github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+        parameters: |
+          version: ${{ toJSON(steps.inputs.outputs.version) }}
+        wait-for-completion: true
+        wait-for-completion-timeout-in-seconds: 7200
+        output-artifact-directory: ${{ runner.temp }}/signpath-signed-${{ inputs.stage }}
+    - name: Check returned signatures and copy signed outputs
+      shell: pwsh
+      env:
+        SIGNING_STAGE: ${{ inputs.stage }}
+        EXPECTED_PUBLISHER: ${{ inputs.publisher }}
+        SIGNED_ROOT: ${{ runner.temp }}/signpath-signed-${{ inputs.stage }}
+        TARGET_ROOT: ${{ steps.inputs.outputs.target }}
+        SIGNING_REQUEST: ${{ steps.sign.outputs.signing-request-web-url }}
+      run: |
+        $arguments=@{PackageRoot=$env:SIGNED_ROOT;Publisher=$env:EXPECTED_PUBLISHER}
+        if($env:SIGNING_STAGE -eq 'applications'){
+          New-Item -ItemType Directory -Path "$env:SIGNED_ROOT/windows/share" -Force | Out-Null
+          Copy-Item -LiteralPath dist/windows/share/AppxManifest.xml -Destination "$env:SIGNED_ROOT/windows/share/AppxManifest.xml"
+        }else{$arguments.InstallerOnly=$true}
+        ./scripts/Test-WindowsSignatures.ps1 @arguments
+        Copy-Item -Path "$env:SIGNED_ROOT/*" -Destination $env:TARGET_ROOT -Recurse -Force
+        "SignPath $env:SIGNING_STAGE request: $env:SIGNING_REQUEST" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

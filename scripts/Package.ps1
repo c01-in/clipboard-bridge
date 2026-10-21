@@ -1,11 +1,17 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([string]$AndroidSdk=$env:ANDROID_HOME,[string]$OutputDirectory=$env:CLIPBRIDGE_DIST)
+param([string]$AndroidSdk=$env:ANDROID_HOME,[string]$OutputDirectory=$env:CLIPBRIDGE_DIST,[switch]$ForPublication)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskDist=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskRoot 'dist'}
 $taskVersion=([xml](Get-Content (Join-Path $taskRoot 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version
+if($ForPublication){
+    $taskShareManifest=[xml](Get-Content -LiteralPath (Join-Path $taskDist 'windows\share\AppxManifest.xml') -Raw)
+    if($taskShareManifest.Package.Identity.Publisher -match 'OID\.2\.25\.311729368913984317654407730594956997722=1'){throw 'Public distribution requires a trusted signed Windows Share identity. Configure CLIPBRIDGE_WINDOWS_SHARE_CERT_THUMBPRINT.'}
+    & (Join-Path $PSScriptRoot 'Test-WindowsSignatures.ps1') -PackageRoot $taskDist -Publisher $taskShareManifest.Package.Identity.Publisher
+}
 if($taskVersion -notmatch '^0\.\d+\.\d+$'){throw 'Preview releases must use a 0.x.y version.'}
+& (Join-Path $PSScriptRoot 'Test-WindowsPackage.ps1') -PackageRoot $taskDist
 foreach($taskPart in @(@('service','ClipboardBridge.Service.exe'),@('tray','ClipboardBridge.exe'),@('cli','ClipboardBridge.Cli.exe'))){
     $taskFile=Join-Path $taskDist ('windows\'+$taskPart[0]+'\'+$taskPart[1])
     if(!(Test-Path -LiteralPath $taskFile) -or (Get-Item $taskFile).VersionInfo.ProductVersion.Split('+')[0] -ne $taskVersion){throw 'Build all Windows applications at the declared version before packaging.'}
@@ -14,20 +20,16 @@ $taskApk=Join-Path $taskDist 'ClipboardBridge.apk'
 $taskAapt=Join-Path $AndroidSdk 'build-tools\36.0.0\aapt.exe'
 $taskBadging=(& $taskAapt dump badging $taskApk) -join "`n"
 if($LASTEXITCODE -ne 0 -or $taskBadging -notmatch ('versionName='''+[regex]::Escape($taskVersion)+'''')){throw 'The signed Android APK version must match Windows.'}
-$taskStage=Join-Path $taskDist ('package-'+[Guid]::NewGuid().ToString('N'))
+$taskTemporaryRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+$taskStage=Join-Path $taskTemporaryRoot ('ClipboardBridge-package-'+[Guid]::NewGuid().ToString('N'))
 $taskRelease=Join-Path $taskDist 'release'
 New-Item -ItemType Directory -Path $taskStage,$taskRelease -Force | Out-Null
 try{
     New-Item -ItemType Directory -Path (Join-Path $taskStage 'windows'),(Join-Path $taskStage 'scripts') -Force | Out-Null
-    foreach($taskPart in @('service','tray','cli')){
-        $taskDestination=Join-Path $taskStage ('windows\'+$taskPart)
-        New-Item -ItemType Directory -Path $taskDestination -Force | Out-Null
-        foreach($taskFile in Get-ChildItem -LiteralPath (Join-Path $taskDist ('windows\'+$taskPart)) -File){
-            if($taskFile.Extension -eq '.pdb'){continue}
-            Copy-Item -LiteralPath $taskFile.FullName -Destination $taskDestination
-        }
+    foreach($taskPart in @('service','tray','cli','runtime','share')){
+        Copy-Item -LiteralPath (Join-Path $taskDist ('windows\'+$taskPart)) -Destination (Join-Path $taskStage 'windows') -Recurse
     }
-    foreach($taskScript in @('Install.ps1','Uninstall.ps1')){
+    foreach($taskScript in @('Install.ps1','Uninstall.ps1','Register-WindowsShare.ps1')){
         # Windows PowerShell 5.1 needs a BOM to decode the localized shortcut and messages.
         [IO.File]::WriteAllText((Join-Path $taskStage ('scripts\'+$taskScript)),[IO.File]::ReadAllText((Join-Path $PSScriptRoot $taskScript)),[Text.UTF8Encoding]::new($true))
     }
@@ -57,6 +59,6 @@ try{
     [IO.File]::WriteAllLines((Join-Path $taskRelease 'SHA256SUMS.txt'),$taskChecksums,[Text.UTF8Encoding]::new($false))
     Write-Host "Release packages ready: $taskRelease"
 }finally{
-    if(![IO.Path]::GetFullPath($taskStage).StartsWith([IO.Path]::GetFullPath($taskDist)+[IO.Path]::DirectorySeparatorChar) -or !(Split-Path $taskStage -Leaf).StartsWith('package-')){throw 'Unexpected packaging directory'}
+    if(![IO.Path]::GetFullPath($taskStage).StartsWith($taskTemporaryRoot+[IO.Path]::DirectorySeparatorChar) -or !(Split-Path $taskStage -Leaf).StartsWith('ClipboardBridge-package-')){throw 'Unexpected packaging directory'}
     Remove-Item -LiteralPath $taskStage -Recurse -Force
 }

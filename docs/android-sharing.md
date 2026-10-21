@@ -24,9 +24,9 @@ Android debug and release builds, the AAB and lint are checked separately from d
 
 ```powershell
 .\android\gradlew.bat -p .\android assembleDebug assembleDebugAndroidTest lintDebug --no-daemon --max-workers=1
-adb -s <emulator-serial> install -r .\android\app\build\outputs\apk\debug\app-debug.apk
-adb -s <emulator-serial> install -r .\android\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk
-adb -s <emulator-serial> shell am instrument -w -r com.colin.clipbridge.debug.test/androidx.test.runner.AndroidJUnitRunner
+adb -s <emulator-serial> install --user 0 -r .\android\app\build\outputs\apk\debug\app-debug.apk
+adb -s <emulator-serial> install --user 0 -r .\android\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk
+adb -s <emulator-serial> shell am instrument --user 0 -w -r com.colin.clipbridge.debug.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 On 2026-10-16, all **12 instrumentation tests passed** on Android 15 / API 35 AOSP ATD. They cover text and image extraction, malformed and multiple inputs, share-target resolution, actual encrypted HTTP payloads and hash checks, PNG bytes, incorrect acknowledgments, pause and unpaired errors, activity recreation, separate-UID image URI grants, and ordinary copying in another app. The notification regression test explicitly enables notification permission, observes the progress notification, completes the receive feedback and waits for the notification's removal. All **85 Windows protocol, pairing, localization and download checks** also passed. Release APK/AAB builds and Android lint passed; the review APK retains the existing release signing certificate.

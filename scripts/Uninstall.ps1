@@ -6,6 +6,11 @@ $taskResolved=[IO.Path]::GetFullPath($InstallRoot).TrimEnd('\')
 $taskExpected=[IO.Path]::GetFullPath((Join-Path $env:ProgramFiles 'ClipboardBridge')).TrimEnd('\')
 if ($taskResolved -ne $taskExpected) { throw '卸载脚本只允许删除 Program Files\ClipboardBridge。' }
 Get-Process -Name ClipboardBridge -ErrorAction SilentlyContinue | Stop-Process
+$taskShareRegistration=Join-Path $taskResolved 'scripts\Register-WindowsShare.ps1'
+if(Test-Path -LiteralPath $taskShareRegistration){
+    & "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File $taskShareRegistration -InstallRoot $taskResolved -Unregister
+    if($LASTEXITCODE -ne 0){throw 'Windows Share removal failed.'}
+}
 if (Get-Service ClipboardBridge -ErrorAction SilentlyContinue) { Stop-Service ClipboardBridge -Force; & sc.exe delete ClipboardBridge | Out-Null }
 Remove-NetFirewallRule -Name ClipboardBridge-In -ErrorAction SilentlyContinue
 Remove-NetFirewallRule -Name ClipboardBridge-Discovery -ErrorAction SilentlyContinue

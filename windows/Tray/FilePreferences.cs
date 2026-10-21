@@ -4,6 +4,16 @@ using ClipboardBridge;
 static class FilePreferences
 {
     public static string DirectoryPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge");
+    public static string ShareStagingDirectory
+    {
+        get
+        {
+            string setting = Path.Combine(DirectoryPath, "share-staging.txt");
+            string path = File.Exists(setting) ? File.ReadAllText(setting) : Path.Combine(Path.GetTempPath(), "ClipboardBridge", "share-inbox");
+            if (!Path.IsPathFullyQualified(path)) throw new IOException(UiText.Get("files_folder_invalid"));
+            return Path.GetFullPath(path);
+        }
+    }
     public static string SaveDirectory
     {
         get

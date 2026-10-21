@@ -130,7 +130,8 @@
     <string name="installer_log">Siehe Installationsprotokoll: %1$s</string>
     <string name="sync_enabled">Zwischenablage synchronisieren</string>
     <string name="sync_paused">Synchronisierung pausiert</string>
-    <string name="sync_restoring">Wird fortgesetzt… Warte auf Bestätigung des Computers.</string>
+    <string name="sync_restoring">Verbindung wird automatisch wiederhergestellt…</string>
+    <string name="registration_timeout">Der Push-Dienst hat nicht auf die Registrierung geantwortet. Bitte erneut versuchen.</string>
     <string name="sync_pause_help">Senden und Empfangen pausiert. Die Kopplung bleibt erhalten; alte Inhalte werden beim Fortsetzen nicht angewendet.</string>
     <string name="phone_paused">Die Synchronisierung am Telefon ist pausiert. Dort fortsetzen.</string>
     <string name="push_not_registered">Die aktualisierte Telefon-App öffnen, um die automatische Push-Registrierung abzuschließen.</string>

@@ -15,14 +15,30 @@ if (!$DataRoot) {
 $taskDataDir = [IO.Path]::GetFullPath($DataRoot)
 $taskOwnerSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 $taskSource = Join-Path $PackageRoot 'windows'
-if (!(Test-Path -LiteralPath (Join-Path $taskSource 'service\ClipboardBridge.Service.exe'))) { throw '缺少已发布的 Windows 安装文件，请先运行 Build.ps1。' }
+foreach($taskRequired in @('service\ClipboardBridge.Service.exe','tray\ClipboardBridge.exe','cli\ClipboardBridge.Cli.exe','runtime\dotnet.exe')){
+    if(!(Test-Path -LiteralPath (Join-Path $taskSource $taskRequired))){throw ('缺少已发布的 Windows 安装文件：'+$taskRequired)}
+}
+$InstallRoot=[IO.Path]::GetFullPath($InstallRoot).TrimEnd('\')
+# Never replace a program directory if it contains the user's configuration.
+foreach($taskPart in @('service','tray','cli','runtime','share')){
+    $taskPartPath=Join-Path $InstallRoot $taskPart
+    if($taskDataDir -eq $taskPartPath -or $taskDataDir.StartsWith($taskPartPath+'\',[StringComparison]::OrdinalIgnoreCase)){throw '数据目录不能放在待更新的程序目录中。'}
+    if((Test-Path -LiteralPath $taskPartPath) -and ((Get-Item -LiteralPath $taskPartPath).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Unexpected installed application directory.'}
+}
 $taskService = Get-Service -Name ClipboardBridge -ErrorAction SilentlyContinue
 if ($taskService) { Stop-Service -Name ClipboardBridge -Force; $taskService.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(20)) }
 Get-Process -Name ClipboardBridge -ErrorAction SilentlyContinue | Stop-Process
 New-Item -ItemType Directory -Path $InstallRoot,$taskDataDir -Force | Out-Null
-foreach ($taskPart in @('service','tray','cli')) { Copy-Item -LiteralPath (Join-Path $taskSource $taskPart) -Destination $InstallRoot -Recurse -Force }
+foreach($taskPart in @('service','tray','cli','runtime','share')){
+    $taskPartPath=Join-Path $InstallRoot $taskPart
+    if(Test-Path -LiteralPath $taskPartPath){
+        if([IO.Path]::GetFullPath($taskPartPath) -ne (Join-Path $InstallRoot $taskPart)){throw 'Unexpected installed application path.'}
+        Remove-Item -LiteralPath $taskPartPath -Recurse -Force
+    }
+    Copy-Item -LiteralPath (Join-Path $taskSource $taskPart) -Destination $InstallRoot -Recurse
+}
 New-Item -ItemType Directory -Path (Join-Path $InstallRoot 'scripts') -Force | Out-Null
-foreach($taskScript in @('Install.ps1','Uninstall.ps1')){Copy-Item -LiteralPath (Join-Path $PackageRoot ('scripts\'+$taskScript)) -Destination (Join-Path $InstallRoot ('scripts\'+$taskScript)) -Force}
+foreach($taskScript in @('Install.ps1','Uninstall.ps1','Register-WindowsShare.ps1')){Copy-Item -LiteralPath (Join-Path $PackageRoot ('scripts\'+$taskScript)) -Destination (Join-Path $InstallRoot ('scripts\'+$taskScript)) -Force}
 $taskAndroidSource=Join-Path $PackageRoot 'ClipboardBridge.apk'
 if(Test-Path -LiteralPath $taskAndroidSource){New-Item -ItemType Directory -Path (Join-Path $InstallRoot 'android') -Force | Out-Null;Copy-Item -LiteralPath $taskAndroidSource -Destination (Join-Path $InstallRoot 'android\ClipboardBridge.apk') -Force}
 $taskAcl = New-Object Security.AccessControl.DirectorySecurity
@@ -80,6 +96,12 @@ $taskSendTo.Arguments='--send-files'
 $taskSendTo.IconLocation=$taskSendTo.TargetPath+',0'
 $taskSendTo.WorkingDirectory=Join-Path $InstallRoot 'tray'
 $taskSendTo.Save()
+$taskOS=Get-CimInstance Win32_OperatingSystem
+if($taskOS.ProductType -eq 1 -and [int]$taskOS.BuildNumber -ge 22000){
+    & "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File (Join-Path $InstallRoot 'scripts\Register-WindowsShare.ps1') -InstallRoot $InstallRoot
+    if($LASTEXITCODE -ne 0){throw 'Windows Share registration failed.'}
+}
 Start-Service ClipboardBridge
+(Get-Service ClipboardBridge).WaitForStatus('Running',[TimeSpan]::FromSeconds(20))
 if(!$NoStartTray){Start-Process -FilePath (Join-Path $InstallRoot 'tray\ClipboardBridge.exe') -WindowStyle Hidden}
 Write-Host "已安装并启动。推送身份与配对密钥保存在 $taskDataDir，后续升级会保留。"

@@ -130,7 +130,8 @@
     <string name="installer_log">インストールログを確認してください：%1$s</string>
     <string name="sync_enabled">クリップボード同期</string>
     <string name="sync_paused">同期は一時停止中です</string>
-    <string name="sync_restoring">再開中… PC の確認を待っています。</string>
+    <string name="sync_restoring">自動的に再接続しています…</string>
+    <string name="registration_timeout">通知サービスから登録への応答がありませんでした。再試行してください。</string>
     <string name="sync_pause_help">送受信を一時停止しました。ペアリングは維持され、再開後に古い内容は適用されません。</string>
     <string name="phone_paused">スマートフォンの同期は一時停止中です。スマートフォンで再開してください。</string>
     <string name="push_not_registered">更新したスマートフォンアプリを開き、自動プッシュ登録を完了してください。</string>

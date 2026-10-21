@@ -29,12 +29,8 @@ jobs:
       - name: Build Windows applications and run checks
         shell: pwsh
         run: |
-          dotnet build windows/Service/Service.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build windows/Tray/Tray.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build windows/Cli/Cli.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/Build-Windows.ps1
+          ./scripts/Test-SignPath.ps1
           dotnet run --project windows/Tests/Tests.csproj -c Release
   android:
     runs-on: ubuntu-latest

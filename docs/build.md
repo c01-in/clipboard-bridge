@@ -45,13 +45,16 @@ dist/
 ├─ windows/
 │  ├─ service/ClipboardBridge.Service.exe
 │  ├─ tray/ClipboardBridge.exe
-│  └─ cli/ClipboardBridge.Cli.exe
+│  ├─ cli/ClipboardBridge.Cli.exe
+│  └─ runtime/（三端共用的私有 .NET 运行环境）
 └─ scripts/
 ```
 
 构建脚本第一次运行会在 `local/signing/` 创建自己的签名密钥；后续复用已有密钥。真实使用按 [自动配置推送文档](webpush.md) 完成两端确认，无需 Firebase 项目。
 
-`Package.ps1` 在 `dist/release/` 生成签名 APK、供 Play 上传的 AAB、Windows 安装 EXE、手动安装 ZIP 、UnifiedPush 原始库源码 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework，安装后的三个程序自带 .NET 运行时。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+`Package.ps1` 在 `dist/release/` 生成签名 APK、供 Play 上传的 AAB、Windows 安装 EXE、手动安装 ZIP 、UnifiedPush 原始库源码 ZIP 及 SHA-256 校验文件。安装器使用系统自带的 .NET Framework；安装后的三个程序共用 `runtime/` 中随包附带的一份 .NET 环境，无需用户另装 .NET，也不在线下载运行时。构建从 Windows x64 SDK 已安装的运行库中选择同一补丁版本的 Core、Windows Desktop 和 ASP.NET 框架，同时保留运行库许可证。应用通过官方 `AppHostDotNetSearch=AppRelative` 和 `AppHostRelativeDotNet=../runtime` 机制定位这份环境，不使用系统全局 .NET 或 `DOTNET_ROOT`。升级替换旧程序目录，保留配对和数据。Android 内部升级编号递增，两端对外版本为 0.x 测试版。
+
+仅修改 Windows 时可运行 `./scripts/Build-Windows.ps1 -OutputDirectory <输出目录>`，复用同版本已签名的 Android 产物，再运行 `Package.ps1`。`Test-WindowsPackage.ps1 -PackageRoot <输出目录>` 检查 CoreCLR 只有一份，在 `PATH` 不含 dotnet 的环境实际启动 CLI，并暂时移开这份构建产物中的私有运行环境，确认程序不会回退到全局 .NET。该脚本仅针对构建输出，不对正在使用的安装目录运行。
 
 ## 安装到 Windows
 
@@ -82,10 +85,10 @@ dist/
 以下命令仅供开发时使用已授权的 ADB：
 
 ```powershell
-adb install --user 0 -r .\dist\ClipboardBridge.apk
+.\scripts\Install-Android.ps1 -Serial '<device-serial>' -ApkPath .\dist\ClipboardBridge.apk
 ```
 
-`--user 0` 只安装到主用户，避免在工作资料或安全文件夹产生额外安装。ADB 只用于安装和调试，正常同步不依赖 ADB，也不用保持无线调试开启。
+该脚本核对设备后固定使用 `install --user 0 -r`，只安装到主用户，禁止默认安装到所有用户、克隆空间、工作资料或安全文件夹。手动执行 ADB 时也必须显式写出 `--user 0`。ADB 只用于安装和调试，正常同步不依赖 ADB，也不用保持无线调试开启。
 
 ## 验证与卸载
 

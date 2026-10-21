@@ -130,7 +130,8 @@
     <string name="installer_log">See the installation log: %1$s</string>
     <string name="sync_enabled">Clipboard sync</string>
     <string name="sync_paused">Sync paused</string>
-    <string name="sync_restoring">Resuming… Waiting for the computer to confirm.</string>
+    <string name="sync_restoring">Reconnecting automatically…</string>
+    <string name="registration_timeout">The push service did not respond to registration. Please retry.</string>
     <string name="sync_pause_help">Sending and receiving are paused. Pairing is kept; old updates will not be applied after resuming.</string>
     <string name="phone_paused">Phone sync is paused. Resume it on the phone.</string>
     <string name="push_not_registered">Open the updated phone app to finish automatic push registration.</string>

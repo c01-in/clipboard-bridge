@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters><parameter name="version" required="true" /></parameters>
+  <zip-file>
+    <pe-file path="windows/service/ClipboardBridge.Service.exe" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <pe-file path="windows/service/ClipboardBridge.Service.dll" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <pe-file path="windows/tray/ClipboardBridge.exe" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <pe-file path="windows/tray/ClipboardBridge.dll" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <pe-file path="windows/cli/ClipboardBridge.Cli.exe" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <pe-file path="windows/cli/ClipboardBridge.Cli.dll" product-name="Clipboard Bridge" product-version="${version}"><authenticode-sign /></pe-file>
+    <msix-file path="windows/share/ClipboardBridge.Share.msix"><authenticode-sign /></msix-file>
+  </zip-file>
+</artifact-configuration>

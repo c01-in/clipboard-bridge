@@ -65,7 +65,7 @@ final class AutoPairing implements AutoCloseable {
                                 if(!"known".equals(offer.optString("kind"))||!Objects.equals(challenge,offer.optString("nonce"))||!requestId.equals(offer.getString("requestComputerId"))||(!requestId.isEmpty()&&!requestId.equals(computerId))||
                                     !PairingIdentity.verify(configured.getString("key"),"known\n"+requestId+"\n"+computerId+"\n"+challenge+"\n45871",offer.getString("proof")))continue;
                                 JSONArray addresses=new JSONArray().put(endpoint);for(int i=0;i<configured.getJSONArray("endpoints").length();i++){String old=configured.getJSONArray("endpoints").getString(i);if(!old.equals(endpoint))addresses.put(old);}
-                                if(!computerId.equals(configured.optString("computerId"))||!endpoint.equals(configured.getJSONArray("endpoints").optString(0))){configured.put("computerId",computerId).put("endpoints",addresses);Config.updateEndpoints(context,configured);RegistrationWorker.schedule(context);}
+                                if(!computerId.equals(configured.optString("computerId"))||!endpoint.equals(configured.getJSONArray("endpoints").optString(0))){configured.put("computerId",computerId).put("endpoints",addresses);Config.updateEndpoints(context,configured);RegistrationWorker.retry(context);}
                                 listener.status(R.string.discovery_connected);continue;
                             }
                             if(!"offer".equals(offer.optString("kind")))continue;
@@ -108,7 +108,7 @@ final class AutoPairing implements AutoCloseable {
             com.colin.clipbridge.Network.register(config,device);done=true;
         }
         if(!done)throw new IOException(context.getString(R.string.pair_invalid));
-        Config.save(context,config);SyncState.registered(context,device);Config.status(context,R.string.status_paired);RegistrationWorker.schedule(context);listener.paired();
+        Config.save(context,config);SyncState.registered(context,device);Config.status(context,R.string.status_paired);RegistrationWorker.retry(context);listener.paired();
     }
     private static final class PairNotReady extends IOException {}
     private String request(Computer pc,String operation,String body)throws Exception {

@@ -42,6 +42,8 @@ Text and one image. Your own devices. Free and open source.
 
 **Current release: 0.1.4 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
 
+[Code signing policy](CODE_SIGNING_POLICY.md): SignPath Foundation application pending. Existing Windows downloads remain unsigned.
+
 ## Made for the clipboard
 
 > [!NOTE]

@@ -42,6 +42,6 @@ final class SyncState {
             WorkManager.getInstance(c).cancelAllWorkByTag("receive-files");
             c.getSystemService(android.app.NotificationManager.class).cancel(1);
         }
-        if(Config.prefs(c).contains("config"))RegistrationWorker.schedule(c);
+        if(Config.prefs(c).contains("config"))RegistrationWorker.retry(c);
     }
 }

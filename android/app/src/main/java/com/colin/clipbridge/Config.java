@@ -62,6 +62,7 @@ public final class Config {
         if(prefs(c).contains("config")&&!SyncState.ready(c)&&!"registration_failed".equals(prefs(c).getString("statusKey","")))return c.getString(R.string.sync_restoring);
         try {
             String name=prefs(c).getString("statusKey","");int id=c.getResources().getIdentifier(name,"string",c.getPackageName());
+            if(("sync_restoring".equals(name)||"registration_failed".equals(name))&&SyncState.ready(c))return c.getString(R.string.status_paired);
             if(id==0)return c.getString(prefs(c).contains("config")?R.string.status_paired:R.string.status_unpaired);
             org.json.JSONArray values=new org.json.JSONArray(prefs(c).getString("statusArgs","[]"));Object[] args=new Object[values.length()];for(int i=0;i<args.length;i++)args[i]=values.getString(i);return c.getString(id,args);
         }catch(Exception e){return c.getString(R.string.status_unpaired);}

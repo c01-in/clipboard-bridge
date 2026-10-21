@@ -10,8 +10,7 @@ final class PushRegistration {
     private static CompletableFuture<JSONObject> waiting;
     private static String requested="";
     static void refresh(Context context){
-        Config.prefs(context).edit().remove("subscription").remove("subscriptionIv").apply();
-        RegistrationWorker.schedule(context);
+        RegistrationWorker.retry(context);
     }
     static JSONObject ensure(Context context,JSONObject configuration)throws Exception {
         String vapid=configuration.getString("vapid");CompletableFuture<JSONObject> future;
@@ -25,12 +24,26 @@ final class PushRegistration {
             }
             future=waiting;
         }
-        return future.get(25,TimeUnit.SECONDS);
+        try{return future.get(25,TimeUnit.SECONDS);}
+        catch(java.util.concurrent.TimeoutException e){
+            synchronized(PushRegistration.class){if(waiting==future)waiting=null;}
+            throw new java.io.IOException(context.getString(R.string.registration_timeout),e);
+        }
     }
     static synchronized void completed(Context context,JSONObject subscription)throws Exception {
         String vapid=Config.prefs(context).getString("requestedVapid","");
         if(vapid.isEmpty())throw new IllegalStateException("Missing VAPID registration");
-        Config.saveSubscription(context,new JSONObject().put("vapid",vapid).put("subscription",subscription));
+        synchronized(SyncState.LOCK){
+            boolean changed=true;
+            try{
+                JSONObject saved=Config.subscription(context),previous=saved.getJSONObject("subscription");
+                changed=!vapid.equals(saved.getString("vapid"))||!previous.getString("endpoint").equals(subscription.getString("endpoint"))
+                    ||!previous.getJSONObject("keys").getString("p256dh").equals(subscription.getJSONObject("keys").getString("p256dh"))
+                    ||!previous.getJSONObject("keys").getString("auth").equals(subscription.getJSONObject("keys").getString("auth"));
+            }catch(Exception ignored){}
+            Config.saveSubscription(context,new JSONObject().put("vapid",vapid).put("subscription",subscription));
+            if(changed)Config.prefs(context).edit().remove("registeredGeneration").commit();
+        }
         if(waiting!=null)waiting.complete(subscription);
         if(Config.prefs(context).contains("config")&&!Config.prefs(context).contains("pending"))RegistrationWorker.schedule(context);
     }

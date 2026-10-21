@@ -9,10 +9,7 @@ if (!$Gradle) { $Gradle = Join-Path $taskRoot 'android\gradlew.bat' }
 $taskDist=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskRoot 'dist'}
 $env:CLIPBRIDGE_DIST=$taskDist
 New-Item -ItemType Directory -Path $taskDist -Force | Out-Null
-foreach ($taskProject in @(@('Service','service'),@('Tray','tray'),@('Cli','cli'))) {
-    & dotnet publish (Join-Path $taskRoot "windows\$($taskProject[0])\$($taskProject[0]).csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $taskDist "windows\$($taskProject[1])") --nologo --disable-build-servers -m:1
-    if ($LASTEXITCODE -ne 0) { throw 'Windows 编译失败' }
-}
+& (Join-Path $PSScriptRoot 'Build-Windows.ps1') -OutputDirectory $taskDist
 $env:JAVA_HOME=$JavaHome;$env:ANDROID_HOME=$AndroidSdk
 $env:Path=(Join-Path $JavaHome 'bin')+';'+$env:Path
 if($UseEnvironmentSigning){

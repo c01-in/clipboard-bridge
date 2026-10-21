@@ -130,7 +130,8 @@
     <string name="installer_log">Consulte o log de instalação: %1$s</string>
     <string name="sync_enabled">Sincronizar área de transferência</string>
     <string name="sync_paused">Sincronização pausada</string>
-    <string name="sync_restoring">Retomando… Aguardando confirmação do computador.</string>
+    <string name="sync_restoring">Reconectando automaticamente…</string>
+    <string name="registration_timeout">O serviço de notificações não respondeu ao registro. Tente novamente.</string>
     <string name="sync_pause_help">Envio e recebimento pausados. O pareamento é mantido; conteúdos antigos não serão aplicados ao retomar.</string>
     <string name="phone_paused">A sincronização do celular está pausada. Retome no celular.</string>
     <string name="push_not_registered">Abra o app atualizado do celular para concluir o registro automático.</string>

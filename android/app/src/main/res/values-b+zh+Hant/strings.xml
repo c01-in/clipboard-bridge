@@ -130,7 +130,8 @@
     <string name="installer_log">請查看安裝記錄：%1$s</string>
     <string name="sync_enabled">剪貼簿同步</string>
     <string name="sync_paused">同步已暫停</string>
-    <string name="sync_restoring">正在恢復，等待電腦確認。</string>
+    <string name="sync_restoring">正在自動恢復連線…</string>
+    <string name="registration_timeout">推播服務未回應註冊要求，請重試。</string>
     <string name="sync_pause_help">已暫停傳送和接收，保留配對。恢復後不會補寫舊內容。</string>
     <string name="phone_paused">手機同步已暫停，請在手機上恢復。</string>
     <string name="push_not_registered">請開啟更新後的手機 App，自動完成推播註冊。</string>

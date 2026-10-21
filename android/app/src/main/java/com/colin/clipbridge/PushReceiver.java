@@ -18,7 +18,7 @@ public final class PushReceiver extends MessagingReceiver {
         }catch(Exception e){PushRegistration.failed(e.getMessage());Config.status(context,R.string.registration_failed,e.getMessage());}
     }
     @Override public void onRegistrationFailed(Context context,FailedReason reason,String instance){PushRegistration.failed(reason.toString());Config.status(context,R.string.registration_failed,reason.toString());}
-    @Override public void onUnregistered(Context context,String instance){Config.prefs(context).edit().remove("subscription").remove("subscriptionIv").apply();RegistrationWorker.schedule(context);}
+    @Override public void onUnregistered(Context context,String instance){synchronized(SyncState.LOCK){Config.prefs(context).edit().remove("subscription").remove("subscriptionIv").remove("registeredGeneration").commit();}RegistrationWorker.retry(context);}
     @Override public void onMessage(Context context,PushMessage message,String instance){
         if(!message.getDecrypted())return;
         try{

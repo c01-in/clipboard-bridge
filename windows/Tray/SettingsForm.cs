@@ -7,6 +7,7 @@ sealed class SettingsForm : Form
 {
     readonly Label state = new() { AutoSize = true };
     readonly Label searchState = new() { AutoSize = true };
+    readonly Label pairingHelp;
     readonly ListBox phones = new() { Height = 126, Dock = DockStyle.Top, IntegralHeight = false, HorizontalScrollbar = true };
     readonly Button approve = new() { AutoSize = true, Enabled = false };
     readonly TextBox addresses = new() { Dock = DockStyle.Top };
@@ -31,15 +32,7 @@ sealed class SettingsForm : Form
             var label = new Label { Text = UiText.Get(key), AutoSize = true, Margin = new Padding(0, 0, 0, 12), Font = new Font(Font.FontFamily, size, size > 15 ? FontStyle.Bold : FontStyle.Regular) };
             wrapping.Add(label); content.Controls.Add(label); return label;
         }
-        Label("win_heading", 23); Label("win_description");
         state.Text = UiText.Get("win_connecting");state.Margin = new Padding(0, 0, 0, 20);wrapping.Add(state);content.Controls.Add(state);
-        Label("win_pair_heading", 16);Label("win_pair_help");
-        content.Controls.Add(phones);searchState.Margin = new Padding(0, 10, 0, 10);wrapping.Add(searchState);content.Controls.Add(searchState);
-        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0, 0, 0, 14) };
-        actions.Controls.Add(Button("win_search_phones", async () => { await Ipc.Call(new Command("pairing-open")); await RefreshStatus(); }));
-        approve.Text = UiText.Get("confirm_pair");approve.Click += async (_, _) => { try { await Approve(); } catch (Exception e) { MessageBox.Show(UiText.Translate(e.Message), UiText.Get("app_name")); } };actions.Controls.Add(approve);content.Controls.Add(actions);
-        phones.SelectedIndexChanged += (_, _) => approve.Enabled = phones.SelectedItem is PhoneRow row && !row.Peer.ComputerApproved && !row.Peer.Completed;
-        content.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
         Label("files_folder_heading", 16);
         var folder = new TextBox { ReadOnly = true, Dock = DockStyle.Top, Text = FilePreferences.SaveDirectory };
         content.Controls.Add(folder);
@@ -50,10 +43,24 @@ sealed class SettingsForm : Form
             return Task.CompletedTask;
         }));
         content.Controls.Add(fileProgressText); wrapping.Add(fileProgressText); content.Controls.Add(fileProgress);
+        Label("win_pair_heading", 16);pairingHelp = Label("win_pair_help");pairingHelp.Visible = false;
+        content.Controls.Add(phones);searchState.Margin = new Padding(0, 10, 0, 10);wrapping.Add(searchState);content.Controls.Add(searchState);
+        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0, 0, 0, 14) };
+        actions.Controls.Add(Button("win_search_phones", async () => { await Ipc.Call(new Command("pairing-open")); await RefreshStatus(); }));
+        approve.Text = UiText.Get("confirm_pair");approve.Click += async (_, _) => { try { await Approve(); } catch (Exception e) { MessageBox.Show(UiText.Translate(e.Message), UiText.Get("app_name")); } };actions.Controls.Add(approve);content.Controls.Add(actions);
+        phones.SelectedIndexChanged += (_, _) => approve.Enabled = phones.SelectedItem is PhoneRow row && !row.Peer.ComputerApproved && !row.Peer.Completed;
+        content.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
         var advanced = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Top, ColumnCount = 1, Visible = false, Margin = new Padding(0, 14, 0, 0) };
         content.Controls.Add(Button("win_advanced", () => { advanced.Visible = !advanced.Visible; return Task.CompletedTask; }));
         var addressLabel = new Label { Text = UiText.Get("win_addresses"), AutoSize = true };wrapping.Add(addressLabel);advanced.Controls.Add(addressLabel);advanced.Controls.Add(addresses);
         advanced.Controls.Add(Button("win_save_addresses", () => Action(new Command("endpoints", Value: addresses.Text))));content.Controls.Add(advanced);
+        var version = new Label
+        {
+            Text = UiText.Get("about_version", typeof(SettingsForm).Assembly.GetName().Version!.ToString(3)),
+            AutoSize = true, Dock = DockStyle.Bottom, ForeColor = SystemColors.GrayText,
+            Padding = new Padding(24, 0, 24, 12)
+        };
+        Controls.Add(version);
         scroll.SizeChanged += (_, _) => { int width = Math.Max(250, scroll.ClientSize.Width - scroll.Padding.Horizontal - 22);content.Width = width; foreach (var label in wrapping) label.MaximumSize = new Size(width, 0); };
         Shown += async (_, _) => { try { await Ipc.Call(new Command("pairing-open")); } catch (Exception e) { state.Text = UiText.Get("win_status_error", UiText.Translate(e.Message)); } await RefreshStatus(); };
         timer.Tick += async (_, _) => await RefreshStatus();timer.Start();FormClosed += (_, _) => timer.Dispose();
@@ -78,7 +85,9 @@ sealed class SettingsForm : Form
             var reply = await Ipc.Call(new Command("status"));if (IsDisposed) return;
             using var data = JsonDocument.Parse(reply.Value ?? "{}");var root = data.RootElement;
             string? device = root.GetProperty("device").GetString();
-            state.Text = !root.GetProperty("configured").GetBoolean() ? UiText.Get("win_setup_needed") : UiText.Get(device is null ? "win_no_phone" : "win_connected_device", device is null ? reply.Message : device, reply.Message);
+            bool configured = root.GetProperty("configured").GetBoolean();
+            pairingHelp.Visible = !configured;
+            state.Text = !configured ? UiText.Get("status_unpaired") : UiText.Get(device is null ? "win_no_phone" : "win_connected_device", device is null ? reply.Message : device, reply.Message);
             if (!addresses.Focused && addresses.Text.Length == 0) addresses.Text = string.Join(",", root.GetProperty("endpoints").EnumerateArray().Select(e => e.GetString()));
             var transfer = await Ipc.Call(new Command("files-incoming-status"));
             if (transfer.Ok && transfer.Value is not null)
@@ -95,6 +104,7 @@ sealed class SettingsForm : Form
             string? selected = (phones.SelectedItem as PhoneRow)?.Peer.Id;phones.BeginUpdate();phones.Items.Clear();
             foreach (var peer in pairing.Phones) phones.Items.Add(new PhoneRow(peer));
             phones.EndUpdate();int index = pairing.Phones.ToList().FindIndex(p => p.Id == selected);if (phones.Items.Count > 0) phones.SelectedIndex = index >= 0 ? index : 0;
+            phones.Visible = approve.Visible = phones.Items.Count > 0;
             searchState.Text = UiText.Get(pairing.Searching ? "win_searching" : "win_search_expired");
         }
         catch (Exception e) { if (!IsDisposed) state.Text = e is TimeoutException or OperationCanceledException ? UiText.Get("win_connect_retry") : e is UnauthorizedAccessException ? UiText.Get("win_permission_error") : UiText.Get("win_status_error", UiText.Translate(e.Message)); }

@@ -12,6 +12,13 @@ static class Program
     public static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.SequenceEqual(new[]{"--share-identity"})) { Console.WriteLine(ShareFiles.Identity()); return; }
+        var share = ShareFiles.Activated();
+        if (share is not null)
+        {
+            using (share) Application.Run(new FileSendForm(share));
+            return;
+        }
         if (args.Length > 0 && args[0] == "--send-files")
         {
             if (args.Length > 1) Application.Run(new FileSendForm(args.Skip(1).ToArray()));

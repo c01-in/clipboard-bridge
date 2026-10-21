@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
     private int discoveryGeneration;
     private final Runnable refresh=new Runnable(){public void run(){if(visible){refreshSync();handler.postDelayed(this,1500);}}};
     private void refreshSync(){
+        Notices.dismissViewed(this);
         status.setText(Config.statusText(this));updatingSwitch=true;syncSwitch.setChecked(!SyncState.paused(this));updatingSwitch=false;
         if(SyncState.paused(this))sendStatus.setText(R.string.sync_pause_help);
         if(!sending)sendButton.setEnabled(Config.prefs(this).contains("config")&&SyncState.ready(this));
@@ -162,7 +163,7 @@ public class MainActivity extends Activity {
         if(request==41)share.putExtra(Intent.EXTRA_STREAM,uris.get(0));else share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
         startActivity(share);
     }
-    @Override protected void onResume(){super.onResume();visible=true;handler.post(refresh);updatePermissionCard();if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));handler.post(()->{if(visible)requestNotifications(false);});}
+    @Override protected void onResume(){super.onResume();visible=true;handler.post(refresh);updatePermissionCard();if(Config.prefs(this).contains("config")&&!SyncState.ready(this))RegistrationWorker.schedule(this);startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));handler.post(()->{if(visible)requestNotifications(false);});}
     @Override protected void onPause(){visible=false;++discoveryGeneration;handler.removeCallbacks(refresh);if(pairing!=null){pairing.close();pairing=null;}super.onPause();}
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);updatePermissionCard();if(visible)startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));}
     @Override protected void onDestroy(){if(pairing!=null)pairing.close();sender.shutdown();super.onDestroy();}

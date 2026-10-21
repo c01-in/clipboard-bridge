@@ -130,7 +130,8 @@
     <string name="installer_log">Consultez le journal d’installation : %1$s</string>
     <string name="sync_enabled">Synchroniser le presse-papiers</string>
     <string name="sync_paused">Synchronisation en pause</string>
-    <string name="sync_restoring">Reprise… En attente de confirmation de l’ordinateur.</string>
+    <string name="sync_restoring">Reconnexion automatique…</string>
+    <string name="registration_timeout">Le service de notifications n’a pas répondu à l’enregistrement. Veuillez réessayer.</string>
     <string name="sync_pause_help">Envoi et réception en pause. L’association est conservée ; les anciens contenus ne seront pas appliqués à la reprise.</string>
     <string name="phone_paused">La synchronisation du téléphone est en pause. Reprenez-la sur le téléphone.</string>
     <string name="push_not_registered">Ouvrez l’app mise à jour du téléphone pour terminer l’inscription automatique.</string>
