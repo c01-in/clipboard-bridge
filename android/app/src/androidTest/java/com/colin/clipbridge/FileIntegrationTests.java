@@ -37,6 +37,11 @@ public final class FileIntegrationTests {
     }
     @After public void cleanup()throws Exception{
         if(context==null)return;
+        FileSendService.State sending=FileSendService.state;
+        if(sending!=null&&sending.running){
+            context.startService(new Intent(context,FileSendService.class).setAction("cancel").putExtra("jobId",sending.id));
+            long until=System.currentTimeMillis()+35000;while(System.currentTimeMillis()<until&&sending.running)Thread.sleep(50);
+        }
         if(activity!=null)instrumentation.runOnMainSync(()->activity.finish());
         WorkManager.getInstance(context).cancelAllWork().getResult().get(5,TimeUnit.SECONDS);
         File[] journals=new File(context.getFilesDir(),"file-receipts").listFiles();
@@ -113,6 +118,26 @@ public final class FileIntegrationTests {
             assertEquals(before,new JSONArray(Network.request(config,"/test/saved",null,65536)).length());
             assertEquals(0,Config.prefs(context).getLong("outgoingSequence",0));
         }finally{file.delete();}
+    }
+    @Test public void notificationCancelStopsTheActualForegroundService()throws Exception{
+        String previous=FileSendService.state==null?"":FileSendService.state.id;
+        Instrumentation.ActivityMonitor monitor=instrumentation.addMonitor(FileShareActivity.class.getName(),null,false);
+        context.startActivity(new Intent().setClassName(instrumentation.getContext().getPackageName(),ShareSourceActivity.class.getName()).putExtra("mode","files").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        activity=monitor.waitForActivityWithTimeout(10000);instrumentation.removeMonitor(monitor);assertNotNull(activity);
+        long until=System.currentTimeMillis()+20000;
+        while(System.currentTimeMillis()<until&&(FileSendService.state==null||FileSendService.state.id.equals(previous)||FileSendService.state.bytes==0))Thread.sleep(25);
+        FileSendService.State state=FileSendService.state;assertNotNull(state);assertNotEquals("A new transfer did not start",previous,state.id);assertTrue("No chunk uploaded",state.bytes>0);assertTrue("Transfer stopped before cancellation: "+state.error,state.running);
+        context.startService(new Intent(context,FileSendService.class).setAction("cancel").putExtra("jobId",FileTransfer.id()));
+        Thread.sleep(100);assertTrue("A stale notification cancelled a newer transfer",state.running);assertTrue(senderServiceRunning());
+        context.startService(new Intent(context,FileSendService.class).setAction("cancel").putExtra("jobId",state.id));
+        until=System.currentTimeMillis()+40000;
+        while(System.currentTimeMillis()<until&&(state.running||senderServiceRunning()))Thread.sleep(50);
+        assertFalse(state.running);assertFalse(state.success);assertFalse("Cancel left the Android service started",senderServiceRunning());
+        try{Network.request(config,"/test/save","{}",4096);fail("Cancelled batch was ready for saving");}catch(Exception expected){assertNotNull(expected.getMessage());}
+    }
+    @SuppressWarnings("deprecation") private boolean senderServiceRunning(){
+        for(ActivityManager.RunningServiceInfo info:context.getSystemService(ActivityManager.class).getRunningServices(100))if(FileSendService.class.getName().equals(info.service.getClassName()))return true;
+        return false;
     }
     private static String hash(InputStream input)throws Exception{MessageDigest digest=MessageDigest.getInstance("SHA-256");byte[] buffer=new byte[65536];int n;while((n=input.read(buffer))!=-1)digest.update(buffer,0,n);return FileTransfer.hex(digest.digest());}
     private void captureActivityView(String name,boolean requireProgress)throws Exception{

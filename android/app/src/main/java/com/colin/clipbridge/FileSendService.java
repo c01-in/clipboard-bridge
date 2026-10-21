@@ -19,10 +19,17 @@ public final class FileSendService extends Service {
         State(String id){this.id=id;}
     }
     static volatile State state;
+    private int latestStartId;
     @Override public IBinder onBind(Intent intent){return null;}
     @Override public int onStartCommand(Intent intent,int flags,int startId){
+        latestStartId=startId;
         if(intent==null){stopSelf(startId);return START_NOT_STICKY;}
-        if("cancel".equals(intent.getAction())){State s=state;if(s!=null&&s.id.equals(intent.getStringExtra("jobId")))s.cancelled.set(true);return START_NOT_STICKY;}
+        if("cancel".equals(intent.getAction())){
+            State s=state;
+            if(s!=null&&s.running){if(s.id.equals(intent.getStringExtra("jobId")))s.cancelled.set(true);}
+            else stopSelf(startId);
+            return START_NOT_STICKY;
+        }
         if(state!=null&&state.running)return START_NOT_STICKY;
         State job=new State(intent.getStringExtra("jobId"));state=job;
         Notification notification=notice(job);
@@ -45,7 +52,8 @@ public final class FileSendService extends Service {
                     Config.status(this,job.success?R.string.files_sent:R.string.send_failed,job.error);
                     if(Build.VERSION.SDK_INT<33||checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)
                         getSystemService(NotificationManager.class).notify(21,Notices.create(this,result));
-                    stopSelf(startId);
+                    // A notification Cancel intent also receives a new startId.
+                    stopSelf(latestStartId);
                 });
             }
         },"ClipboardBridge-file-send").start();
