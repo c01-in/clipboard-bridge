@@ -28,6 +28,12 @@ public final class PushReceiver extends MessagingReceiver {
             if(manifest.getLong("expiresAt")<=System.currentTimeMillis())return;
             synchronized(SyncState.LOCK){
                 if(!SyncState.accepts(context,manifest.optString("receiveGeneration")))return;
+                if("application/vnd.clipboardbridge.files".equals(manifest.optString("mime"))){
+                    String id=manifest.getString("id");if(!id.matches("[0-9a-f]{32}"))return;
+                    OneTimeWorkRequest files=new OneTimeWorkRequest.Builder(FileReceiveWorker.class).setInputData(new Data.Builder().putString("box",box).build())
+                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).setBackoffCriteria(BackoffPolicy.LINEAR,10,java.util.concurrent.TimeUnit.SECONDS).addTag("receive-files").build();
+                    WorkManager.getInstance(context).enqueueUniqueWork("receive-files-"+id,ExistingWorkPolicy.KEEP,files);return;
+                }
                 long sequence=manifest.getLong("sequence");if(sequence<=Config.prefs(context).getLong("latestScheduledSequence",0))return;
                 if(!Config.prefs(context).edit().putLong("latestScheduledSequence",sequence).commit())return;
                 Notices.show(context,R.string.receiving);

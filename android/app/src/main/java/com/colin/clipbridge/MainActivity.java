@@ -46,6 +46,8 @@ public class MainActivity extends Activity {
         permissionCard=new LinearLayout(this);permissionCard.setOrientation(LinearLayout.VERTICAL);layout.addView(permissionCard);
         text(permissionCard,R.string.notification_required,15);button(permissionCard,R.string.enable_notifications,()->requestNotifications(true));
         sendButton=button(layout,R.string.send_clipboard,this::sendClipboard);
+        button(layout,R.string.files_clipboard_image,()->pickFiles(true));
+        button(layout,R.string.files_choose,()->pickFiles(false));
         sendStatus=text(layout,R.string.send_help,15);
         connection=new LinearLayout(this);connection.setOrientation(LinearLayout.VERTICAL);layout.addView(connection);
         text(connection,R.string.connection_heading,21);text(connection,R.string.discovery_help,15);
@@ -55,11 +57,12 @@ public class MainActivity extends Activity {
     }
     private void showMenu(android.view.View anchor){
         PopupMenu menu=new PopupMenu(this,anchor);
-        menu.getMenu().add(0,1,0,R.string.change_computer);menu.getMenu().add(0,2,1,R.string.reconnect);menu.getMenu().add(0,4,2,R.string.download_windows);menu.getMenu().add(0,5,3,R.string.privacy_policy);menu.getMenu().add(0,3,4,R.string.about);
+        menu.getMenu().add(0,1,0,R.string.change_computer);menu.getMenu().add(0,2,1,R.string.reconnect);menu.getMenu().add(0,6,2,R.string.files_choose_receive_folder);menu.getMenu().add(0,4,3,R.string.download_windows);menu.getMenu().add(0,5,4,R.string.privacy_policy);menu.getMenu().add(0,3,5,R.string.about);
         menu.setOnMenuItemClickListener(item->{
             if(item.getItemId()==1){choosingComputer=true;startDiscovery(true);}
             else if(item.getItemId()==2){choosingComputer=false;if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(!Config.prefs(this).contains("config"));}
             else if(item.getItemId()==4)showWindowsDownload();
+            else if(item.getItemId()==6)startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION),43);
             else if(item.getItemId()==5){try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(CompanionLinks.PRIVACY)));}catch(ActivityNotFoundException e){Toast.makeText(this,R.string.link_unavailable,Toast.LENGTH_LONG).show();}}
             else {String version;try{version=getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(PackageManager.NameNotFoundException e){throw new IllegalStateException(e);}
                 new AlertDialog.Builder(this).setTitle(R.string.about).setMessage(getString(R.string.about_version,version)+"\n\n"+getString(R.string.notification_help)).setPositiveButton(android.R.string.ok,null).show();}
@@ -129,6 +132,35 @@ public class MainActivity extends Activity {
                 final String message=result;runOnUiThread(()->{sending=false;if(!isDestroyed()){sendStatus.setText(message);refreshSync();}});
             });
         }catch(Exception e){sendStatus.setText(getString(R.string.send_failed,e.getMessage()));}
+    }
+    private void pickFiles(boolean clipboard){
+        if(!SyncState.ready(this)){sendStatus.setText(R.string.sync_paused);return;}
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType(clipboard?"image/*":"*/*").addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE,!clipboard).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try{startActivityForResult(intent,clipboard?41:42);}catch(ActivityNotFoundException e){sendStatus.setText(R.string.files_picker_unavailable);}
+    }
+    @Override protected void onActivityResult(int request,int result,Intent data){
+        super.onActivityResult(request,result,data);
+        if(request==43&&result==RESULT_OK&&data!=null&&data.getData()!=null){
+            try{
+                int required=Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                if((data.getFlags()&required)!=required)throw new Exception(getString(R.string.files_folder_invalid));
+                getContentResolver().takePersistableUriPermission(data.getData(),Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                Config.prefs(this).edit().putString("receiveFolder",data.getData().toString()).apply();sendStatus.setText(R.string.files_folder_saved);
+            }
+            catch(Exception e){sendStatus.setText(getString(R.string.files_save_failed,e.getMessage()));}return;
+        }
+        if((request!=41&&request!=42)||result!=RESULT_OK||data==null)return;
+        java.util.ArrayList<android.net.Uri> uris=new java.util.ArrayList<>();
+        if(data.getClipData()!=null){for(int i=0;i<data.getClipData().getItemCount();i++)uris.add(data.getClipData().getItemAt(i).getUri());}
+        else if(data.getData()!=null)uris.add(data.getData());
+        if(uris.isEmpty())return;
+        if(request==41&&uris.size()!=1){sendStatus.setText(R.string.error_one_item);return;}
+        Intent share=new Intent(this,ShareActivity.class).setAction(request==41?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE)
+            .setType(request==41?"image/*":"*/*").putExtra("asFiles",request==42).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        ClipData clip=ClipData.newRawUri("",uris.get(0));for(int i=1;i<uris.size();i++)clip.addItem(new ClipData.Item(uris.get(i)));share.setClipData(clip);
+        if(request==41)share.putExtra(Intent.EXTRA_STREAM,uris.get(0));else share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
+        startActivity(share);
     }
     @Override protected void onResume(){super.onResume();visible=true;handler.post(refresh);updatePermissionCard();if(Config.prefs(this).contains("config"))PushRegistration.refresh(this);startDiscovery(choosingComputer||!Config.prefs(this).contains("config"));handler.post(()->{if(visible)requestNotifications(false);});}
     @Override protected void onPause(){visible=false;++discoveryGeneration;handler.removeCallbacks(refresh);if(pairing!=null){pairing.close();pairing=null;}super.onPause();}

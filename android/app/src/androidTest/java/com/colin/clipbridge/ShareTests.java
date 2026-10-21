@@ -74,7 +74,8 @@ public class ShareTests {
             Intent intent=new Intent(Intent.ACTION_SEND).setType(type).setPackage(context.getPackageName());
             assertTrue(context.getPackageManager().queryIntentActivities(intent,0).stream().anyMatch(info->info.activityInfo.name.equals(ShareActivity.class.getName())));
         }
-        assertTrue(context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_SEND).setType("application/pdf").setPackage(context.getPackageName()),0).isEmpty());
+        assertFalse(context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_SEND).setType("application/pdf").setPackage(context.getPackageName()),0).isEmpty());
+        assertFalse(context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_SEND_MULTIPLE).setType("*/*").setPackage(context.getPackageName()),0).isEmpty());
     }
     @Test public void successfulReceiveHasNoDuplicateNotificationOnModernAndroid()throws Exception{
         if(Build.VERSION.SDK_INT>=33)instrumentation.getUiAutomation().grantRuntimePermission(context.getPackageName(),android.Manifest.permission.POST_NOTIFICATIONS);
@@ -139,6 +140,7 @@ public class ShareTests {
                 Instrumentation.ActivityMonitor monitor=instrumentation.addMonitor(ShareActivity.class.getName(),null,false);
                 context.startActivity(new Intent().setClassName(instrumentation.getContext().getPackageName(),ShareSourceActivity.class.getName()).putExtra("mode",mode).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));
                 activity=monitor.waitForActivityWithTimeout(10000);instrumentation.removeMonitor(monitor);assertNotNull("Share target was not launched",activity);
+                if("text".equals(mode))tapSend();
                 byte[] content=peer.completed.get(10,TimeUnit.SECONDS);
                 if("text".equals(mode))assertEquals("External source → Windows 📋",new String(content,StandardCharsets.UTF_8));
                 else{
@@ -160,7 +162,23 @@ public class ShareTests {
         }
     }
     private Activity launch(Intent intent){
-        return instrumentation.startActivitySync(intent.setClass(context,ShareActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Activity result=instrumentation.startActivitySync(intent.setClass(context,ShareActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        activity=result;
+        if("text/plain".equals(intent.getType()))tapSend();
+        return result;
+    }
+    private void tapSend(){instrumentation.runOnMainSync(()->click(activity.getWindow().getDecorView(),context.getString(R.string.send_clipboard)));}
+    private boolean click(View view,String text){
+        if(view instanceof android.widget.Button&&text.contentEquals(((TextView)view).getText())){view.performClick();return true;}
+        if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)if(click(((ViewGroup)view).getChildAt(i),text))return true;
+        return false;
+    }
+    @Test public void sharedTextRequiresExplicitSend()throws Exception{
+        try(Peer peer=new Peer()){
+            configure(peer);activity=instrumentation.startActivitySync(text("Manual text").setClass(context,ShareActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            instrumentation.waitForIdleSync();Thread.sleep(500);assertEquals(0,peer.requests);
+            tapSend();peer.allowReceipt.countDown();assertEquals("Manual text",new String(peer.completed.get(10,TimeUnit.SECONDS),StandardCharsets.UTF_8));
+        }
     }
     private void configure(Peer peer)throws Exception{
         Config.save(context,new JSONObject().put("key",peer.key).put("endpoints",new JSONArray().put("http://127.0.0.1:"+peer.server.getLocalPort())));

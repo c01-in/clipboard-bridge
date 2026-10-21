@@ -1,1 +1,11 @@
-<Project><PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><Version>0.1.4</Version><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><EnableWindowsTargeting>true</EnableWindowsTargeting><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Version>0.2.0</Version>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <BaseIntermediateOutputPath Condition="'$(CLIPBRIDGE_BUILD_ROOT)' != ''">$(CLIPBRIDGE_BUILD_ROOT)/dotnet/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition="'$(CLIPBRIDGE_BUILD_ROOT)' != ''">$(CLIPBRIDGE_BUILD_ROOT)/dotnet/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <DefaultItemExcludes Condition="'$(CLIPBRIDGE_BUILD_ROOT)' != ''">$(DefaultItemExcludes);$(MSBuildProjectDirectory)/obj/**;$(MSBuildProjectDirectory)/bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

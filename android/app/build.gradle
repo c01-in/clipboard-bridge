@@ -3,7 +3,7 @@ android {
     namespace 'com.colin.clipbridge'
     compileSdk 36
     buildToolsVersion '36.0.0'
-    defaultConfig { applicationId 'com.colin.clipbridge'; minSdk 26; targetSdk 36; versionCode 8; versionName '0.1.4'; testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
+    defaultConfig { applicationId 'com.colin.clipbridge'; minSdk 26; targetSdk 36; versionCode 9; versionName '0.2.0'; testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {
         release {
@@ -32,7 +32,7 @@ dependencies {
 }
 tasks.register('bundleUnifiedPushSources', Zip) {
     archiveFileName = 'ClipboardBridge-Android-Library-Sources.zip'
-    destinationDirectory = rootProject.layout.projectDirectory.dir('../dist')
+    destinationDirectory = System.getenv('CLIPBRIDGE_DIST') ? file(System.getenv('CLIPBRIDGE_DIST')) : rootProject.layout.projectDirectory.dir('../dist')
     from configurations.unifiedPushSources
     from('src/main/assets/third-party')
     from(rootProject.file('../THIRD_PARTY_NOTICES.md'))

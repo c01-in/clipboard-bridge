@@ -18,6 +18,11 @@ static class PairingChecks
         {
             var repo = new DirectoryInfo(AppContext.BaseDirectory);
             while (repo is not null && !File.Exists(Path.Combine(repo.FullName, "android/app/src/main/java/com/colin/clipbridge/PairingIdentity.java"))) repo = repo.Parent;
+            if (repo is null)
+            {
+                repo = new DirectoryInfo(Directory.GetCurrentDirectory());
+                while (repo is not null && !File.Exists(Path.Combine(repo.FullName, "android/app/src/main/java/com/colin/clipbridge/PairingIdentity.java"))) repo = repo.Parent;
+            }
             if (repo is null) throw new DirectoryNotFoundException("Cannot locate actual Android pairing source");
             string home = Environment.GetEnvironmentVariable("JAVA_HOME") ?? "";
             string Tool(string tool) => home.Length > 0 ? Path.Combine(home, "bin", tool + ".exe") : tool;

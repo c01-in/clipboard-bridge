@@ -10,6 +10,8 @@ sealed class SettingsForm : Form
     readonly ListBox phones = new() { Height = 126, Dock = DockStyle.Top, IntegralHeight = false, HorizontalScrollbar = true };
     readonly Button approve = new() { AutoSize = true, Enabled = false };
     readonly TextBox addresses = new() { Dock = DockStyle.Top };
+    readonly Label fileProgressText = new() { AutoSize = true, Visible = false };
+    readonly ProgressBar fileProgress = new() { Dock = DockStyle.Top, Maximum = 1000, Visible = false };
     readonly System.Windows.Forms.Timer timer = new() { Interval = 2000 };
     readonly List<Label> wrapping = [];
     bool refreshing;
@@ -38,6 +40,16 @@ sealed class SettingsForm : Form
         approve.Text = UiText.Get("confirm_pair");approve.Click += async (_, _) => { try { await Approve(); } catch (Exception e) { MessageBox.Show(UiText.Translate(e.Message), UiText.Get("app_name")); } };actions.Controls.Add(approve);content.Controls.Add(actions);
         phones.SelectedIndexChanged += (_, _) => approve.Enabled = phones.SelectedItem is PhoneRow row && !row.Peer.ComputerApproved && !row.Peer.Completed;
         content.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
+        Label("files_folder_heading", 16);
+        var folder = new TextBox { ReadOnly = true, Dock = DockStyle.Top, Text = FilePreferences.SaveDirectory };
+        content.Controls.Add(folder);
+        content.Controls.Add(Button("files_change_folder", () =>
+        {
+            using var picker = new FolderBrowserDialog { Description = UiText.Get("files_folder_heading"), UseDescriptionForTitle = true, InitialDirectory = FilePreferences.SaveDirectory };
+            if (picker.ShowDialog(this) == DialogResult.OK) { FilePreferences.SaveDirectory = picker.SelectedPath; folder.Text = FilePreferences.SaveDirectory; }
+            return Task.CompletedTask;
+        }));
+        content.Controls.Add(fileProgressText); wrapping.Add(fileProgressText); content.Controls.Add(fileProgress);
         var advanced = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Top, ColumnCount = 1, Visible = false, Margin = new Padding(0, 14, 0, 0) };
         content.Controls.Add(Button("win_advanced", () => { advanced.Visible = !advanced.Visible; return Task.CompletedTask; }));
         var addressLabel = new Label { Text = UiText.Get("win_addresses"), AutoSize = true };wrapping.Add(addressLabel);advanced.Controls.Add(addressLabel);advanced.Controls.Add(addresses);
@@ -68,6 +80,15 @@ sealed class SettingsForm : Form
             string? device = root.GetProperty("device").GetString();
             state.Text = !root.GetProperty("configured").GetBoolean() ? UiText.Get("win_setup_needed") : UiText.Get(device is null ? "win_no_phone" : "win_connected_device", device is null ? reply.Message : device, reply.Message);
             if (!addresses.Focused && addresses.Text.Length == 0) addresses.Text = string.Join(",", root.GetProperty("endpoints").EnumerateArray().Select(e => e.GetString()));
+            var transfer = await Ipc.Call(new Command("files-incoming-status"));
+            if (transfer.Ok && transfer.Value is not null)
+            {
+                var progress = Bridge.Decode<FileTransferStatus>(Encoding.UTF8.GetBytes(transfer.Value));
+                fileProgress.Visible = fileProgressText.Visible = progress.Status is "receiving" or "saving";
+                fileProgress.Style = progress.Total < 0 || progress.Status == "saving" ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous;
+                if (progress.Total > 0) fileProgress.Value = (int)Math.Clamp((double)progress.Bytes / progress.Total * 1000, 0, 1000);
+                fileProgressText.Text = progress.Status == "saving" ? UiText.Get("files_saving_pc") : UiText.Get("files_progress", (progress.Bytes / (1024d * 1024)).ToString("0.0") + " MiB", progress.Total < 0 ? "?" : (progress.Total / (1024d * 1024)).ToString("0.0") + " MiB");
+            }
             var response = await Ipc.Call(new Command("pairing-status"));if (IsDisposed) return;
             if (!response.Ok || response.Value is null) { searchState.Text = response.Message; return; }
             var pairing = Bridge.Decode<PairState>(Encoding.UTF8.GetBytes(response.Value));

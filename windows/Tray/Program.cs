@@ -12,6 +12,11 @@ static class Program
     public static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length > 0 && args[0] == "--send-files")
+        {
+            if (args.Length > 1) Application.Run(new FileSendForm(args.Skip(1).ToArray()));
+            return;
+        }
         using var mutex = new Mutex(true, "Local\\ClipboardBridge.Tray", out bool first);
         bool showSettings = args.Contains("--settings");
         if (!first)
@@ -32,7 +37,7 @@ static class Ipc
     public static async Task<Reply> Call(Command command)
     {
         using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(35));
-        using var pipe = new NamedPipeClientStream(".", Bridge.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        using var pipe = new NamedPipeClientStream(".", Bridge.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation);
         await pipe.ConnectAsync(2000, ct.Token);
         await Bridge.WriteFrame(pipe, Bridge.Encode(command), ct.Token);
         var reply = Bridge.Decode<Reply>(await Bridge.ReadFrame(pipe, ct.Token));
@@ -50,6 +55,7 @@ sealed class TrayContext : ApplicationContext
     readonly SemaphoreSlim sending = new(1, 1);
     bool paused, sendAgain;
     bool receiving;
+    string? failedFileId;
     uint? receivedClipboardSequence;
     string? lastHash;
     string status = UiText.Get("win_connecting");
@@ -59,6 +65,16 @@ sealed class TrayContext : ApplicationContext
         window.SettingsRequested += ShowSettings;
         var menu = new ContextMenuStrip();
         menu.Items.Add(UiText.Get("win_send_now"), null, async (_, _) => await Send(true));
+        menu.Items.Add(UiText.Get("files_choose"), null, (_, _) =>
+        {
+            using var dialog = new OpenFileDialog { Multiselect = true, Title = UiText.Get("files_choose"), CheckFileExists = true };
+            if (dialog.ShowDialog() == DialogResult.OK) new FileSendForm(dialog.FileNames).Show();
+        });
+        menu.Items.Add(UiText.Get("files_open_folder"), null, (_, _) =>
+        {
+            try { Directory.CreateDirectory(FilePreferences.SaveDirectory); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(FilePreferences.SaveDirectory) { UseShellExecute = true }); }
+            catch (Exception e) { Notify(e.Message, true); }
+        });
         var toggle = new ToolStripMenuItem(UiText.Get("win_pause")) { CheckOnClick = true };
         toggle.CheckedChanged += (_, _) => { paused = toggle.Checked; SavePreferences(); icon!.Text = paused ? UiText.Get("win_paused") : UiText.Get("win_automatic"); icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray; }; menu.Items.Add(toggle);
         menu.Items.Add(UiText.Get("win_open_settings"), null, (_, _) => ShowSettings());
@@ -104,6 +120,23 @@ sealed class TrayContext : ApplicationContext
         receiving = true;
         try
         {
+            var files = await Ipc.Call(new Command("files-incoming"));
+            if (files.Ok && files.Value is not null)
+            {
+                var batch = Bridge.Decode<FileInboxBatch>(Encoding.UTF8.GetBytes(files.Value));
+                try
+                {
+                    string[] saved = await Task.Run(() => FileInbox.Save(batch, FilePreferences.SaveDirectory, Path.Combine(FilePreferences.DirectoryPath, "file-receipts")));
+                    var ack = await Ipc.Call(new Command("files-incoming-ack", Value: batch.Id));
+                    if (!ack.Ok) throw new IOException(ack.Message);
+                    File.Delete(Path.Combine(FilePreferences.DirectoryPath, "file-receipts", batch.Id + ".json"));
+                    failedFileId = null; Notify(UiText.Get("files_received", saved.Length, Path.GetDirectoryName(saved[0])), false);
+                }
+                catch (Exception e)
+                {
+                    if (failedFileId != batch.Id) { failedFileId = batch.Id; Notify(UiText.Get("files_save_failed", e.Message), true); }
+                }
+            }
             var reply = await Ipc.Call(new Command("receive"));
             if (!reply.Ok || reply.Value is null) return;
             var clip = Bridge.Decode<IncomingClip>(Encoding.UTF8.GetBytes(reply.Value));

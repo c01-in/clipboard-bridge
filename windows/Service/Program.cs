@@ -26,6 +26,8 @@ builder.Services.AddHostedService<DiscoveryService>();
 builder.Services.AddSingleton(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(20) });
 builder.Services.AddSingleton<WebPushSender>(); builder.Services.AddSingleton<Broker>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Broker>());
+builder.Services.AddSingleton<FileTransfers>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<FileTransfers>());
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -37,6 +39,7 @@ app.Use(async (context, next) =>
     await next(context);
 });
 app.MapGet("/health", () => Results.Json(new { service = "ClipboardBridge", version = 1 }));
+FileTransfers.Map(app);
 AndroidDownload.Map(app, () => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "android", "ClipboardBridge.apk")));
 app.MapPost("/api/pairing/{id}/confirm", (string id, Box body, PairingHub hub, HttpContext context) =>
     PairResult(() => hub.ConfirmPhone(id, body, context.Connection.RemoteIpAddress!.MapToIPv4())));

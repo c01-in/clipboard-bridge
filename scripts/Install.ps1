@@ -67,6 +67,19 @@ $taskShortcut.WorkingDirectory=Join-Path $InstallRoot 'tray'
 $taskShortcut.IconLocation=$taskShortcut.TargetPath+',0'
 $taskShortcut.Description=if((Get-UICulture).TwoLetterISOLanguageName -eq 'zh'){'剪贴板同步：Windows 与 Android 互传文字和图片'}else{'Clipboard Bridge: share text and images with Android'}
 $taskShortcut.Save()
+# Explorer's built-in Send to menu passes the entire multi-selection to one process.
+# This avoids one command invocation (and one separate transfer) per selected file.
+$taskSendToDirectory=[Environment]::GetFolderPath('SendTo')
+foreach($taskOldShortcutName in @('剪贴板同步','Clipboard Bridge')){
+    $taskOldSendTo=Join-Path $taskSendToDirectory ($taskOldShortcutName+'.lnk')
+    if($taskOldShortcutName -ne $taskShortcutName -and (Test-Path -LiteralPath $taskOldSendTo)){Remove-Item -LiteralPath $taskOldSendTo -Force}
+}
+$taskSendTo=$taskShortcutShell.CreateShortcut((Join-Path $taskSendToDirectory ($taskShortcutName+'.lnk')))
+$taskSendTo.TargetPath=Join-Path $InstallRoot 'tray\ClipboardBridge.exe'
+$taskSendTo.Arguments='--send-files'
+$taskSendTo.IconLocation=$taskSendTo.TargetPath+',0'
+$taskSendTo.WorkingDirectory=Join-Path $InstallRoot 'tray'
+$taskSendTo.Save()
 Start-Service ClipboardBridge
 if(!$NoStartTray){Start-Process -FilePath (Join-Path $InstallRoot 'tray\ClipboardBridge.exe') -WindowStyle Hidden}
 Write-Host "已安装并启动。推送身份与配对密钥保存在 $taskDataDir，后续升级会保留。"

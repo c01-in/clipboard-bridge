@@ -44,6 +44,9 @@ Text and one image. Your own devices. Free and open source.
 
 ## Made for the clipboard
 
+> [!NOTE]
+> **In development: 0.2.0 file sharing.** Send multiple photos, videos and other files through Android’s share sheet or system picker; save them to a configurable Windows folder. Windows adds multi-file sending through the tray and Explorer’s **Send to → Clipboard Bridge** menu. Both sides show progress. Clipboard mode remains text or one image. This update is **not published yet**; the links above still download 0.1.4. See [file-transfer behavior and testing](docs/file-transfers.md).
+
 | | What you get |
 | :--- | :--- |
 | **🖥️ Copy on Windows** | Text or one image is sent automatically. Prefer control? Use `Ctrl+Alt+V` or the tray menu. |

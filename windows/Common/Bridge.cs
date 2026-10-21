@@ -77,6 +77,8 @@ public sealed class Configuration
     public long OutgoingSequence { get; set; }
     public long IncomingSequence { get; set; }
     public string? IncomingId { get; set; }
+    public long FileIncomingSequence { get; set; }
+    public string? FileIncomingId { get; set; }
 }
 
 public sealed class Vault

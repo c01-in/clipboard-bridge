@@ -20,6 +20,13 @@ public final class ShareActivity extends Activity {
     private Button retry,settings,close;
     @Override public void onCreate(Bundle saved){
         super.onCreate(saved);
+        try{
+            if(ShareInput.asFiles(getIntent())){
+                Intent files=new Intent(getIntent()).setClass(this,FileShareActivity.class);
+                files.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(files);finish();return;
+            }
+        }catch(Exception ignored){/* Display a normal, actionable share validation error below. */}
         setTitle(R.string.app_name);
         LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(24*getResources().getDisplayMetrics().density);layout.setPadding(pad,pad,pad,pad);
@@ -33,7 +40,8 @@ public final class ShareActivity extends Activity {
         if(transfer==null){
             transfer=new Transfer(getApplicationContext(),new Intent(getIntent()));
             // A process recreation must not silently send the same share a second time.
-            if(saved==null)transfer.start();
+            if(saved==null&&!transfer.manual)transfer.start();
+            else if(saved==null)transfer.message=getString(R.string.send_help);
             else transfer.message=getString(R.string.share_interrupted);
         }
         transfer.changed=this::render;render();
@@ -41,13 +49,14 @@ public final class ShareActivity extends Activity {
     private void render(){
         if(isDestroyed()||isFinishing())return;
         status.setText(transfer.message);
+        retry.setText(transfer.manual?R.string.send_clipboard:R.string.share_retry);
         retry.setVisibility(transfer.busy||transfer.success?View.GONE:View.VISIBLE);
         settings.setVisibility(transfer.busy||transfer.success?View.GONE:View.VISIBLE);
         close.setVisibility(transfer.busy?View.GONE:View.VISIBLE);
         if(transfer.success){setResult(RESULT_OK);new Handler(Looper.getMainLooper()).postDelayed(()->{if(!isDestroyed())finish();},1200);}
     }
     @Override public Object onRetainNonConfigurationInstance(){return transfer;}
-    @Override protected void onDestroy(){transfer.changed=null;super.onDestroy();}
+    @Override protected void onDestroy(){if(transfer!=null)transfer.changed=null;super.onDestroy();}
 
     private static final class Transfer {
         final Context context;
@@ -55,8 +64,9 @@ public final class ShareActivity extends Activity {
         final Handler handler=new Handler(Looper.getMainLooper());
         Runnable changed;
         boolean busy,success;
+        final boolean manual;
         String message;
-        Transfer(Context context,Intent intent){this.context=context;this.intent=intent;message=context.getString(R.string.send_wait);}
+        Transfer(Context context,Intent intent){this.context=context;this.intent=intent;manual="text/plain".equals(intent.getType())&&!intent.hasExtra(Intent.EXTRA_STREAM);message=context.getString(R.string.send_wait);}
         void start(){
             if(busy||success)return;
             busy=true;message=context.getString(R.string.send_wait);if(changed!=null)changed.run();

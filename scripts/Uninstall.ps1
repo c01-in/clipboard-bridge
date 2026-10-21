@@ -12,6 +12,8 @@ Remove-NetFirewallRule -Name ClipboardBridge-Discovery -ErrorAction SilentlyCont
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name ClipboardBridge -ErrorAction SilentlyContinue
 $taskShortcutDirectory=Join-Path ([Environment]::GetFolderPath('Programs')) 'ClipboardBridge'
 foreach($taskShortcutName in @('剪贴板同步','Clipboard Bridge')){
+    $taskSendToPath=Join-Path ([Environment]::GetFolderPath('SendTo')) ($taskShortcutName+'.lnk')
+    if(Test-Path -LiteralPath $taskSendToPath){Remove-Item -LiteralPath $taskSendToPath -Force}
     $taskShortcutPath=Join-Path $taskShortcutDirectory ($taskShortcutName+'.lnk')
     if(Test-Path -LiteralPath $taskShortcutPath){Remove-Item -LiteralPath $taskShortcutPath -Force}
 }

@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ClipboardBridge;
 
-public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = Bridge.PipeName, PairingHub? pairing = null) : BackgroundService
+public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = Bridge.PipeName, PairingHub? pairing = null, FileTransfers? files = null) : BackgroundService
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly string pendingPath = Path.Combine(vault.DataDir, "pending.json");
@@ -63,7 +63,17 @@ public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = 
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromSeconds(45));
                 var command = Bridge.Decode<Command>(await Bridge.ReadFrame(pipe, timeout.Token));
                 Reply reply;
-                try { reply = await Handle(command, timeout.Token); }
+                try
+                {
+                    if (command.Op == "files-send" && files is not null)
+                    {
+                        var paths = Bridge.Decode<string[]>(System.Text.Encoding.UTF8.GetBytes(command.Value ?? "[]"));
+                        FileStream[] streams = [];
+                        pipe.RunAsClient(() => streams = FileTransfers.OpenFiles(paths));
+                        reply = await files.Send(streams, timeout.Token);
+                    }
+                    else reply = await Handle(command, timeout.Token);
+                }
                 catch (Exception e) when (e is not OperationCanceledException) { reply = new Reply(false, e.Message); }
                 await Bridge.WriteFrame(pipe, Bridge.Encode(reply), timeout.Token);
             }
@@ -72,6 +82,7 @@ public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = 
     }
     public async Task<Reply> Handle(Command c, CancellationToken ct)
     {
+        if (c.Op.StartsWith("files-", StringComparison.Ordinal) && files is not null) return await files.Local(c, ct);
         switch (c.Op)
         {
             case "status":
@@ -173,7 +184,7 @@ public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = 
         {
             return pairing.Complete(id, body, address, (key, device) =>
             {
-                vault.Update(c => { c.Key = key; c.IncomingSequence = 0; c.IncomingId = null; ApplyDevice(c, device); });
+                vault.Update(c => { c.Key = key; c.IncomingSequence = 0; c.IncomingId = null; c.FileIncomingSequence = 0; c.FileIncomingId = null; ApplyDevice(c, device); });
                 if (incoming is not null) incoming.Completion.TrySetResult(new Receipt(incoming.Manifest.Id, incoming.Manifest.Sequence, "error", "手机配对已更换"));
                 incoming = null;
                 ClearPending(); status = "已安全配对，等待复制内容";

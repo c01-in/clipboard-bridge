@@ -1,15 +1,16 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([string]$JavaHome=$env:JAVA_HOME,[string]$AndroidSdk=$env:ANDROID_HOME,[string]$Gradle,[switch]$UseEnvironmentSigning)
+param([string]$JavaHome=$env:JAVA_HOME,[string]$AndroidSdk=$env:ANDROID_HOME,[string]$Gradle,[switch]$UseEnvironmentSigning,[string]$OutputDirectory=$env:CLIPBRIDGE_DIST)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 if (!$JavaHome -or !(Test-Path -LiteralPath (Join-Path $JavaHome 'bin\java.exe'))) { throw '请设置 JAVA_HOME 或通过 -JavaHome 指定 JDK 21 目录。' }
 if (!$AndroidSdk -or !(Test-Path -LiteralPath (Join-Path $AndroidSdk 'platforms\android-36\android.jar'))) { throw '请设置 ANDROID_HOME 或通过 -AndroidSdk 指定包含 Android SDK 36 的目录。' }
 if (!$Gradle) { $Gradle = Join-Path $taskRoot 'android\gradlew.bat' }
-$taskDist=Join-Path $taskRoot 'dist'
+$taskDist=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskRoot 'dist'}
+$env:CLIPBRIDGE_DIST=$taskDist
 New-Item -ItemType Directory -Path $taskDist -Force | Out-Null
 foreach ($taskProject in @(@('Service','service'),@('Tray','tray'),@('Cli','cli'))) {
-    & dotnet publish (Join-Path $taskRoot "windows\$($taskProject[0])\$($taskProject[0]).csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $taskDist "windows\$($taskProject[1])") --nologo
+    & dotnet publish (Join-Path $taskRoot "windows\$($taskProject[0])\$($taskProject[0]).csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $taskDist "windows\$($taskProject[1])") --nologo --disable-build-servers -m:1
     if ($LASTEXITCODE -ne 0) { throw 'Windows 编译失败' }
 }
 $env:JAVA_HOME=$JavaHome;$env:ANDROID_HOME=$AndroidSdk
@@ -33,11 +34,14 @@ if (!(Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)) {
 }
 }
 try {
-    & $Gradle -p (Join-Path $taskRoot 'android') assembleRelease bundleRelease bundleUnifiedPushSources --console=plain
+    $taskGradleArguments=@('-p',(Join-Path $taskRoot 'android'),'assembleRelease','bundleRelease','bundleUnifiedPushSources','--console=plain','--no-daemon','--max-workers=1','-Dorg.gradle.jvmargs=-Xmx768m -XX:ActiveProcessorCount=1 -Dfile.encoding=UTF-8')
+    if($env:CLIPBRIDGE_BUILD_ROOT){$taskGradleArguments+=@('--project-cache-dir',(Join-Path $env:CLIPBRIDGE_BUILD_ROOT 'gradle-project'))}
+    & $Gradle @taskGradleArguments
     if ($LASTEXITCODE -ne 0) { throw 'Android 编译失败' }
 } finally { Remove-Item Env:CLIPBRIDGE_STORE_PASSWORD -ErrorAction SilentlyContinue }
-Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\release\app-release.apk') -Destination (Join-Path $taskDist 'ClipboardBridge.apk') -Force
-Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\bundle\release\app-release.aab') -Destination (Join-Path $taskDist 'ClipboardBridge.aab') -Force
+$taskAndroidBuild=if($env:CLIPBRIDGE_BUILD_ROOT){Join-Path $env:CLIPBRIDGE_BUILD_ROOT 'android\app'}else{Join-Path $taskRoot 'android\app\build'}
+Copy-Item -LiteralPath (Join-Path $taskAndroidBuild 'outputs\apk\release\app-release.apk') -Destination (Join-Path $taskDist 'ClipboardBridge.apk') -Force
+Copy-Item -LiteralPath (Join-Path $taskAndroidBuild 'outputs\bundle\release\app-release.aab') -Destination (Join-Path $taskDist 'ClipboardBridge.aab') -Force
 Copy-Item -LiteralPath $PSScriptRoot -Destination $taskDist -Recurse -Force
 foreach ($taskNotice in @('LICENSE','THIRD_PARTY_NOTICES.md')) { Copy-Item -LiteralPath (Join-Path $taskRoot $taskNotice) -Destination $taskDist -Force }
 Write-Host "构建完成：$taskDist"

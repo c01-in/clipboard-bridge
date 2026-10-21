@@ -39,6 +39,7 @@ final class SyncState {
             if(!Config.prefs(c).edit().putBoolean("paused",paused).putString("receiveGeneration",UUID.randomUUID().toString().replace("-",""))
                 .putLong("syncRevision",revision).remove("registeredGeneration").remove("latestScheduledSequence").commit())throw new Exception(c.getString(R.string.error_save_config));
             WorkManager.getInstance(c).cancelUniqueWork("receive-clipboard");
+            WorkManager.getInstance(c).cancelAllWorkByTag("receive-files");
             c.getSystemService(android.app.NotificationManager.class).cancel(1);
         }
         if(Config.prefs(c).contains("config"))RegistrationWorker.schedule(c);

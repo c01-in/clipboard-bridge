@@ -1,9 +1,9 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([string]$AndroidSdk=$env:ANDROID_HOME)
+param([string]$AndroidSdk=$env:ANDROID_HOME,[string]$OutputDirectory=$env:CLIPBRIDGE_DIST)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
-$taskDist=Join-Path $taskRoot 'dist'
+$taskDist=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskRoot 'dist'}
 $taskVersion=([xml](Get-Content (Join-Path $taskRoot 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version
 if($taskVersion -notmatch '^0\.\d+\.\d+$'){throw 'Preview releases must use a 0.x.y version.'}
 foreach($taskPart in @(@('service','ClipboardBridge.Service.exe'),@('tray','ClipboardBridge.exe'),@('cli','ClipboardBridge.Cli.exe'))){

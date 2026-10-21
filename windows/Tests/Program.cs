@@ -5,6 +5,8 @@ using System.Buffers.Binary;
 using System.IO.Pipes;
 using System.Security.Principal;
 
+if (args.Length == 2 && args[0] == "--file-integration-host") { await FileIntegrationHost.Run(args[1]); return; }
+
 int checks = 0;
 void Assert(bool ok, string label) { if (!ok) throw new Exception(label); checks++; Console.WriteLine("PASS " + label); }
 string key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
@@ -133,4 +135,5 @@ finally
 await PairingChecks.Run(Assert);
 await WebPushChecks.Run(Assert);
 await DownloadChecks.Run(Assert);
+await FileChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");
