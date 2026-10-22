@@ -181,7 +181,7 @@ public sealed class FileTransfers : BackgroundService
         var config = vault.Read();
         var request = Bridge.Decode<FileRequest>(Bridge.Open(body.Data, config.Key));
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (!FileProtocol.IsId(request.Id) || !FileProtocol.IsId(request.Nonce) || request.ExpiresAt <= now || request.ExpiresAt > now + 120_000)
+        if (!FileProtocol.IsId(request.Id) || !FileProtocol.IsId(request.Nonce) || request.ExpiresAt <= now || request.ExpiresAt > now + 120_000 + FileProtocol.ClockSkewMilliseconds)
             throw new InvalidDataException("Invalid or expired file request.");
         await gate.WaitAsync(ct);
         try

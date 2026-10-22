@@ -4,14 +4,14 @@
 
 # Clipboard Bridge · 剪贴板同步
 
-> **0.2.0 预览版：多文件互传，Windows 微软商店版已上线。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘和系统“共享 → 剪贴板同步”。两端显示进度，剪贴板模式仍限文字或单张图片。详见[版本说明](docs/release-notes/v0.2.0.md)。
+> **0.2.1 预览版：多文件互传，Windows 微软商店版已上线。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘和系统“共享 → 剪贴板同步”。两端显示进度，剪贴板模式仍限文字或单张图片。详见[版本说明](docs/release-notes/v0.2.1.md)。
 
 **Windows 自动发送，Android 点击发送。**
 
 文字、单张图片进剪贴板；多张图片、视频和文档保存为文件。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![预览版 0.2.0](https://img.shields.io/badge/preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
+[![预览版 0.2.1](https://img.shields.io/badge/preview-0.2.1-8B5CF6?style=flat-square)](docs/release-notes/v0.2.1.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -34,21 +34,21 @@
 <div align="center">
 
 [![从微软商店获取](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
-[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.0/ClipboardBridge.apk)
+[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**
 
-[0.2.0 安装包、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.0)
+[0.2.1 安装包、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.1)
 
 </div>
 
-**当前版本：0.2.0 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
+**当前版本：0.2.1 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
 
 [微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)提供微软签名的 Windows 应用。新版 GitHub 中的 Windows EXE 是微软签名的在线安装器，会联网下载当前商店版本，需要可用的微软商店组件；无需开发者模式或导入证书。旧版独立 EXE 仍未签名，见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ## 剪贴板快速复制，文件直接保存
 
-以下为 0.2.0 功能。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
+以下为 0.2.1 功能。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
 
 | | 你可以做什么 |
 | :--- | :--- |
@@ -70,7 +70,7 @@
 
 1. **安装两端。** 从开始菜单打开 Windows 设置，再打开手机 App。连接同一 Wi-Fi，按手机内的引导允许通知。
 2. **确认设备。** 手机选择自动发现的电脑，比较两端显示的六位确认码，并在两端确认。确认码不同就不要批准。
-3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可复制后打开 App 发送，或在系统分享菜单选择“剪贴板同步”；0.2.0 分享纯文字还需点击发送。只有 Windows 实际写入并返回确认，手机才显示成功。
+3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可复制后打开 App 发送，或在系统分享菜单选择“剪贴板同步”；0.2.1 分享纯文字还需点击发送。只有 Windows 实际写入并返回确认，手机才显示成功。
 
 还没安装电脑端？Android 的**获取 Windows 版**入口可复制或分享 [GitHub Releases 页面](https://github.com/c01-in/clipboard-bridge/releases)，在电脑上打开后自行选择安装包。
 
@@ -117,7 +117,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-当前 Android APK 和 Windows 商店版均为 0.2.0，文件功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。更新两端后打开手机 App 一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+当前 Android APK 为 0.2.1；Windows 商店更新需等待微软认证。文件功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。更新两端后打开手机 App 一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 微软商店版使用独立的每用户加密配置。切换渠道前保留备份并重新配对，不要同时运行两个占用相同端口的 Windows 后台。商店版无需管理员系统服务或另装 .NET；Windows 组件共用随包附带的一份运行环境。
 
@@ -148,7 +148,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 | [贡献指南](CONTRIBUTING.md) | [安全](SECURITY.md) |
 | [Google Play 发布评估](docs/google-play.md) | [隐私政策](PRIVACY.md) |
 | [文件互传](docs/file-transfers.md) | [Windows 系统共享](docs/windows-sharing.md) |
-| [微软商店](docs/microsoft-store.md) | [0.2.0 版本说明](docs/release-notes/v0.2.0.md) |
+| [微软商店](docs/microsoft-store.md) | [0.2.1 版本说明](docs/release-notes/v0.2.1.md) |
 
 GitHub Actions 自动构建和检查两端。微软商店 API 已配置，首次上架完成前自动提交更新仍关闭。独立签名 EXE 的发布另需 SignPath 批准和凭据，目前未配置。CI、GitHub Release 或上传成功都不等于商店审核通过，详见[发布渠道](docs/releases.md)。
 

@@ -19,13 +19,16 @@ public static class FileProtocol
     public const int ChunkBytes = 256 * 1024;
     public const int MaxFiles = 1000;
     public const int MaxEnvelopeBytes = 1024 * 1024;
+    // Authenticated peers use independent clocks. Allow a bounded positive skew
+    // at the maximum-lifetime boundary, while still rejecting expired messages.
+    public const long ClockSkewMilliseconds = 60_000;
     public const string Mime = "application/vnd.clipboardbridge.files";
     public static bool IsId(string? value) => value?.Length == 32 && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
     public static string NewId() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
     public static void Validate(FileBatch batch)
     {
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (!IsId(batch.Id) || batch.Sequence <= 0 || batch.ExpiresAt <= now || batch.ExpiresAt > now + 3_600_000 ||
+        if (!IsId(batch.Id) || batch.Sequence <= 0 || batch.ExpiresAt <= now || batch.ExpiresAt > now + 3_600_000 + ClockSkewMilliseconds ||
             batch.Files is null || batch.Files.Length is < 1 or > MaxFiles ||
             batch.Files.Any(f => f is null || string.IsNullOrWhiteSpace(f.Name) || f.Name.Length > 240 ||
                 f.Mime is null || f.Mime.Length > 200 || f.Size < -1) || Bridge.Encode(batch).Length > 512 * 1024)

@@ -53,9 +53,9 @@ static class FileChecks
                 return opened;
             }
             string id = FileProtocol.NewId();
-            var batch = new FileBatch(id, 1, expiry, generation,
+            var batch = new FileBatch(id, 1, DateTimeOffset.UtcNow.AddHours(1).AddSeconds(30).ToUnixTimeMilliseconds(), generation,
                 [new("photo.png", "image/png", size), new("photo.png", "image/png", 0), new("../../CON.txt", "application/octet-stream", -1)]);
-            check((await Call(Request("start", id, batch: batch))).Status == "ready", "Real HTTP accepts a multi-file batch without touching the clipboard");
+            check((await Call(Request("start", id, batch: batch) with { ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(150).ToUnixTimeMilliseconds() })).Status == "ready", "Real HTTP accepts a multi-file batch from an authenticated phone with a clock 30 seconds ahead");
             check((await transfers.Local(new("files-incoming"), default)).Value is null, "Files are not offered to the tray before a complete batch");
             using (var input = File.OpenRead(source))
             {
@@ -108,6 +108,12 @@ static class FileChecks
             check(unauthorized.StatusCode == HttpStatusCode.BadRequest, "Unpaired callers cannot read file-transfer state");
             using var expired = await client.PostAsJsonAsync("/api/files", new Box(Bridge.Seal(Bridge.Encode(Request("result", id) with { ExpiresAt = 1 }), key)));
             check(expired.StatusCode == HttpStatusCode.BadRequest, "Expired file requests are rejected");
+            using var tooFarAhead = await client.PostAsJsonAsync("/api/files", new Box(Bridge.Seal(Bridge.Encode(Request("result", id) with { ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(4).ToUnixTimeMilliseconds() }), key)));
+            check(tooFarAhead.StatusCode == HttpStatusCode.BadRequest, "Clock-skew tolerance does not permit unbounded future request lifetimes");
+            bool farFutureBatchRejected = false;
+            try { FileProtocol.Validate(batch with { ExpiresAt = DateTimeOffset.UtcNow.AddHours(2).ToUnixTimeMilliseconds() }); }
+            catch (InvalidDataException) { farFutureBatchRejected = true; }
+            check(farFutureBatchRejected, "Clock-skew tolerance retains the file manifest lifetime limit");
             using var oversized = await client.PostAsync("/api/files", new StringContent("{\"data\":\"" + new string('a', FileProtocol.MaxEnvelopeBytes + 2048) + "\"}", Encoding.UTF8, "application/json"));
             check(oversized.StatusCode == HttpStatusCode.RequestEntityTooLarge, "The real file endpoint rejects oversized HTTP bodies before unbounded allocation");
 
