@@ -10,7 +10,7 @@ Text and one image for your clipboard. Photos, videos and documents as files.
 Your own devices. Free and open source.
 
 [![Build](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![Preview 0.2.1](https://img.shields.io/badge/preview-0.2.1-8B5CF6?style=flat-square)](docs/release-notes/v0.2.1.md)
+[![Preview 0.2.2](https://img.shields.io/badge/preview-0.2.2-8B5CF6?style=flat-square)](docs/release-notes/v0.2.2.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Downloads](#download-and-try-it) · [Quick start](#install-pair-copy) · [Docs](#build-and-contribute)
@@ -33,32 +33,32 @@ Your own devices. Free and open source.
 <div align="center">
 
 [![Get it from Microsoft Store](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
-[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge.apk)
+[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge.apk)
 
 **Install both. Pair once. Start copying.**
 
-[0.2.1 installers, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.1)
+[0.2.2 installers, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.2)
 
 </div>
 
-**Current release: 0.2.1 preview.** No SDKs, local builds or phone debugging needed. The Microsoft Store edition requires Windows 11 or later, x64. Android requires Android 8.0 or later and Google Play Services. Google Play updates appear after Google's review.
+**Current release: 0.2.2 preview.** No SDKs, local builds or phone debugging needed. The Microsoft Store edition requires Windows 11 or later, x64. Android requires Android 8.0 or later and Google Play Services. Google Play updates appear after Google's review.
 
 | Windows download | What you get |
 | --- | --- |
-| [Full installer — MSIX, x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-x64.msix) | Complete 0.2.1 Store edition, Microsoft-signed, including one shared .NET runtime. No application or runtime downloads during installation. |
-| [Online installer — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-Store-Setup.exe) | Small Microsoft-signed installer; downloads the current [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) version. Requires Internet access and Store components. |
+| [Full installer — MSIX, x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge-Windows-x64.msix) | Complete 0.2.2 Store edition, Microsoft-signed, including one shared .NET runtime. No application or runtime downloads during installation. |
+| [Online installer — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge-Windows-Store-Setup.exe) | Small Microsoft-signed installer; downloads the current [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) version. Requires Internet access and Store components. |
 
-Both options use the same Store identity. No Developer Mode or certificate import is required. Release packages are built on GitHub Actions. The full MSIX retains Microsoft's signature; Actions checks its checksum against Microsoft's HTTPS Store catalog before publication. Earlier standalone GitHub EXEs remain unsigned; new downloads do not use them. See the [code signing policy](CODE_SIGNING_POLICY.md).
+Both options use the same Store identity. No Developer Mode or certificate import is required. Release packages are built on GitHub Actions. The full MSIX is added after the matching Store version is certified and its checksum is verified against Microsoft's HTTPS catalog; until then, the online installer downloads the currently published Store version. Earlier standalone GitHub EXEs remain unsigned; new downloads do not use them. See the [code signing policy](CODE_SIGNING_POLICY.md).
 
 ## Clipboard for quick copies. Files for everything else.
 
 > [!NOTE]
-> **0.2.1 preview — files alongside your clipboard.** Use matching 0.2.1 apps for file transfers. See [version notes](docs/release-notes/v0.2.1.md), [file-transfer behavior](docs/file-transfers.md) and [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ).
+> **0.2.2 preview — files alongside your clipboard.** Use matching 0.2.2 apps for file transfers. See [version notes](docs/release-notes/v0.2.2.md), [file-transfer behavior](docs/file-transfers.md) and [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ).
 
 | | What you get |
 | :--- | :--- |
 | **🖥️ Copy on Windows** | Text or one image is sent automatically. Prefer control? Use `Ctrl+Alt+V` or the tray menu. |
-| **📱 Share through Clipboard Bridge** | Use another app's Share menu. One image goes to the computer clipboard; shared plain text asks for an explicit Send tap. Or send text/one image from the foreground app's clipboard action. |
+| **📱 Send to computer** | Choose **Send to computer** in another Android app's Share menu. One image goes to the computer clipboard; shared plain text asks for an explicit Send tap. Or send text/one image from the foreground app's clipboard action. |
 | **📁 Send files both ways** | Send multiple photos, videos, documents or other files. Android uses the system picker or Share menu; Windows offers a tray picker, **Share → Clipboard Bridge**, and the desktop edition's classic **Send to** menu. |
 | **📂 Choose where files land** | Windows saves to Downloads by default; change the receiving folder in Settings. Android saves to Downloads/Clipboard Bridge on Android 10+, or a chosen folder. Files keep their original bytes and stay out of the clipboard. |
 | **📊 See the actual result** | File sending shows progress and waits for a saved-file receipt. The Windows sending window closes three seconds after success; errors and cancellations stay visible. |
@@ -71,23 +71,24 @@ Clipboard mode supports UTF-8 text and **one image, up to 16 MiB**; images trave
 
 ### Pick the destination, not just the content
 
-| Send action in 0.2.1 | Destination |
+| Send action in 0.2.2 | Destination |
 | --- | --- |
 | Android **Send clipboard** or **Send one image to clipboard** | Computer clipboard: text or exactly one image |
-| Share one image from another Android app through **Clipboard Bridge** | Computer clipboard |
+| Share one image from another Android app through **Send to computer** | Computer clipboard |
 | Android **Send files…**, even with one image selected | Computer receiving folder |
+| Android **Open with → Send to computer**, including one image or text document | Computer receiving folder |
 | Share multiple images, a video or a file attachment from Android | Computer receiving folder |
 | Windows system Share panel, tray file picker or desktop **Send to** | Android storage |
 
-Files are not opened automatically. Existing destination files are not overwritten. See [storage, progress, cancellation and limits](docs/file-transfers.md).
+Android Share and Open with show **Send to computer** in your language. Samsung panels also display the application name above that action. File transfers use PC-issued sessions, so the phone and computer do not need matching clocks. Clipboard expiry checks remain unchanged. Files are not opened automatically. Existing destination files are not overwritten. See [storage, progress, cancellation and limits](docs/file-transfers.md).
 
 ## Install. Pair. Copy.
 
 1. **Install both apps.** Open Windows settings from the Start menu and launch Android. Connect both to the same Wi-Fi and allow notifications through the Android prompt.
 2. **Confirm your devices.** Select the discovered computer on Android, compare the six-digit code on both screens and confirm on both. Do not approve a different code.
-3. **Try your clipboard.** Copy text or one image on Windows, then paste on Android. For the other direction, copy and use the foreground Android app's Send clipboard action, or share through **Clipboard Bridge**. In 0.2.1, shared plain text also requires a Send tap. Success appears after Windows actually writes the clipboard and acknowledges it.
+3. **Try your clipboard.** Copy text or one image on Windows, then paste on Android. For the other direction, copy and use the foreground Android app's Send clipboard action, or share through **Send to computer**. In 0.2.2, shared plain text also requires a Send tap. Success appears after Windows actually writes the clipboard and acknowledges it.
 
-With matching 0.2.1 apps, use **Send files…** or system Share for files. On Windows, set **Save received files to → Change folder…** in Settings. Sending one image through the file picker saves a file; the dedicated image-to-clipboard entry accepts only one image. No custom file browser or broad storage permission is needed.
+With matching 0.2.2 apps, use **Send files…** or system Share for files. On Windows, set **Save received files to → Change folder…** in Settings. Sending one image through the file picker saves a file; the dedicated image-to-clipboard entry accepts only one image. No custom file browser or broad storage permission is needed.
 
 Need the companion? Android's **Get the Windows app** entry lets you copy/share the [GitHub Releases page](https://github.com/c01-in/clipboard-bridge/releases) and open it on your computer.
 
@@ -134,7 +135,7 @@ Both apps follow the system language. Other languages fall back to English.
 <details>
 <summary><strong>Upgrading, privacy & licenses</strong></summary>
 
-The current Android APK is 0.2.1. The Windows Store update appears after Microsoft certification. File features require matching endpoints. Android internal version codes keep increasing and the existing signing key is reused. Update both apps and open Android once. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
+The current Android APK is 0.2.2. The Windows Store update appears after Microsoft certification. File features require matching endpoints. Android internal version codes keep increasing and the existing signing key is reused. Update both apps and open Android once. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
 The Microsoft Store edition has separate, per-user encrypted state from the standalone Windows service edition. Back up existing configuration and re-pair when switching editions; do not run both Windows brokers on the same port. The Store package needs neither administrator elevation nor a separate .NET installation. All Windows components share one bundled .NET runtime.
 
@@ -165,7 +166,7 @@ All vendors, prolonged sleep, reboot recovery and cross-network combinations hav
 | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) |
 | [Google Play readiness](docs/google-play.md) | [Privacy policy](PRIVACY.md) |
 | [File transfers](docs/file-transfers.md) | [Windows Share](docs/windows-sharing.md) |
-| [Microsoft Store](docs/microsoft-store.md) | [0.2.1 notes](docs/release-notes/v0.2.1.md) |
+| [Microsoft Store](docs/microsoft-store.md) | [0.2.2 notes](docs/release-notes/v0.2.2.md) |
 
 GitHub Actions builds and tests both apps. Store API authentication is configured; automatic Store updates remain gated until the first publication completes. Standalone signed EXE publication separately requires approved SignPath access, which is not configured. A green CI run, GitHub Release or uploaded package does not mean a store has approved the app. See [release channels and prerequisites](docs/releases.md).
 

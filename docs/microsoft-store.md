@@ -100,6 +100,13 @@ After authentication and the first Store publication are verified, set
 update submission; manual publication also requires a matching existing tag.
 Upload success does not mean certification passed or that the app is live.
 
+From 0.2.2, each tag also carries
+`docs/release-notes/v0.x.y.store-listing.json` with the English product description
+and release notes. CI uploads the package with `--noCommit`, reads the resulting
+draft, updates only its existing English description/release notes, then commits.
+Other listing languages, images, pricing and policy fields are retained.
+Metadata failure leaves the draft uncommitted instead of submitting stale text.
+
 References: [Microsoft Store automation](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions),
 [submission API prerequisites](https://learn.microsoft.com/en-us/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services),
 [packaging WinForms](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/publish-first-app),

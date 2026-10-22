@@ -1,6 +1,6 @@
-# File transfers — 0.2.0 preview
+# File transfers — 0.2.2 preview
 
-Both endpoints need matching 0.2.0 builds for file transfers. Windows 0.2.0.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ); the new GitHub Windows download uses Microsoft's signed online installer for that Store product. Older 0.1.4 installers do not support this feature. See [version notes](release-notes/v0.2.0.md) and [Store details](microsoft-store.md).
+Update both endpoints to 0.2.2 for PC-issued file sessions. The [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) online installer downloads its currently published package; the complete signed MSIX is attached to GitHub after the matching version is certified and verified against the public Microsoft catalog. Older 0.1.4 installers do not support file transfers. See [version notes](release-notes/v0.2.2.md) and [Store details](microsoft-store.md).
 
 ## Clipboard or files
 
@@ -35,7 +35,7 @@ Both endpoints show progress. Android displays a temporary foreground notificati
 
 `POST /api/files` exchanges AES-GCM-encrypted envelopes with the existing pairing key. Every request includes a fresh nonce, operation, transfer ID and phone generation; responses echo the nonce and ID. File index, offset and content are authenticated inside the envelope. Google receives only an encrypted wake-up, with no file names, paths or bytes.
 
-### PC-issued sessions (unreleased source change)
+### PC-issued sessions (0.2.2)
 
 The updated Android client first requests an encrypted `session` response from the PC. The opaque token is bound to the transfer ID, pairing key and phone generation. All subsequent file operations carry that token. The PC sets a one-hour lifetime and checks elapsed time using its monotonic clock; repeating session creation does not renew it. Android uses the returned relative lifetime with its own elapsed-time clock for cancellation, never to authorize a request. Neither the phone's request timestamp nor its manifest timestamp decides validity.
 
@@ -43,7 +43,7 @@ This covers both upload and download. File wake-ups are checked against the PC's
 
 A new deliberate send can replace an incomplete upload after two minutes without an accepted start or chunk/completion operation. The PC checks inactivity with its own elapsed-time clock, recovers last progress from its manifest and chunk timestamps after restart, and revokes the abandoned transfer's session tokens. An active upload stays protected. A fully uploaded batch awaiting desktop saving is never replaced by inactivity.
 
-Updated Android file transfers require a PC build containing this session endpoint. An older Android client can still use the existing authenticated, timestamp-based protocol against the updated PC. Legacy validation remains isolated to requests without session tokens. HTTP rejection is reported separately from connection failure, including when a stale endpoint is tried afterwards. This change is committed as source only, with no version increment or release.
+Updated Android file transfers require a PC build containing this session endpoint. An older Android client can still use the existing authenticated, timestamp-based protocol against the updated PC. Legacy validation remains isolated to requests without session tokens. HTTP rejection is reported separately from connection failure, including when a stale endpoint is tried afterwards. These changes ship together in 0.2.2; update both endpoints for the new session protocol.
 
 - Each chunk contains at most **256 KiB** of file bytes; HTTP bodies are bounded before parsing. Videos are never loaded whole into memory.
 - Android upload: `start`, `write`, `finish`, `commit`, `result`, `abort`. Final SHA-256 and size must match. Unknown source sizes are supported and checked at completion.

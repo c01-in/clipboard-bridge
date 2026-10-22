@@ -45,6 +45,8 @@ jobs:
           if($env:STORE_PUBLISH -eq 'true'){
             if($env:STORE_ENABLED -ne 'true'){throw 'Complete and verify Store API setup and the initial Store submission before enabling deployment.'}
             if($env:STORE_TAG -ne ('v'+$version)){throw 'Store publication requires an existing tag matching the source version.'}
+            $metadata=Get-Content ('docs/release-notes/'+$env:STORE_TAG+'.store-listing.json') -Raw | ConvertFrom-Json
+            if($metadata.version -ne $version -or $metadata.storeId -cne '9PJT9PTSMCJQ' -or !$metadata.description -or !$metadata.releaseNotes){throw 'Matching versioned Microsoft Store description and release notes are required.'}
           }
           ./scripts/Check-Publish.ps1 -IncludeHistory
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
@@ -104,7 +106,20 @@ jobs:
           msstore reconfigure --tenantId $env:MS_STORE_TENANT_ID --sellerId $env:MS_STORE_SELLER_ID --clientId $env:MS_STORE_CLIENT_ID --clientSecret $env:MS_STORE_CLIENT_SECRET
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
           $identity=Get-Content windows/Store/identity.json -Raw | ConvertFrom-Json
-          msstore publish (Resolve-Path dist/store/ClipboardBridge-Store-x64.msix).Path -id $identity.storeId
+          # Upload first: publish recreates the draft from the last published submission.
+          msstore publish (Resolve-Path dist/store/ClipboardBridge-Store-x64.msix).Path -id $identity.storeId --noCommit
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $metadata=Get-Content ('docs/release-notes/'+$env:STORE_TAG+'.store-listing.json') -Raw | ConvertFrom-Json
+          $draftJson=msstore submission get $identity.storeId
+          if($LASTEXITCODE -ne 0){throw 'Could not read the uploaded Store draft.'}
+          $draft=($draftJson -join "`n") | ConvertFrom-Json
+          $listing=$draft.listings.'en-us'.baseListing
+          if(!$listing){throw 'The existing English Store listing is missing; refusing to replace unrelated metadata.'}
+          $listing.description=$metadata.description
+          $listing.releaseNotes=$metadata.releaseNotes
+          $result=msstore submission update $identity.storeId ($draft | ConvertTo-Json -Depth 100 -Compress)
+          if($LASTEXITCODE -ne 0){throw 'Store description/release-note update failed; the draft was not committed.'}
+          msstore submission publish $identity.storeId
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
           'Update submitted to Microsoft Store. Certification and public availability are separate from upload success.' | Out-File $env:GITHUB_STEP_SUMMARY -Append
       - name: Record review-only result
