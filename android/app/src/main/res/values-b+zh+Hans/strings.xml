@@ -61,6 +61,7 @@
     <string name="error_address">电脑地址无效。</string>
     <string name="error_response_size">接收内容超过大小限制。</string>
     <string name="error_http">电脑返回 HTTP %1$s。</string>
+    <string name="error_file_request">电脑拒绝了文件请求（HTTP %1$s）。请确认电脑端已更新、同步已启用且配对有效。</string>
     <string name="error_connect">无法连接电脑，请检查 Wi-Fi、Tailscale 和防火墙：%1$s</string>
     <string name="win_settings_title">剪贴板同步 · 设置</string>
     <string name="win_heading">剪贴板，随手互传</string>

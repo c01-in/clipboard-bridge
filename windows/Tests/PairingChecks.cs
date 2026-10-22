@@ -27,10 +27,25 @@ static class PairingChecks
             string home = Environment.GetEnvironmentVariable("JAVA_HOME") ?? "";
             string Tool(string tool) => home.Length > 0 ? Path.Combine(home, "bin", tool + ".exe") : tool;
             var compile = new ProcessStartInfo(Tool("javac")) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (string arg in new[] { "--release", "17", "-encoding", "UTF-8", "-d", directory.FullName, Path.Combine(repo.FullName, "android/app/src/main/java/com/colin/clipbridge/PairingIdentity.java"), Path.Combine(repo.FullName, "windows/Tests/PairingCrossCheck.java") }) compile.ArgumentList.Add(arg);
+            foreach (string arg in new[] { "--release", "17", "-encoding", "UTF-8", "-d", directory.FullName,
+                Path.Combine(repo.FullName, "android/app/src/main/java/com/colin/clipbridge/PairingIdentity.java"), Path.Combine(repo.FullName, "windows/Tests/PairingCrossCheck.java"),
+                Path.Combine(repo.FullName, "android/app/src/main/java/com/colin/clipbridge/HttpTransport.java"), Path.Combine(repo.FullName, "windows/Tests/HttpTransportChecks.java") }) compile.ArgumentList.Add(arg);
             using (var compiler = Process.Start(compile)!)
             {
                 string errors = await compiler.StandardError.ReadToEndAsync();await compiler.WaitForExitAsync();if (compiler.ExitCode != 0) throw new Exception("Actual Android crypto compilation failed: " + errors);
+            }
+            var networkStart = new ProcessStartInfo(Tool("java")) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (string arg in new[] { "-cp", directory.FullName, "com.colin.clipbridge.HttpTransportChecks" }) networkStart.ArgumentList.Add(arg);
+            using (var network = Process.Start(networkStart)!)
+            {
+                try
+                {
+                    var output = network.StandardOutput.ReadToEndAsync(); var errors = network.StandardError.ReadToEndAsync();
+                    await network.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                    if (network.ExitCode != 0) throw new Exception("Actual Android HTTP transport checks failed: " + await errors);
+                    check((await output).Contains("checks passed"), "Actual Android HTTP transport distinguishes rejections from connectivity and preserves safe endpoint fallback");
+                }
+                finally { if (!network.HasExited) network.Kill(true); }
             }
             var start = new ProcessStartInfo(Tool("java")) { UseShellExecute = false, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
             foreach (string arg in new[] { "-cp", directory.FullName, "com.colin.clipbridge.PairingCrossCheck" }) start.ArgumentList.Add(arg);

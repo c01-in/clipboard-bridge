@@ -61,6 +61,7 @@
     <string name="error_address">Dirección de equipo no válida.</string>
     <string name="error_response_size">Los datos recibidos superan el límite.</string>
     <string name="error_http">El equipo devolvió HTTP %1$s.</string>
+    <string name="error_file_request">El equipo rechazó la solicitud del archivo (HTTP %1$s). Comprueba que Windows esté actualizado, la sincronización activada y el emparejamiento válido.</string>
     <string name="error_connect">No se puede conectar. Comprueba Wi-Fi, Tailscale y cortafuegos: %1$s</string>
     <string name="win_settings_title">Portapapeles · Configuración</string>
     <string name="win_heading">Comparte tu portapapeles</string>

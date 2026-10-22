@@ -61,6 +61,7 @@
     <string name="error_address">電腦位址無效。</string>
     <string name="error_response_size">接收內容超過大小限制。</string>
     <string name="error_http">電腦回傳 HTTP %1$s。</string>
+    <string name="error_file_request">電腦拒絕了檔案請求（HTTP %1$s）。請確認電腦端已更新、同步已啟用且配對有效。</string>
     <string name="error_connect">無法連接電腦，請檢查 Wi-Fi、Tailscale 與防火牆：%1$s</string>
     <string name="win_settings_title">剪貼簿同步 · 設定</string>
     <string name="win_heading">剪貼簿，隨手互傳</string>

@@ -61,6 +61,7 @@
     <string name="error_address">Ungültige Computeradresse.</string>
     <string name="error_response_size">Empfangene Daten überschreiten die Größenbegrenzung.</string>
     <string name="error_http">Computer antwortete mit HTTP %1$s.</string>
+    <string name="error_file_request">Der Computer hat die Dateianfrage abgelehnt (HTTP %1$s). Windows-App aktualisieren, Synchronisierung aktivieren und Kopplung prüfen.</string>
     <string name="error_connect">Verbindung nicht möglich. WLAN, Tailscale und Firewall prüfen: %1$s</string>
     <string name="win_settings_title">Zwischenablage · Einstellungen</string>
     <string name="win_heading">Zwischenablage teilen</string>

@@ -61,6 +61,7 @@
     <string name="error_address">Invalid computer address.</string>
     <string name="error_response_size">Received data exceeds the size limit.</string>
     <string name="error_http">Computer returned HTTP %1$s.</string>
+    <string name="error_file_request">Computer rejected the file request (HTTP %1$s). Check that Windows is updated, syncing is enabled and pairing is valid.</string>
     <string name="error_connect">Cannot connect to the computer. Check Wi-Fi, Tailscale and firewall: %1$s</string>
     <string name="win_settings_title">Clipboard Bridge · Settings</string>
     <string name="win_heading">Share your clipboard</string>

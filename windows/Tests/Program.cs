@@ -136,4 +136,5 @@ await PairingChecks.Run(Assert);
 await WebPushChecks.Run(Assert);
 await DownloadChecks.Run(Assert);
 await FileChecks.Run(Assert);
+await FileSessionChecks.Run(Assert);
 Console.WriteLine($"{checks} checks passed");

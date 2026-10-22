@@ -61,6 +61,7 @@
     <string name="error_address">Adresse de l’ordinateur invalide.</string>
     <string name="error_response_size">Les données reçues dépassent la limite.</string>
     <string name="error_http">L’ordinateur a renvoyé HTTP %1$s.</string>
+    <string name="error_file_request">L’ordinateur a refusé la demande de fichier (HTTP %1$s). Vérifiez que Windows est à jour, que la synchronisation est activée et que l’association est valide.</string>
     <string name="error_connect">Connexion impossible. Vérifiez Wi-Fi, Tailscale et pare-feu : %1$s</string>
     <string name="win_settings_title">Presse-papiers · Réglages</string>
     <string name="win_heading">Partagez votre presse-papiers</string>

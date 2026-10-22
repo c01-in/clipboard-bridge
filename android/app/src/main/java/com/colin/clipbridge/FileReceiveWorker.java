@@ -36,19 +36,21 @@ public final class FileReceiveWorker extends Worker {
     @NonNull @Override public Result doWork(){
         Context context=getApplicationContext();JSONObject config=null,wake=null;File journal=null;JSONObject record=null;
         String id="",generation="";
+        FileTransfer.Session session=null;
         try{
             config=Config.read(context);wake=new JSONObject(new String(Crypto.open(getInputData().getString("box"),config.getString("key")),StandardCharsets.UTF_8));
             id=wake.getString("id");generation=wake.getString("receiveGeneration");
-            if(!id.matches("[0-9a-f]{32}")||!SyncState.accepts(context,generation)||wake.getLong("expiresAt")<=System.currentTimeMillis())return Result.success();
+            if(!id.matches("[0-9a-f]{32}")||!SyncState.accepts(context,generation))return Result.success();
             setForegroundAsync(foreground(context.getString(R.string.receiving),0,true)).get();
+            session=FileTransfer.open(config,generation,id);
             File directory=new File(context.getFilesDir(),"file-receipts");if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("Cannot create file receipts.");
             journal=new File(directory,id+".json");
             record=journal.isFile()?new JSONObject(new String(Files.readAllBytes(journal.toPath()),StandardCharsets.UTF_8)):new JSONObject().put("files",new JSONArray());
             if(record.optBoolean("complete")&&record.optLong("sequence")==wake.getLong("sequence")&&generation.equals(record.optString("receiveGeneration"))){
-                if(!record.optBoolean("acknowledged")){FileTransfer.request(config,generation,"saved",id,null);record.put("acknowledged",true);persist(journal,record);}
+                if(!record.optBoolean("acknowledged")){session.request("saved",null);record.put("acknowledged",true);persist(journal,record);}
                 return Result.success();
             }
-            JSONObject offer=FileTransfer.request(config,generation,"offer",id,null),batch=offer.getJSONObject("batch");
+            JSONObject offer=session.request("offer",null),batch=offer.getJSONObject("batch");
             if(!id.equals(batch.getString("id"))||!generation.equals(batch.getString("receiveGeneration"))||batch.getLong("sequence")!=wake.getLong("sequence"))throw new Exception(context.getString(R.string.error_receipt));
             JSONArray files=batch.getJSONArray("files");if(files.length()<1||files.length()>FileTransfer.MAX_FILES)throw new Exception(context.getString(R.string.files_selection_limit));
             JSONArray receipts=record.getJSONArray("files");
@@ -65,9 +67,9 @@ public final class FileReceiveWorker extends Worker {
                     if(stream==null)throw new IOException(context.getString(R.string.files_save_failed,item.getString("name")));
                     long offset=0;
                     while(offset<size){
-                        if(isStopped()||!SyncState.accepts(context,generation)||wake.getLong("expiresAt")<=System.currentTimeMillis())throw new InterruptedException(context.getString(R.string.files_cancelled));
+                        if(isStopped()||!SyncState.accepts(context,generation)||session.expired())throw new InterruptedException(context.getString(R.string.files_cancelled));
                         final String acceptedGeneration=generation;
-                        JSONObject chunk=FileTransfer.retry(config,generation,"read",id,new JSONObject().put("index",i).put("offset",offset),()->isStopped()||!SyncState.accepts(context,acceptedGeneration));
+                        JSONObject chunk=session.retry("read",new JSONObject().put("index",i).put("offset",offset),()->isStopped()||!SyncState.accepts(context,acceptedGeneration));
                         byte[] bytes=java.util.Base64.getDecoder().decode(chunk.getString("data"));
                         if(!"chunk".equals(chunk.getString("status"))||bytes.length<1||bytes.length>FileTransfer.CHUNK||offset+bytes.length>size||chunk.getLong("offset")!=offset+bytes.length)throw new IOException(context.getString(R.string.error_integrity));
                         stream.write(bytes);offset+=bytes.length;done+=bytes.length;
@@ -86,16 +88,16 @@ public final class FileReceiveWorker extends Worker {
             }
             final String acceptedGeneration=generation;
             record.put("complete",true).put("sequence",wake.getLong("sequence")).put("receiveGeneration",generation);persist(journal,record);
-            FileTransfer.retry(config,generation,"saved",id,null,()->isStopped()||!SyncState.accepts(context,acceptedGeneration));
+            session.retry("saved",null,()->isStopped()||!SyncState.accepts(context,acceptedGeneration));
             record.put("acknowledged",true);persist(journal,record);
             Config.status(context,R.string.files_received_phone,String.valueOf(files.length()));
             showResult(context,context.getString(R.string.files_received_phone,String.valueOf(files.length())));
             return Result.success();
         }catch(Exception e){
             if(isStopped()||SyncState.paused(context)){cleanupPartial(context,record);return Result.failure();}
-            if(getRunAttemptCount()<2&&wake!=null&&wake.optLong("expiresAt")>System.currentTimeMillis())return Result.retry();
+            if(getRunAttemptCount()<2&&wake!=null&&(session==null||!session.expired()))return Result.retry();
             cleanupPartial(context,record);
-            if(config!=null&&!id.isEmpty())try{FileTransfer.request(config,generation,"reject",id,new JSONObject().put("data",String.valueOf(e.getMessage())));}catch(Exception ignored){}
+            if(session!=null)try{session.request("reject",new JSONObject().put("data",String.valueOf(e.getMessage())));}catch(Exception ignored){}
             Config.status(context,R.string.files_save_failed,String.valueOf(e.getMessage()));showResult(context,context.getString(R.string.files_save_failed,String.valueOf(e.getMessage())));
             return Result.failure();
         }

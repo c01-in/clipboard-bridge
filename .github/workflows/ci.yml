@@ -53,7 +53,7 @@ jobs:
           refresh=()
           for attempt in 1 2 3; do
             set +e
-            ./gradlew --no-daemon assembleDebug lintDebug --console=plain "${refresh[@]}" 2>&1 | tee "$RUNNER_TEMP/android-build.log"
+            ./gradlew --no-daemon assembleDebug assembleDebugAndroidTest lintDebug --console=plain "${refresh[@]}" 2>&1 | tee "$RUNNER_TEMP/android-build.log"
             result=("${PIPESTATUS[@]}")
             set -e
             if (( result[1] != 0 )); then exit "${result[1]}"; fi

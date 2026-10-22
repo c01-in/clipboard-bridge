@@ -25,7 +25,6 @@ public final class PushReceiver extends MessagingReceiver {
             JSONObject payload=new JSONObject(new String(message.getContent(),java.nio.charset.StandardCharsets.UTF_8));
             if(!"1".equals(payload.optString("v")))return;String box=payload.getString("box");
             JSONObject manifest=new JSONObject(new String(Crypto.open(box,Config.read(context).getString("key")),java.nio.charset.StandardCharsets.UTF_8));
-            if(manifest.getLong("expiresAt")<=System.currentTimeMillis())return;
             synchronized(SyncState.LOCK){
                 if(!SyncState.accepts(context,manifest.optString("receiveGeneration")))return;
                 if("application/vnd.clipboardbridge.files".equals(manifest.optString("mime"))){
@@ -34,6 +33,7 @@ public final class PushReceiver extends MessagingReceiver {
                         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).setBackoffCriteria(BackoffPolicy.LINEAR,10,java.util.concurrent.TimeUnit.SECONDS).addTag("receive-files").build();
                     WorkManager.getInstance(context).enqueueUniqueWork("receive-files-"+id,ExistingWorkPolicy.KEEP,files);return;
                 }
+                if(manifest.getLong("expiresAt")<=System.currentTimeMillis())return;
                 long sequence=manifest.getLong("sequence");if(sequence<=Config.prefs(context).getLong("latestScheduledSequence",0))return;
                 if(!Config.prefs(context).edit().putLong("latestScheduledSequence",sequence).commit())return;
                 Notices.show(context,R.string.receiving);

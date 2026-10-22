@@ -30,7 +30,15 @@ Both endpoints show progress. Android displays a temporary foreground notificati
 
 ## Protocol and limits
 
-`POST /api/files` exchanges AES-GCM-encrypted envelopes with the existing pairing key. Every request includes a fresh nonce, operation, transfer ID, generation and expiration; responses echo the nonce and ID. File index, offset and content are authenticated inside the envelope. Google receives only an encrypted wake-up, with no file names, paths or bytes.
+`POST /api/files` exchanges AES-GCM-encrypted envelopes with the existing pairing key. Every request includes a fresh nonce, operation, transfer ID and phone generation; responses echo the nonce and ID. File index, offset and content are authenticated inside the envelope. Google receives only an encrypted wake-up, with no file names, paths or bytes.
+
+### PC-issued sessions (unreleased source change)
+
+The updated Android client first requests an encrypted `session` response from the PC. The opaque token is bound to the transfer ID, pairing key and phone generation. All subsequent file operations carry that token. The PC sets a one-hour lifetime and checks elapsed time using its monotonic clock; repeating session creation does not renew it. Android uses the returned relative lifetime with its own elapsed-time clock for cancellation, never to authorize a request. Neither the phone's request timestamp nor its manifest timestamp decides validity.
+
+This covers both upload and download. File wake-ups are checked against the PC's live offer instead of comparing the phone clock to a PC timestamp. Pausing, changing pairing/generation, expiry and restarting the PC service invalidate tokens. Incoming metadata survives restart and can obtain a fresh token for its remaining PC-side lifetime; outgoing open handles still require sending again after restart. Persistence uses the PC's own timestamp to recover a bounded remaining lifetime after restart.
+
+Updated Android file transfers require a PC build containing this session endpoint. An older Android client can still use the existing authenticated, timestamp-based protocol against the updated PC. Legacy validation remains isolated to requests without session tokens. HTTP rejection is reported separately from connection failure, including when a stale endpoint is tried afterwards. This change is committed as source only, with no version increment or release.
 
 - Each chunk contains at most **256 KiB** of file bytes; HTTP bodies are bounded before parsing. Videos are never loaded whole into memory.
 - Android upload: `start`, `write`, `finish`, `commit`, `result`, `abort`. Final SHA-256 and size must match. Unknown source sizes are supported and checked at completion.
