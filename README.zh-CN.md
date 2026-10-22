@@ -35,8 +35,9 @@
 
 <div align="center">
 
-[![从 Google Play 获取](https://img.shields.io/badge/Get_it_on-Google_Play-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.colin.clipbridge)
-[![从微软商店获取](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
+<a href="https://play.google.com/store/apps/details?id=com.colin.clipbridge"><img src="docs/assets/google-play-badge-en.png" alt="Get it on Google Play" height="66" align="middle"></a>
+<a href="https://apps.microsoft.com/detail/9PJT9PTSMCJQ"><img src="docs/assets/microsoft-store-badge-en.svg" alt="Download from the Microsoft Store" height="44" align="middle"></a>
+
 [![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**

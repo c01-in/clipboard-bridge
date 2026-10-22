@@ -11,3 +11,10 @@ Use case: ads-marketing. Asset type: wide GitHub README hero illustration, appro
 The page organization draws on [LocalSend](https://github.com/localsend/localsend), [Supabase](https://github.com/supabase/supabase) and [Immich](https://github.com/immich-app/immich): clear product introduction, focused downloads, readable feature sections and navigation. Their artwork and copy were not reused.
 
 The English README remains the default. The Chinese guide uses the same layout with localized feature cards. Google FCM, Google Play Services and Google network requirements must remain visible near the top.
+
+## Official store download badges
+
+- `google-play-badge-en.png`: unmodified English badge from [Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png). SHA-256: `f72611e2df8e88204009fd896d05d5e8e83c77009c63943bbffa169559934849`.
+- `microsoft-store-badge-en.svg`: unmodified English dark badge from [Microsoft](https://get.microsoft.com/images/en-us%20dark.svg). SHA-256: `0e0cd666d0b351bc2680658faf8485a5d2d78d2ab14086d37fca7f0e8c12fa69`.
+
+The store names and logos belong to Google and Microsoft. These files are official download artwork, not AI-generated images or recreated logos. The README scales the images proportionally without cropping or recoloring them. Google's PNG includes transparent clear space: displaying it at 66 pixels high aligns its approximately 44-pixel visible badge with Microsoft's 44-pixel badge. Both use middle alignment and link to the project's own store listings. Copies are kept in the repository so the README does not depend on third-party badge generators.
