@@ -17,7 +17,9 @@ $taskRelease=(Invoke-GitHub -Arguments @('release','view',$Tag,'--json','tagName
 $taskNames=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip')
 $taskChecksumAsset=$taskRelease.assets | Where-Object name -eq 'SHA256SUMS.txt'
 if(!$taskChecksumAsset){throw 'Original release checksums are missing.'}
-$taskOriginalChecksums=(Invoke-WebRequest $taskChecksumAsset.url).Content
+$taskChecksumResponse=Invoke-WebRequest $taskChecksumAsset.url
+# Release text assets can be served as application/octet-stream in PowerShell 7.
+$taskOriginalChecksums=if($taskChecksumResponse.Content -is [byte[]]){[Text.Encoding]::UTF8.GetString($taskChecksumResponse.Content)}else{[string]$taskChecksumResponse.Content}
 foreach($taskName in $taskNames){
     $taskAsset=$taskRelease.assets | Where-Object name -ceq $taskName
     if(!$taskAsset -or $taskAsset.digest -notmatch '^sha256:([a-f0-9]{64})$'){throw "Missing release asset or digest: $taskName"}
