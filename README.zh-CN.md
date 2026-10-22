@@ -16,6 +16,8 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
 
+[Android · Google Play](https://play.google.com/store/apps/details?id=com.colin.clipbridge) · [Windows · 微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
+
 <sub>上方为 AI 生成的概念插画，并非 App 实际界面截图。</sub>
 
 </div>
@@ -33,6 +35,7 @@
 
 <div align="center">
 
+[![从 Google Play 获取](https://img.shields.io/badge/Get_it_on-Google_Play-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.colin.clipbridge)
 [![从微软商店获取](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
 [![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge.apk)
 

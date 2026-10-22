@@ -15,6 +15,8 @@ Your own devices. Free and open source.
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Downloads](#download-and-try-it) · [Quick start](#install-pair-copy) · [Docs](#build-and-contribute)
 
+[Android · Google Play](https://play.google.com/store/apps/details?id=com.colin.clipbridge) · [Windows · Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
+
 <sub>AI-generated concept illustration above; not an app screenshot.</sub>
 
 </div>
@@ -32,6 +34,7 @@ Your own devices. Free and open source.
 
 <div align="center">
 
+[![Get it on Google Play](https://img.shields.io/badge/Get_it_on-Google_Play-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.colin.clipbridge)
 [![Get it from Microsoft Store](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
 [![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge.apk)
 
