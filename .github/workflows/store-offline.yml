@@ -1,0 +1,57 @@
+name: Verify Microsoft-signed offline package
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release whose Store-signed package must match'
+        required: true
+        type: string
+        default: v0.2.1
+permissions:
+  contents: read
+concurrency:
+  group: store-offline-verification
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - name: Verify existing release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if($env:RELEASE_TAG -notmatch '^v0\.\d+\.\d+$'){throw 'An existing 0.x.y release is required.'}
+          $props=git show ($env:RELEASE_TAG+':Directory.Build.props')
+          if($LASTEXITCODE -ne 0){throw 'Release tag does not exist.'}
+          $version=([xml]($props -join "`n")).Project.PropertyGroup.Version
+          if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Release and source versions differ.'}
+          gh release view $env:RELEASE_TAG --json tagName
+          if($LASTEXITCODE -ne 0){throw 'GitHub release does not exist.'}
+      - name: Set up official Windows Package Manager
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
+          Install-Module Microsoft.WinGet.Client -Repository PSGallery -Force -Scope CurrentUser
+          Import-Module Microsoft.WinGet.Client
+          Repair-WinGetPackageManager -AllUsers -Force
+      - name: Download and verify the unmodified Store-signed full package
+        run: ./scripts/Test-StoreOfflineDownload.ps1 -Tag $env:RELEASE_TAG -OutputDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')
+      - name: Preserve verified package and test evidence in Actions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: store-signed-offline-${{ inputs.tag }}
+          path: |
+            ${{ runner.temp }}/store-offline/ClipboardBridge-Windows-x64.msix
+            ${{ runner.temp }}/store-offline/verification.json
+          if-no-files-found: error
