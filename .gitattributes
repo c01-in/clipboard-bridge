@@ -2,7 +2,7 @@
 *.ico binary
 *.png binary
 # Keep the official SVG badge byte-for-byte identical to its upstream download.
-docs/assets/microsoft-store-badge-en.svg -text
+docs/assets/microsoft-store-badge-en.svg binary
 *.jar binary
 *.bat text eol=crlf
 gradlew text eol=lf
