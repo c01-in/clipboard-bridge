@@ -27,9 +27,19 @@ function Invoke-PlayRequest {
             $text=$response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
             if(!$response.IsSuccessStatusCode){
                 $reason='';try{$errorBody=$text | ConvertFrom-Json -AsHashtable;foreach($detail in @($errorBody.error.details)){if($detail.reason -match '^[A-Z_]+$'){$reason=$detail.reason;break}}}catch{}
+                $operation=switch -Regex ($Uri){
+                    ':validate$' {'validate_edit';break}
+                    ':commit\?' {'commit_edit';break}
+                    '/bundles\?uploadType=' {'upload_bundle';break}
+                    '/listings/' {'listing';break}
+                    '/tracks/' {'track';break}
+                    '/edits(?:/[^/:?]+)?$' {'edit';break}
+                    default {'other'}
+                }
                 # Do not print response bodies, identities, request payloads or bearer tokens.
-                $exception=[InvalidOperationException]::new("Google Play API HTTP $([int]$response.StatusCode) ($Method); reason=$reason. Check API enablement and app-specific Play permissions for 403 errors.")
+                $exception=[InvalidOperationException]::new("Google Play API HTTP $([int]$response.StatusCode) ($Method); operation=$operation; reason=$reason. Check app-specific permissions, including Manage store presence when submitting product descriptions. A successful draft write does not prove validation/commit permission.")
                 $exception.Data['PlayReason']=$reason;$exception.Data['HttpStatus']=[int]$response.StatusCode
+                $exception.Data['PlayOperation']=$operation
                 throw $exception
             }
             if([string]::IsNullOrWhiteSpace($text)){return @{}}

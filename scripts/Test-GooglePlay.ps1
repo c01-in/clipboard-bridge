@@ -112,6 +112,17 @@ try{
     }finally{$fixture.Client.Dispose()}
     $fixture=New-Fixture
     try{
+        Add-Prefix $fixture
+        $fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}')
+        $fixture.Handler.Reply('{"error":{"message":"private-server-detail fixture-access-token"}}',403);$fixture.Handler.Reply('{}')
+        $failure=$null
+        try{Invoke-PlayPublish @argsBase -Client $fixture.Client -Listings $versionListings | Out-Null}catch{$failure=$_.Exception}
+        Assert ($null -ne $failure -and $failure.Data['PlayOperation'] -eq 'validate_edit' -and $failure.Message -match 'operation=validate_edit' -and $failure.Message -notmatch 'private-server-detail|fixture-access-token') 'Validation permission failure identifies the safe operation without exposing server content'
+        Assert (($fixture.Handler.Methods -join ',') -eq 'GET,POST,GET,POST,GET,GET,PUT,PUT,POST,DELETE' -and !($fixture.Handler.Uris -match ':commit')) 'Accepted listing/track drafts do not imply publication permission; rejected validation discards all changes'
+        $count++
+    }finally{$fixture.Client.Dispose()}
+    $fixture=New-Fixture
+    try{
         Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -Sha256 ('0'*64)} 'checksum mismatch'
         Assert ($fixture.Handler.Methods.Count -eq 0) 'Bad checksum must not contact Google'
         $count++
