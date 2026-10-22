@@ -140,6 +140,64 @@ static class FileSessionChecks
             vault.Update(c => { c.PhonePaused = false; c.PhoneGeneration = FileProtocol.NewId(); });
             generation = vault.Read().PhoneGeneration;
             check(await Rejected(Wire("result", receiveId, receive.Session)), "Changing the phone generation revokes previous sessions");
+
+            Dictionary<string, object?> Start(string transferId, string? session, long sequence, long size)
+            {
+                var request = Wire("start", transferId, session);
+                request["batch"] = new { id = transferId, sequence, receiveGeneration = generation, files = new[] { new { name = "recovery.pdf", mime = "application/pdf", size } } };
+                return request;
+            }
+            string lostId = FileProtocol.NewId(), replacementId = FileProtocol.NewId();
+            var lostSession = await Call(Wire("session", lostId));
+            check((await Call(Start(lostId, lostSession.Session, 3, 10))).Status == "ready", "A new upload starts after an older expired batch");
+            var replacementSession = await Call(Wire("session", replacementId));
+            clock.Advance(TimeSpan.FromSeconds(30));
+            check((await Call(Start(replacementId, replacementSession.Session, 4, 0))).Status == "error", "A second send cannot displace an active upload");
+            var partial = Wire("write", lostId, lostSession.Session); partial["data"] = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+            await Call(partial);
+            clock.Advance(TimeSpan.FromSeconds(91));
+            check((await Call(Start(replacementId, replacementSession.Session, 4, 0))).Status == "error", "A valid chunk refreshes the upload's inactivity deadline");
+            clock.Advance(TimeSpan.FromSeconds(30));
+            check((await Call(Start(replacementId, replacementSession.Session, 4, 0))).Status == "ready", "A deliberate new send reclaims an incomplete upload after two minutes without progress");
+            check(await Rejected(Wire("abort", lostId, lostSession.Session)), "An abandoned sender cannot cancel the replacement using its old session");
+            check((await Call(Wire("result", replacementId, replacementSession.Session))).Status == "ready", "Reclaiming a stale upload leaves the replacement intact");
+            var emptyFinish = Wire("finish", replacementId, replacementSession.Session);
+            emptyFinish["size"] = 0; emptyFinish["sha256"] = Convert.ToHexString(SHA256.HashData([])).ToLowerInvariant();
+            await Call(emptyFinish); await Call(Wire("commit", replacementId, replacementSession.Session));
+            clock.Advance(TimeSpan.FromMinutes(3));
+            string competingId = FileProtocol.NewId(); var competing = await Call(Wire("session", competingId));
+            check((await Call(Start(competingId, competing.Session, 5, 0))).Status == "error", "A complete batch awaiting desktop saving is never reclaimed by inactivity");
+            check((await Call(Wire("result", replacementId, replacementSession.Session))).Status == "saving", "A blocked new send preserves the previously uploaded batch");
+            var recoveryInbox = Bridge.Decode<FileInboxBatch>(Encoding.UTF8.GetBytes((await transfers.Local(new("files-incoming"), default)).Value!));
+            FileInbox.Save(recoveryInbox, Path.Combine(directory.FullName, "downloads"), Path.Combine(directory.FullName, "receipts"));
+            await transfers.Local(new("files-incoming-ack", Value: replacementId), default);
+            check((await Call(Wire("result", replacementId, replacementSession.Session))).Status == "saved", "The preserved complete batch can still be saved and acknowledged");
+
+            string orphanId = FileProtocol.NewId(); var orphan = await Call(Wire("session", orphanId));
+            await Call(Start(orphanId, orphan.Session, 6, 0));
+            File.SetLastWriteTimeUtc(Path.Combine(vault.DataDir, "file-transfers", "incoming.json"), clock.GetUtcNow().AddMinutes(-3).UtcDateTime);
+            using (var recoveredService = new FileTransfers(vault, sender, clock))
+            {
+                async Task<FileResponse> Recovered(Dictionary<string, object?> request) => Bridge.Decode<FileResponse>(Bridge.Open(
+                    (await recoveredService.Request(new(Bridge.Seal(Bridge.Encode(request), key)), default)).Data, key));
+                string freshId = FileProtocol.NewId(); var fresh = await Recovered(Wire("session", freshId));
+                check((await Recovered(Start(freshId, fresh.Session, 7, 0))).Status == "ready", "A stale zero-byte upload recovered from disk cannot block the next send after restart");
+                check((await Recovered(Wire("abort", freshId, fresh.Session))).Status == "cancelled", "The recovered replacement retains normal cancellation behavior");
+                string activeId = FileProtocol.NewId(); var active = await Recovered(Wire("session", activeId));
+                await Recovered(Start(activeId, active.Session, 8, 10));
+                var activeWrite = Wire("write", activeId, active.Session); activeWrite["data"] = Convert.ToBase64String(new byte[] { 5, 6, 7, 8 });
+                await Recovered(activeWrite);
+                string staging = Path.Combine(vault.DataDir, "file-transfers");
+                File.SetLastWriteTimeUtc(Path.Combine(staging, "incoming.json"), clock.GetUtcNow().AddMinutes(-3).UtcDateTime);
+                File.SetLastWriteTimeUtc(Path.Combine(staging, activeId, "0.part"), clock.GetUtcNow().UtcDateTime);
+                using var afterChunkRestart = new FileTransfers(vault, sender, clock);
+                async Task<FileResponse> AfterChunk(Dictionary<string, object?> request) => Bridge.Decode<FileResponse>(Bridge.Open(
+                    (await afterChunkRestart.Request(new(Bridge.Seal(Bridge.Encode(request), key)), default)).Data, key));
+                string blockedId = FileProtocol.NewId(); var blocked = await AfterChunk(Wire("session", blockedId));
+                check((await AfterChunk(Start(blockedId, blocked.Session, 9, 0))).Status == "error", "Recent persisted chunk progress protects an upload after restart even if its manifest is old");
+                var resumedActive = await AfterChunk(Wire("session", activeId));
+                await AfterChunk(Wire("abort", activeId, resumedActive.Session));
+            }
             string currentId = FileProtocol.NewId(); var current = await Call(Wire("session", currentId));
             vault.Update(c => c.Key = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))); key = vault.Read().Key;
             check(await Rejected(Wire("result", currentId, current.Session)), "Changing the pairing key revokes sessions even for a correctly encrypted new request");

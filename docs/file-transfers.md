@@ -38,6 +38,8 @@ The updated Android client first requests an encrypted `session` response from t
 
 This covers both upload and download. File wake-ups are checked against the PC's live offer instead of comparing the phone clock to a PC timestamp. Pausing, changing pairing/generation, expiry and restarting the PC service invalidate tokens. Incoming metadata survives restart and can obtain a fresh token for its remaining PC-side lifetime; outgoing open handles still require sending again after restart. Persistence uses the PC's own timestamp to recover a bounded remaining lifetime after restart.
 
+A new deliberate send can replace an incomplete upload after two minutes without an accepted start or chunk/completion operation. The PC checks inactivity with its own elapsed-time clock, recovers last progress from its manifest and chunk timestamps after restart, and revokes the abandoned transfer's session tokens. An active upload stays protected. A fully uploaded batch awaiting desktop saving is never replaced by inactivity.
+
 Updated Android file transfers require a PC build containing this session endpoint. An older Android client can still use the existing authenticated, timestamp-based protocol against the updated PC. Legacy validation remains isolated to requests without session tokens. HTTP rejection is reported separately from connection failure, including when a stale endpoint is tried afterwards. This change is committed as source only, with no version increment or release.
 
 - Each chunk contains at most **256 KiB** of file bytes; HTTP bodies are bounded before parsing. Videos are never loaded whole into memory.

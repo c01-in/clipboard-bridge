@@ -31,6 +31,7 @@ public sealed class FileTransfers : BackgroundService
     readonly TimeProvider clock;
     readonly Dictionary<string, TransferSession> sessions = new();
     static readonly TimeSpan TransferLifetime = TimeSpan.FromHours(1);
+    static readonly TimeSpan IncomingIdleTimeout = TimeSpan.FromMinutes(2);
     sealed record Lease(long Started, TimeSpan Lifetime)
     {
         public TimeSpan Remaining(TimeProvider clock) => Lifetime - clock.GetElapsedTime(Started);
@@ -38,6 +39,7 @@ public sealed class FileTransfers : BackgroundService
     }
     sealed record TransferSession(string TransferId, string Key, string Generation, Lease Lease);
     Lease? incomingLease;
+    Lease? incomingIdleLease;
     Incoming? incoming;
     Outgoing? outgoing;
     FileTransferStatus? lastOutgoing;
@@ -64,16 +66,32 @@ public sealed class FileTransfers : BackgroundService
             try
             {
                 incoming = Bridge.Decode<Incoming>(File.ReadAllBytes(state));
+                if (!FileProtocol.IsId(incoming.Batch.Id)) throw new InvalidDataException("Invalid persisted file transfer ID.");
                 // Only the PC's own persisted timestamp is used after a service restart.
                 incomingLease = LeaseUntil(incoming.Batch.ExpiresAt);
+                // Recover activity from PC-owned metadata, including chunks flushed after the manifest.
+                DateTime lastActivity = File.GetLastWriteTimeUtc(state);
+                string directory = BatchDirectory(incoming.Batch.Id);
+                if (Directory.Exists(directory))
+                    foreach (string part in Directory.EnumerateFiles(directory, "*.part"))
+                        if (File.GetLastWriteTimeUtc(part) > lastActivity) lastActivity = File.GetLastWriteTimeUtc(part);
+                long remaining = new DateTimeOffset(lastActivity).ToUnixTimeMilliseconds() + (long)IncomingIdleTimeout.TotalMilliseconds - Now;
+                incomingIdleLease = new(clock.GetTimestamp(), TimeSpan.FromMilliseconds(Math.Clamp(remaining, 0, (long)IncomingIdleTimeout.TotalMilliseconds)));
             }
-            catch (Exception e) when (e is IOException or JsonException) { File.Move(state, state + ".invalid", true); }
+            catch (Exception e) when (e is IOException or JsonException)
+            { incoming = null; incomingLease = null; incomingIdleLease = null; File.Move(state, state + ".invalid", true); }
         }
     }
     long Now => clock.GetUtcNow().ToUnixTimeMilliseconds();
     Lease LeaseUntil(long expiry) => new(clock.GetTimestamp(), TimeSpan.FromMilliseconds(Math.Clamp(expiry - Now, 0, (long)TransferLifetime.TotalMilliseconds)));
     bool IncomingExpired => incoming is not null && (incomingLease is null || incomingLease.Expired(clock));
     bool OutgoingExpired => outgoing is not null && outgoing.Lease.Expired(clock);
+    bool IncomingAbandoned => incoming is { Ready: false } && (incomingIdleLease is null || incomingIdleLease.Expired(clock));
+    void IncomingActive() => incomingIdleLease = new(clock.GetTimestamp(), IncomingIdleTimeout);
+    void RevokeIncomingSessions()
+    {
+        foreach (string token in sessions.Where(p => p.Value.TransferId == incoming?.Batch.Id).Select(p => p.Key).ToArray()) sessions.Remove(token);
+    }
     string BatchDirectory(string id) => Path.Combine(root, id);
     string PartPath(string id, int index) => Path.Combine(BatchDirectory(id), index + ".part");
     void Persist()
@@ -89,7 +107,7 @@ public sealed class FileTransfers : BackgroundService
             string directory = BatchDirectory(incoming.Batch.Id);
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
-        incoming = null; incomingLease = null; Persist();
+        incoming = null; incomingLease = null; incomingIdleLease = null; Persist();
     }
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -284,16 +302,20 @@ public sealed class FileTransfers : BackgroundService
             var batch = r.Batch ?? throw new InvalidDataException("Missing file manifest."); FileProtocol.Validate(batch, Now, validateExpiry: r.Session is null);
             if (batch.Id != r.Id || batch.ReceiveGeneration != r.ReceiveGeneration || batch.Sequence <= cfg.FileIncomingSequence)
                 throw new InvalidDataException("Old or invalid file transfer.");
-            if (IncomingExpired) ClearIncoming();
+            if (IncomingExpired || incoming?.Batch.Id != batch.Id && IncomingAbandoned)
+            {
+                // A new deliberate send may reclaim a lost upload, never a batch awaiting desktop saving.
+                RevokeIncomingSessions(); ClearIncoming();
+            }
             if (incoming is not null)
             {
                 if (!Bridge.Encode(incoming.Batch).SequenceEqual(Bridge.Encode(batch))) throw new InvalidDataException(UiText.Get("files_busy"));
-                return Reply(incoming.Ready ? "saving" : "ready");
+                IncomingActive(); return Reply(incoming.Ready ? "saving" : "ready");
             }
             long size = batch.Files.Sum(f => Math.Max(0, f.Size));
             if (new DriveInfo(Path.GetPathRoot(root)!).AvailableFreeSpace < size + Math.Min(size, 64 * 1024 * 1024)) throw new IOException("Not enough space on the receiving computer.");
             Directory.CreateDirectory(BatchDirectory(batch.Id)); incoming = new(batch, new SavedFile?[batch.Files.Length]);
-            incomingLease = r.Session is not null ? sessions[r.Session].Lease : LeaseUntil(batch.ExpiresAt); Persist();
+            incomingLease = r.Session is not null ? sessions[r.Session].Lease : LeaseUntil(batch.ExpiresAt); IncomingActive(); Persist();
             return Reply("ready");
         }
         if (incoming?.Batch.Id != r.Id || IncomingExpired)
@@ -327,21 +349,21 @@ public sealed class FileTransfers : BackgroundService
                 if (r.Offset != file.Length) throw new InvalidDataException("File chunk is out of order.");
                 file.Position = r.Offset; await file.WriteAsync(bytes, ct); file.Flush(true);
             }
-            return Reply("chunk", r.Offset + bytes.Length);
+            IncomingActive(); return Reply("chunk", r.Offset + bytes.Length);
         }
         if (r.Op == "finish")
         {
             if (incoming.Completed[r.Index] is SavedFile completed)
             {
                 if (completed.Size != r.Size || completed.Sha256 != r.Sha256) throw new InvalidDataException("File completion changed.");
-                return Reply("complete", completed.Size);
+                IncomingActive(); return Reply("complete", completed.Size);
             }
             using var file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
             long declared = incoming.Batch.Files[r.Index].Size;
             if (file.Length != r.Size || declared >= 0 && r.Size != declared) throw new InvalidDataException("File size does not match its manifest.");
             string hash = Convert.ToHexString(await SHA256.HashDataAsync(file, ct)).ToLowerInvariant();
             if (hash != r.Sha256) throw new InvalidDataException("File integrity verification failed.");
-            incoming.Completed[r.Index] = new(incoming.Batch.Files[r.Index].Name, path, r.Size, hash); Persist();
+            incoming.Completed[r.Index] = new(incoming.Batch.Files[r.Index].Name, path, r.Size, hash); IncomingActive(); Persist();
             return Reply("complete", r.Size);
         }
         throw new InvalidDataException("Unknown file operation.");

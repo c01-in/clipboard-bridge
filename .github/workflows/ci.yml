@@ -32,6 +32,13 @@ jobs:
           ./scripts/Build-Windows.ps1
           ./scripts/Test-SignPath.ps1
           dotnet run --project windows/Tests/Tests.csproj -c Release
+      - name: Keep service payload for local testing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-service-test
+          path: dist/windows/service/*
+          if-no-files-found: error
+          retention-days: 3
   android:
     runs-on: ubuntu-latest
     steps:
