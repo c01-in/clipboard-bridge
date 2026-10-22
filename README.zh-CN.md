@@ -4,14 +4,14 @@
 
 # Clipboard Bridge · 剪贴板同步
 
-> **开发中的 0.2.0：多文件互传。** Android 可通过系统选择器或分享菜单发送多张图片、视频及其他文件；Windows 保存到可设置的接收文件夹，也可从托盘或资源管理器“发送到 → 剪贴板同步”多选发送，两端均有进度显示。剪贴板模式仍限文字或单张图片。本次更新尚未发布，下方下载链接仍是 0.1.4。详见[文件传输说明](docs/file-transfers.md)。
+> **0.2.0 预览版：多文件互传，Windows 商店审核中。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘、系统“共享 → 剪贴板同步”和桌面版“发送到”菜单。两端显示进度，剪贴板模式仍限文字或单张图片。微软商店尚未上线，GitHub 下载仍是 0.1.4，不包含这些新功能。详见[版本说明](docs/release-notes/v0.2.0.md)。
 
 **Windows 自动发送，Android 点击发送。**
 
-文字、单张图片，你自己的设备。免费、开源。
+文字、单张图片进剪贴板；多张图片、视频和文档保存为文件。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![预览版 0.1.4](https://img.shields.io/badge/preview-0.1.4-8B5CF6?style=flat-square)](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
+[![源码预览版 0.2.0](https://img.shields.io/badge/source_preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -44,26 +44,33 @@
 
 **当前版本：0.1.4 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
 
-[代码签名政策（Code signing policy）](CODE_SIGNING_POLICY.md)：正在申请 SignPath Foundation 免费签名；现有 Windows 下载仍未签名。
+[代码签名政策](CODE_SIGNING_POLICY.md)：现有 GitHub Windows EXE 仍未签名。Windows 11 x64 的 0.2.0 MSIX 已送微软商店认证，设置为通过后自动上架，目前尚未上线。商店签名不会替 GitHub 的 EXE 签名。
 
-## 为剪贴板而做
+## 剪贴板快速复制，文件直接保存
+
+以下为 0.2.0 源码和审核版功能；上方公开下载仍为 0.1.4。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
 
 | | 你可以做什么 |
 | :--- | :--- |
 | **🖥️ Windows 复制即发送** | 自动发送文字或单张图片；也可使用 `Ctrl+Alt+V` 或托盘菜单手动发送。 |
-| **📱 Android 直接分享** | 在其他 App 分享文字或单张图片，选择“剪贴板同步”；也可打开 App 点击“发送剪贴板到 Windows”。 |
+| **📱 通过 App 分享** | 在其他 App 选择“剪贴板同步”：单张图片进入电脑剪贴板，纯文字需再点击发送；也可在前台 App 内发送剪贴板。 |
+| **📁 多文件双向互传** | 手机调用系统选择器或分享菜单；电脑支持托盘选择、系统共享面板和桌面版“发送到”菜单。支持图片、视频、文档及其他文件，暂不支持文件夹。 |
+| **📂 自选保存路径** | Windows 默认保存到下载文件夹，在“设置 → 接收文件保存到 → 更改文件夹”修改；Android 10+ 默认保存到 Downloads/Clipboard Bridge，也可选定文件夹。 |
+| **📊 进度与保存回执** | 接收方实际保存并确认后才成功；Windows 发送成功窗口三秒后关闭，错误和取消仍保留提示。 |
 | **🔗 配对不用输入** | 在同一 Wi-Fi 自动发现电脑，比较六位确认码并在两端确认，无需输入 IP 或配对链接。 |
 | **⏸️ 随时暂停** | Windows 托盘可暂停自动发送；Android 可暂停新的收发，并保留配对。 |
 | **🔐 内容加密传输** | 剪贴板采用 AES-GCM 加密。配对密钥和电脑推送身份保存在本地；Google 仍可看到推送元数据。 |
 | **🌍 跟随系统语言** | 两端支持九种语言，其余语言回退英语。 |
 
-支持 UTF-8 文字和**单张图片，正文最大 16 MiB**。图片按 PNG 传输；Android 粘贴图片取决于目标 App 是否支持图片剪贴板。超过限制会明确报错，不截断或缩小内容。
+剪贴板支持 UTF-8 文字或**单张图片，正文最大 16 MiB**；图片按 PNG 传输，Android 粘贴取决于目标 App。文件模式每批支持 **1–1,000 个文件**，原始字节不转换，不写入剪贴板，不受上述 16 MiB 上限限制，仍受存储、连接时长及 Android 后台限制影响。
+
+**发送规则：** 手机专门的图片剪贴板入口只能选择一张；从其他 App 分享单张图片也进电脑剪贴板。“发送文件”入口即使只选一张图片也保存为文件；分享多张图片、视频及其他附件同样保存为文件。Windows 系统共享、托盘文件选择和桌面版“发送到”都保存到手机存储。收到的文件不会自动打开，不会覆盖已有同名文件。详见[文件传输说明](docs/file-transfers.md)。
 
 ## 安装、配对、开始复制
 
 1. **安装两端。** 从开始菜单打开 Windows 设置，再打开手机 App。连接同一 Wi-Fi，按手机内的引导允许通知。
 2. **确认设备。** 手机选择自动发现的电脑，比较两端显示的六位确认码，并在两端确认。确认码不同就不要批准。
-3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可在系统分享菜单选择“剪贴板同步”，或复制后打开 App 点击“发送剪贴板到 Windows”；只有 Windows 实际写入并返回确认，手机才显示成功。
+3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可复制后打开 App 发送，或在系统分享菜单选择“剪贴板同步”；0.2.0 分享纯文字还需点击发送。只有 Windows 实际写入并返回确认，手机才显示成功。
 
 还没安装电脑端？Android 的**获取 Windows 版**入口可复制或分享 [GitHub Releases 页面](https://github.com/c01-in/clipboard-bridge/releases)，在电脑上打开后自行选择安装包。
 
@@ -110,7 +117,9 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-两端可见版本同为 0.1.4，Android 内部升级编号持续递增并沿用原签名。先更新 Windows，再更新手机并打开一次，原配对自动迁移。旧 Firebase 配置完整保存在原数据目录的 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+GitHub 公开安装包仍为 0.1.4，两端当前源码／审核版为 0.2.0，文件新功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。同为桌面版时，先更新 Windows，再更新手机并打开一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+
+微软商店版使用独立的每用户加密配置。切换渠道前保留备份并重新配对，不要同时运行两个占用相同端口的 Windows 后台。商店版无需管理员系统服务或另装 .NET；Windows 组件共用随包附带的一份运行环境。
 
 凭据、配对密钥、接收地址和运行数据保存在本地，不进入公开仓库或安装包。不要分享私密文件。剪贴板内容使用 AES-GCM 加密，Google 仍可看到推送元数据。请只在受信任的局域网或私有网络内使用，见 [SECURITY.md](SECURITY.md)。
 
@@ -120,12 +129,13 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 
 ## 有验证，也有明确的限制
 
-**85 项自动检查通过**，覆盖协议、IPC、配对、Web Push、暂停修订号、迁移、许可证、语言与真实 HTTP 下载。
+当前预览版 **112 项 Windows 自动检查通过**，覆盖协议、IPC、配对、Web Push、文件分块与保存、暂停修订号、迁移、许可证、语言及 HTTP 下载；另有 **20 项 Android 文件互传测试**。这些结果不等于所有实机都已验证。
 
 - **原生推送探针：** 6 条短时消息到达，含进程终止和强制深度 Doze。[探针记录](experiments/webpush-probe/RESULTS.md)
 - **正式版实机测试：** 原配对迁移、暂停持久化、旧会话拒收、文字与图片双向收发通过。[实机记录](docs/verification-0.1.1.md)
 - **Android 快捷分享：** 12 项模拟器检查通过，包含其他 App 的图片 URI 授权和屏幕重建后不重复发送。微信里第二条复制 Toast 的来源仍未确认。[分享验证](docs/android-sharing.md)
-- **自动发布：** 发布前执行测试、Android 签名、打包、Windows 全新安装和卸载。[GitHub Actions](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)
+- **文件互传：** 模拟器验证真实加密传输、保存后的哈希、空文件、大文件、取消和重试；不代表所有实机 Google 文件唤醒均已验证。[文件测试](docs/file-transfers.md#verification)
+- **商店打包：** MSIX、共用 CLR、真实每用户后台与 IPC、完整 APK 下载与哈希及微软 API 检查已通过。首次提交认证中，商店实际安装和更新仍待验证。[商店流程](docs/microsoft-store.md)
 
 **尚未**验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合。预览版不保证长期投递表现。
 
@@ -137,8 +147,10 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 | [GitHub Actions 发布](docs/releases.md) | [故障排查](docs/troubleshooting.md) |
 | [贡献指南](CONTRIBUTING.md) | [安全](SECURITY.md) |
 | [Google Play 发布评估](docs/google-play.md) | [隐私政策](PRIVACY.md) |
+| [文件互传](docs/file-transfers.md) | [Windows 系统共享](docs/windows-sharing.md) |
+| [微软商店](docs/microsoft-store.md) | [0.2.0 版本说明](docs/release-notes/v0.2.0.md) |
 
-推送匹配的 `v0.x.y` 标签后，自动测试、签名、打包并发布两端应用。用户下载安装包；维护者无需每次在本地构建。
+GitHub Actions 自动构建和检查两端。微软商店 API 已配置，首次上架完成前自动提交更新仍关闭。独立签名 EXE 的发布另需 SignPath 批准和凭据，目前未配置。CI、GitHub Release 或上传成功都不等于商店审核通过，详见[发布渠道](docs/releases.md)。
 
 ---
 

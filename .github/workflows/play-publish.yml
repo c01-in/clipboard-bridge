@@ -80,14 +80,32 @@ jobs:
           if($matches.Count -ne 1){throw 'Expected one AAB release checksum.'}
           $sha=($matches[0] -split '\s+')[0]
           $bundle=Join-Path $out 'ClipboardBridge.aab'
-          ./scripts/Publish-GooglePlay.ps1 -Mode validate -BundlePath $bundle -Sha256 $sha
           "bundle=$bundle" >> $env:GITHUB_OUTPUT
           "sha256=$sha" >> $env:GITHUB_OUTPUT
-          $notes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.play.txt')
-          if(!(Test-Path -LiteralPath $notes)){throw 'Missing version-specific Play release notes.'}
+          $notesSource='docs/release-notes/'+$env:RELEASE_TAG+'.play.txt'
+          $notes=Join-Path $out 'release-notes.play.txt'
+          $tagNotes=git show ($env:RELEASE_TAG+':'+$notesSource) 2>$null
+          $sourceVersion=[version]$env:RELEASE_TAG.TrimStart('v')
+          if($LASTEXITCODE -ne 0){
+            # Older releases predate versioned Play metadata; do not break their no-rebuild path.
+            if($sourceVersion -ge [version]'0.2.0' -or !(Test-Path -LiteralPath $notesSource)){throw 'Missing Play release notes in the release tag.'}
+            $tagNotes=Get-Content -LiteralPath $notesSource
+            $LASTEXITCODE=0
+          }
+          ($tagNotes -join "`n") | Set-Content -LiteralPath $notes -Encoding utf8
           $text=(Get-Content -LiteralPath $notes -Raw).Trim()
           if(!$text -or $text.Length -gt 500){throw 'Play release notes must contain 1 to 500 characters.'}
           "notes=$notes" >> $env:GITHUB_OUTPUT
+          $listing=''
+          if($sourceVersion -ge [version]'0.2.0'){
+            $listingSource='docs/release-notes/'+$env:RELEASE_TAG+'.play-listing.json'
+            $tagListing=git show ($env:RELEASE_TAG+':'+$listingSource) 2>$null
+            if($LASTEXITCODE -ne 0){throw 'Missing version-specific Play product descriptions in the release tag.'}
+            $listing=Join-Path $out 'play-listing.json'
+            ($tagListing -join "`n") | Set-Content -LiteralPath $listing -Encoding utf8
+          }
+          ./scripts/Publish-GooglePlay.ps1 -Mode validate -BundlePath $bundle -Sha256 $sha -ReleaseName $env:RELEASE_TAG -ListingPath $listing
+          "listing=$listing" >> $env:GITHUB_OUTPUT
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: microsoft
@@ -122,5 +140,6 @@ jobs:
           BUNDLE_SHA256: ${{ steps.artifact.outputs.sha256 }}
           VERSION_CODE: ${{ steps.artifact.outputs.version_code }}
           NOTES_PATH: ${{ steps.artifact.outputs.notes }}
+          LISTING_PATH: ${{ steps.artifact.outputs.listing }}
         run: |
-          ./scripts/Publish-GooglePlay.ps1 -Mode $env:PLAY_MODE -Track $env:PLAY_TRACK -BundlePath $env:BUNDLE_PATH -Sha256 $env:BUNDLE_SHA256 -VersionCode ([int]$env:VERSION_CODE) -ReleaseName $env:RELEASE_TAG -NotesPath $env:NOTES_PATH -ReplaceReview:($env:REPLACE_REVIEW -eq 'true')
+          ./scripts/Publish-GooglePlay.ps1 -Mode $env:PLAY_MODE -Track $env:PLAY_TRACK -BundlePath $env:BUNDLE_PATH -Sha256 $env:BUNDLE_SHA256 -VersionCode ([int]$env:VERSION_CODE) -ReleaseName $env:RELEASE_TAG -NotesPath $env:NOTES_PATH -ListingPath $env:LISTING_PATH -ReplaceReview:($env:REPLACE_REVIEW -eq 'true')

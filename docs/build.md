@@ -2,6 +2,8 @@
 
 普通使用者可以直接下载 [Android APK](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge.apk) 和 [Windows x64 安装 EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge-Windows-x64-Setup.exe)。无需自行编译、安装 SDK 或开启调试。以下源码构建流程供开发者使用；自动发版见 [发布文档](releases.md)。
 
+公开 GitHub 安装包仍为 0.1.4；当前源码／审核版为 0.2.0，新增多文件互传、进度和 Windows 系统共享面板，需要两端匹配。Windows 11 x64 的完整 MSIX 已送微软商店认证，尚未上线。商店版使用每用户后台及单份共用 .NET 环境，不安装管理员系统服务；打包、验证及渠道切换见 [Microsoft Store](microsoft-store.md)。下文 EXE／Install.ps1 指独立系统服务版。
+
 ## 环境
 
 | 项目 | 版本 / 条件 |

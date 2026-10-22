@@ -51,9 +51,9 @@ Open [Publish to Google Play](https://github.com/c01-in/clipboard-bridge/actions
 
 | Mode | Effect |
 | --- | --- |
-| `validate` (default) | Downloads the release AAB/checksum, verifies SHA-256 and its signature; no Google credential or upload |
+| `validate` (default) | Downloads the release AAB/checksum, verifies SHA-256/signature and versioned product/release text; no Google credential or upload |
 | `check-access` | Also reads the track's release lifecycle states; no edit/upload |
-| `submit` | Uploads/reuses the exact release AAB, updates the selected track, validates and commits for review |
+| `submit` | Uploads/reuses the exact AAB, updates versioned product descriptions and track What’s new in one edit, validates and commits for review |
 
 For production submission without rebuilding:
 
@@ -65,7 +65,18 @@ Wait for the run and inspect its summary. Do not treat dispatching a workflow as
 
 ## Future releases
 
-Keep Android/Windows versions aligned, increase Android `versionCode`, and add English Play notes of at most 500 characters in `docs/release-notes/v0.x.y.play.txt`. Push the matching tag only after checks pass. The release workflow builds/signs/tests installers and publishes GitHub assets. If `GOOGLE_PLAY_UPLOAD_ENABLED=true`, it then calls the Play workflow directly. This does not depend on a `release: published` event, which a release created using `GITHUB_TOKEN` would not trigger.
+Keep Android/Windows versions aligned and increase Android `versionCode`. Each update must include both:
+
+- `docs/release-notes/v0.x.y.play.txt`: English **What’s new**, 1–500 characters.
+- `docs/release-notes/v0.x.y.play-listing.json`: product title, short description and full description, with the matching version and package. English `en-US` is required; explicit additional locales are supported. Title/short/full limits are 30/80/4,000 characters.
+
+From 0.2.0, missing, invalid, oversized, duplicate-locale or mismatched product text stops publication. CI also verifies that the current source version includes these files. The workflow extracts both from the selected release tag, so a later `main` description cannot advertise new functions on an older AAB. Pre-0.2.0 tags keep the legacy notes-only path for no-rebuild uploads.
+
+Push a new matching tag only after checks and channel prerequisites pass. The standalone installer workflow currently requires approved SignPath setup to publish; it is not configured yet. Once that release path succeeds and `GOOGLE_PLAY_UPLOAD_ENABLED=true`, it calls the Play workflow directly. This does not depend on a `release: published` event, which a release created using `GITHUB_TOKEN` would not trigger. Existing GitHub releases can still use the separate Play workflow without a rebuild.
+
+The submission writes the listing and track notes into the **same edit as the AAB**. Existing promotional video, screenshots and locales not listed in the metadata are retained. An API rejection prevents the entire edit from committing; it does not submit the binary with stale descriptions. The service account requires **Manage store presence** for this app, in addition to its release permission. Do not grant account-wide administration or silently expand permissions to bypass a 403.
+
+The 0.2.0 text is prepared in source; it has not been submitted to Google Play by this documentation/automation change. Local HTTP fixtures cover serialization, existing-video retention, creation of a new locale, transaction ordering, invalid metadata, listing permission failures and review protection. These tests do not establish live Play listing-write permission or approval.
 
 Only trusted maintainers should modify workflows or push release tags. Ordinary PRs never receive the Play secret. There is no extra server, scheduled polling job or local build requirement.
 
@@ -82,4 +93,4 @@ By default the workflow checks for an existing review before creating an edit, a
 
 An uncommitted edit is deleted on failure; a confirmed commit is never automatically retried. If a network error makes the commit outcome unknown, inspect Play release state before retrying. Policy declarations, account verification, rejection resolution and some first-publication setup can still require Console actions. The workflow does not bypass them or Google's review.
 
-Official reference: [commit behavior](https://developers.google.com/android-publisher/api-ref/rest/v3/edits/commit), [release lifecycle states](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases/list).
+Official reference: [commit behavior](https://developers.google.com/android-publisher/api-ref/rest/v3/edits/commit), [listing updates](https://developers.google.com/android-publisher/api-ref/rest/v3/edits.listings/update), [transactional edits](https://developers.google.com/android-publisher/edits), [release lifecycle states](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases/list).

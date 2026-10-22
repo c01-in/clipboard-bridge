@@ -47,6 +47,13 @@ try{
     $hash=(Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()
     $bundleJson=@{versionCode=8;sha256=$hash} | ConvertTo-Json -Compress
     $argsBase=@{Token='fixture-access-token';PackageName='com.colin.clipbridge';Track='production';BundlePath=$path;Sha256=$hash;VersionCode=8;ReleaseName='v0.1.4';Notes='Test notes.'}
+    $listing=@{language='en-US';title='Clipboard Bridge';shortDescription='Copy text and images. Send files.';fullDescription='Send clipboard content and files between your paired devices. Google connectivity is required.'}
+    $metadataPath=Join-Path $temp 'listing.json'
+    @{schemaVersion=1;packageName='com.colin.clipbridge';version='0.2.0';listings=@($listing)} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $metadataPath
+    $versionListings=@(Read-PlayListingMetadata -Path $metadataPath -ReleaseName 'v0.2.0')
+    Assert ($versionListings.Count -eq 1 -and $versionListings[0].language -eq 'en-US') 'Version-specific listing loaded'
+    Expect-Failure {Read-PlayListingMetadata -Path $metadataPath -ReleaseName 'v0.2.1'} 'match the release tag'
+    $count++
     function New-Fixture {
         $handler=[PlayFixtureHandler]::new()
         return @{Handler=$handler;Client=[Net.Http.HttpClient]::new($handler)}
@@ -56,6 +63,53 @@ try{
         if(!$NoUpload){$Fixture.Handler.Reply($bundleJson)}
         $Fixture.Handler.Reply($Track)
     }
+    $fixture=New-Fixture
+    try{
+        Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -ReleaseName 'v0.2.0'} 'require version-specific Play product descriptions'
+        $badListing=$listing.Clone();$badListing.shortDescription='x'*81
+        Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -Listings @($badListing)} 'shortDescription must contain'
+        Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -Listings @($listing,$listing)} 'duplicate Play listing language'
+        Assert ($fixture.Handler.Methods.Count -eq 0) 'Missing, oversized or duplicated metadata must fail before any Google request'
+        $count++
+    }finally{$fixture.Client.Dispose()}
+    $fixture=New-Fixture
+    try{
+        $fixture.Handler.Reply('{"releases":[{"releaseLifecycleState":"RELEASE_LIFECYCLE_STATE_IN_REVIEW"}]}')
+        $result=Invoke-PlayPublish @argsBase -Client $fixture.Client -ReleaseName 'v0.2.0' -Listings $versionListings
+        Assert ($result.state -eq 'waiting_previous_review' -and $fixture.Handler.Methods.Count -eq 1) 'Existing review prevents listing and notes edits too'
+        $count++
+    }finally{$fixture.Client.Dispose()}
+    $fixture=New-Fixture
+    try{
+        Add-Prefix $fixture
+        $fixture.Handler.Reply('{"language":"en-US","video":"https://www.youtube.com/watch?v=fixture"}')
+        $fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}')
+        $result=Invoke-PlayPublish @argsBase -Client $fixture.Client -ReleaseName 'v0.2.0' -Listings $versionListings
+        Assert ($result.committed -and $result.listingLanguages[0] -eq 'en-US') 'Descriptions and notes committed with bundle'
+        Assert (($fixture.Handler.Methods -join ',') -eq 'GET,POST,GET,POST,GET,GET,PUT,PUT,POST,POST') 'Listing and track share a single edit/validate/commit transaction'
+        Assert ($fixture.Handler.Uris[5].EndsWith('/edits/edit1/listings/en-US') -and $fixture.Handler.Uris[7].EndsWith('/edits/edit1/tracks/production')) 'Product and release metadata use the same edit and expected locale'
+        $sentListing=[Text.Encoding]::UTF8.GetString($fixture.Handler.Bodies[6])|ConvertFrom-Json
+        $sentTrack=[Text.Encoding]::UTF8.GetString($fixture.Handler.Bodies[7])|ConvertFrom-Json
+        Assert ($sentListing.title -eq $listing.title -and $sentListing.shortDescription -eq $listing.shortDescription -and $sentListing.fullDescription -eq $listing.fullDescription -and $sentListing.video -eq 'https://www.youtube.com/watch?v=fixture') 'Descriptions match approved version metadata and preserve existing video'
+        Assert ($sentTrack.releases[0].releaseNotes[0].language -eq 'en-US' -and $sentTrack.releases[0].releaseNotes[0].text -eq $argsBase.Notes) 'What is new sent in matching release'
+        $count++
+    }finally{$fixture.Client.Dispose()}
+    $fixture=New-Fixture
+    try{
+        Add-Prefix $fixture
+        $fixture.Handler.Reply('{"error":{}}',404);$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}');$fixture.Handler.Reply('{}')
+        $result=Invoke-PlayPublish @argsBase -Client $fixture.Client -Listings $versionListings
+        Assert ($result.committed -and $fixture.Handler.Methods[6] -eq 'PUT') 'A new listing locale can be created when GET returns 404'
+        $count++
+    }finally{$fixture.Client.Dispose()}
+    $fixture=New-Fixture
+    try{
+        Add-Prefix $fixture
+        $fixture.Handler.Reply('{}');$fixture.Handler.Reply('{"error":{}}',403);$fixture.Handler.Reply('{}')
+        Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -Listings $versionListings} 'HTTP 403'
+        Assert (($fixture.Handler.Methods -join ',') -eq 'GET,POST,GET,POST,GET,GET,PUT,DELETE' -and !($fixture.Handler.Uris -match ':commit')) 'Listing permission failure discards the edit without submitting the bundle'
+        $count++
+    }finally{$fixture.Client.Dispose()}
     $fixture=New-Fixture
     try{
         Expect-Failure {Invoke-PlayPublish @argsBase -Client $fixture.Client -Sha256 ('0'*64)} 'checksum mismatch'
@@ -183,10 +237,21 @@ try{
         Assert ($fixture.Handler.Methods.Count -eq 0) 'Malformed key never sent'
         $count++
     }finally{$fixture.Client.Dispose()}
+    $repo=Split-Path -Parent $PSScriptRoot
+    $sourceVersion=([xml](Get-Content -LiteralPath (Join-Path $repo 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version
+    if([version]$sourceVersion -ge [version]'0.2.0'){
+        $currentTag='v'+$sourceVersion
+        $currentListing=Join-Path $repo ('docs/release-notes/'+$currentTag+'.play-listing.json')
+        $null=Read-PlayListingMetadata -Path $currentListing -ReleaseName $currentTag
+        $currentNotes=(Get-Content -LiteralPath (Join-Path $repo ('docs/release-notes/'+$currentTag+'.play.txt')) -Raw).Trim()
+        Assert ($currentNotes.Length -ge 1 -and $currentNotes.Length -le 500) 'Current source version has valid matching Play product text and What is new'
+        $count++
+    }
     Write-Host "$count Google Play publishing safeguard scenarios passed (local HTTP fixtures; no live Play upload)."
 }finally{
     $env:GOOGLE_PLAY_ACCESS_TOKEN=$oldToken
     # Only individual files created by this script are removed; no recursive deletion.
     if(Test-Path -LiteralPath (Join-Path $temp 'fixture.aab')){Remove-Item -LiteralPath (Join-Path $temp 'fixture.aab') -Force}
+    if(Test-Path -LiteralPath (Join-Path $temp 'listing.json')){Remove-Item -LiteralPath (Join-Path $temp 'listing.json') -Force}
     Remove-Item -LiteralPath $temp
 }

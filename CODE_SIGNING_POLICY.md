@@ -2,7 +2,9 @@
 
 ## Current status
 
-Clipboard Bridge is applying for SignPath Foundation's free open-source signing program. Approval and production signing credentials are pending. Existing public Windows releases are unsigned. Preparing this integration does not make earlier downloads signed, and no new version is published by a build review.
+Windows 0.2.0.0 is in Microsoft Store certification, configured to publish after approval; it is not live yet. Microsoft signs the Store MSIX after certification. This does not sign the standalone EXE or earlier GitHub downloads, which remain unsigned. See [Store package and automation](docs/microsoft-store.md).
+
+The separate SignPath Foundation integration for standalone distribution is proposed. Approval and production signing credentials are not configured. Preparing that integration does not make earlier downloads signed, and a build review publishes no new version.
 
 If approved, the signing attribution will be: **Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).** This is a proposed provider, not a claim that sponsorship has already been granted.
 

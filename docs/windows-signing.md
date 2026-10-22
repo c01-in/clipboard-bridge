@@ -2,6 +2,8 @@
 
 Status: application/integration preparation; no production signing credentials or completed signing request yet. The hosted service and application-review process are separate: service availability does not guarantee acceptance of a new open-source project.
 
+The current Windows distribution being reviewed is the separate **Microsoft Store full MSIX**, version 0.2.0.0. It is in certification and not live yet. Microsoft will sign that package after approval. Existing GitHub EXEs remain unsigned; Store signing does not activate the proposed SignPath route described below. See [Store status and API workflow](microsoft-store.md).
+
 ## Onboarding
 
 Apply through [SignPath Foundation](https://signpath.org/apply). If its embedded form fails to render, contact `info@signpath.io` with the repository, MIT license, existing releases, project purpose and [code signing policy](../CODE_SIGNING_POLICY.md), and ask whether new Foundation applications are being accepted. Do not claim a download history, reputation, MFA status or approval that has not been verified.

@@ -1,5 +1,7 @@
 # Android sharing — 0.1.4 candidate
 
+Historical 0.1.4 record. In the current **0.2.0 preview**, multiple images, videos and attachments use saved-file transfers, while shared plain text requires an explicit Send tap. One shared image still goes to the clipboard. See [current routing rules](file-transfers.md) and [0.2.0 notes](release-notes/v0.2.0.md); the older behavior and test evidence below are retained for their original version.
+
 The owner approved publication on 2026-10-16. This document records the implementation and verification for 0.1.4; GitHub build/publication and Google Play review status are tracked separately.
 
 ## Share through Clipboard Bridge

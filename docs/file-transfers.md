@@ -1,6 +1,6 @@
-# File transfers — 0.2.0 development preview
+# File transfers — 0.2.0 preview
 
-This feature is not in the published 0.1.4 installers. Update both endpoints to the matching development build to test it. A new public release still requires the maintainer’s approval.
+This feature is not in the published GitHub 0.1.4 installers. Both endpoints need matching 0.2.0 builds. Windows 0.2.0.0 was submitted to Microsoft Store certification on 21 October 2026 (America/Los_Angeles), but is not live yet. No 0.2.0 GitHub release or Google Play upload is implied. See [version notes](release-notes/v0.2.0.md) and [Store status](microsoft-store.md).
 
 ## Clipboard or files
 
@@ -13,13 +13,16 @@ This feature is not in the published 0.1.4 installers. Update both endpoints to 
 | Another Android app: share multiple images, a video, or attachments through **Clipboard Bridge** | Original files are saved on the computer. |
 | Another Android app: share plain text through **Clipboard Bridge** | Opens an explicit Send clipboard button; no automatic text upload. A `.txt` attachment is a file. |
 | Windows tray: **Send files…** | Select multiple files in the system picker and send them to Android storage. |
+| Explorer on Windows 11: **Share → Clipboard Bridge** | Sends one or more files to Android storage through the native Share target. |
 | Explorer: **Send to → Clipboard Bridge** | Sends the entire selected file list as one batch. On Windows 11, use **Show more options** for the classic Send to menu. |
+
+The classic Send to shortcut belongs to the standalone desktop installer. The Store MSIX declares the native Share target without that legacy shortcut. The Windows sending window closes three seconds after success; failure and cancellation remain visible. See [Windows Share](windows-sharing.md).
 
 Files never change the clipboard and are never opened or executed automatically. Original bytes are preserved; clipboard images retain PNG conversion and the 16 MiB limit.
 
 ## Storage and progress
 
-Windows defaults to the signed-in user’s Downloads known folder, including redirected locations. Change it in **Settings → Save received files to → Change folder…**. The tray menu also opens this folder. The service stages bytes in its protected data directory; the user-session tray copies them to the destination, verifies SHA-256 and confirms the save. A persistent per-batch plan prevents duplicates after a tray restart. Existing files are never overwritten; collisions get numbered names. A folder change applies to new batches; an already planned batch keeps its destination.
+Windows defaults to the signed-in user’s Downloads known folder, including redirected locations. Change it in **Settings → Save received files to → Change folder…**. The tray menu also opens this folder. The broker stages bytes in its data directory; the user-session tray copies them to the destination, verifies SHA-256 and confirms the save. The desktop broker is a Windows service; the Store broker runs as the signed-in user without elevation. A persistent per-batch plan prevents duplicates after a tray restart. Existing files are never overwritten; collisions get numbered names. A folder change applies to new batches; an already planned batch keeps its destination.
 
 Android 10+ defaults to **Downloads/Clipboard Bridge**, using MediaStore pending entries until each file is complete. The menu also offers a system folder picker. Android 8–9 require selecting a receiving folder first. No broad storage-access permission is requested.
 
@@ -42,6 +45,8 @@ One incoming and one outgoing batch can be active on the computer. A batch suppo
 
 ## Verification
 
+The initial verification below predates the later native Windows Share integration and full Store MSIX. It records that run's results, not the current installation or publication status. Store packaging, real per-user broker/IPC, complete companion download and API checks are recorded separately in [Microsoft Store](microsoft-store.md). Store-delivered installs/updates and Google file wake-ups on all physical devices remain unverified.
+
 On 21 October 2026, **112 Windows checks**, **20 Android instrumentation tests**, Android lint, signed APK/AAB builds and Windows packaging passed locally. Android 15 / API 35 AOSP ATD used an isolated debug package. It sent an 18.25 MiB binary file, an actual PNG and an empty file through a separate app’s URI grants and the real foreground sender into the C# endpoint. The reverse test saved a 17.25 MiB binary file and an empty file into actual Android Downloads, verified SHA-256 and retried the completed receive without duplicating it. Cancellation and single-image/file-mode routing are covered, including actual foreground-service exit after a notification cancel action and rejection of a stale cancellation for another transfer.
 
 The existing 16 local Google Play publishing safeguard scenarios passed; no live Play upload or new Google wake-up device test was performed. APK signing retains the existing certificate and versionCode increases to 9. The new Explorer Send to shortcut is included in the installer; its installation into the user’s daily Windows environment has not been tested in this run. Current installed production apps were left unchanged. The emulator and loopback test host were shut down afterward.
@@ -59,7 +64,7 @@ dotnet run --project windows/Tests/Tests.csproj -- --file-integration-host <new-
 Install the debug APK and instrumentation APK on an emulator, then run:
 
 ```text
-adb -s <emulator> shell am instrument -w -r -e fileIntegration true com.colin.clipbridge.debug.test/androidx.test.runner.AndroidJUnitRunner
+adb -s <emulator> shell am instrument --user 0 -w -r -e fileIntegration true com.colin.clipbridge.debug.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 The test host listens only on Windows loopback port 45879 with a public test key. It substitutes only Google wake-up delivery. File requests, separate-app URI grants, the foreground service, Windows writes and Android Downloads writes use the production implementations. This does not verify new file wake-ups through Google on a physical phone. Never expose the test host or include it in an installer.

@@ -85,10 +85,37 @@ function Get-PlayReleases {
     return @($result['releases'] | Where-Object {$null -ne $_})
 }
 
+function Test-PlayListings {
+    param([object[]]$Listings)
+    $languages=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach($listing in $Listings){
+        if($listing -isnot [Collections.IDictionary]){throw 'Play listing must be a JSON object.'}
+        if(@($listing.Keys | Where-Object {$_ -notin @('language','title','shortDescription','fullDescription')}).Count){throw 'Unexpected Play listing field.'}
+        if($listing['language'] -isnot [string] -or $listing.language -notmatch '^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$' -or !$languages.Add($listing.language)){throw 'Invalid or duplicate Play listing language.'}
+        foreach($field in @(@('title',30),@('shortDescription',80),@('fullDescription',4000))){
+            $value=$listing[$field[0]]
+            if($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value) -or $value.Length -gt $field[1]){throw "Play listing $($field[0]) must contain 1 to $($field[1]) characters."}
+        }
+    }
+}
+
+function Read-PlayListingMetadata {
+    param([string]$Path,[string]$ReleaseName,[string]$PackageName='com.colin.clipbridge')
+    if(!(Test-Path -LiteralPath $Path -PathType Leaf) -or (Get-Item -LiteralPath $Path).Length -gt 65536){throw 'Version-specific Play listing metadata is missing or too large.'}
+    try{$metadata=Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -AsHashtable}catch{throw 'Invalid Play listing metadata JSON.'}
+    if($metadata -isnot [Collections.IDictionary] -or $metadata['schemaVersion'] -ne 1 -or $metadata['packageName'] -ne $PackageName -or ('v'+$metadata['version']) -ne $ReleaseName){throw 'Play listing metadata must match the release tag and Android package.'}
+    if($metadata['listings'] -isnot [array] -or $metadata.listings.Count -eq 0){throw 'At least one version-specific Play listing is required.'}
+    Test-PlayListings -Listings $metadata.listings
+    if('en-US' -notin @($metadata.listings | ForEach-Object {$_.language})){throw 'English (en-US) Play listing is required.'}
+    return $metadata.listings
+}
+
 function Invoke-PlayPublish {
-    param([Net.Http.HttpClient]$Client,[string]$Token,[string]$PackageName,[string]$Track,[string]$BundlePath,[string]$Sha256,[int]$VersionCode,[string]$ReleaseName,[string]$Notes,[switch]$ReplaceReview)
+    param([Net.Http.HttpClient]$Client,[string]$Token,[string]$PackageName,[string]$Track,[string]$BundlePath,[string]$Sha256,[int]$VersionCode,[string]$ReleaseName,[string]$Notes,[object[]]$Listings=@(),[switch]$ReplaceReview)
     if($PackageName -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$' -or $Track -notmatch '^[A-Za-z0-9_-]+$' -or $VersionCode -lt 1){throw 'Invalid Play package, track or version code.'}
     if([string]::IsNullOrWhiteSpace($Notes) -or $Notes.Length -gt 500){throw 'Release notes must contain 1 to 500 characters.'}
+    Test-PlayListings -Listings $Listings
+    if($ReleaseName -match '^v(\d+\.\d+\.\d+)$' -and [version]$Matches[1] -ge [version]'0.2.0' -and $Listings.Count -eq 0){throw 'Releases from 0.2.0 require version-specific Play product descriptions.'}
     $hash=Test-PlayBundle -Path $BundlePath -Sha256 $Sha256
     $releases=@(Get-PlayReleases -Client $Client -Token $Token -PackageName $PackageName -Track $Track)
     if(!$ReplaceReview -and @($releases | Where-Object {$_.releaseLifecycleState -eq 'RELEASE_LIFECYCLE_STATE_IN_REVIEW'}).Count){
@@ -112,6 +139,15 @@ function Invoke-PlayPublish {
         if(@($currentReleases | Where-Object {$_.status -eq 'completed' -and @($_.versionCodes).Count -eq 1 -and [int]$_.versionCodes[0] -eq $VersionCode}).Count){
             return @{state='already_on_track';versionCode=$VersionCode;committed=$false;message='Identical bundle already configured on this track. Review/public availability not inferred.'}
         }
+        foreach($listing in $Listings){
+            $listingUri="$root/listings/$($listing.language)"
+            try{$oldListing=Invoke-PlayRequest -Client $Client -Token $Token -Method GET -Uri $listingUri}
+            catch{if($_.Exception.Data['HttpStatus'] -eq 404){$oldListing=@{}}else{throw}}
+            $body=@{language=$listing.language;title=$listing.title;shortDescription=$listing.shortDescription;fullDescription=$listing.fullDescription}
+            # Preserve an existing promotional video. Screenshots and other locales are separate resources.
+            if($oldListing.ContainsKey('video')){$body.video=$oldListing.video}
+            $null=Invoke-PlayRequest -Client $Client -Token $Token -Method PUT -Uri $listingUri -Body $body
+        }
         $release=@{name=$ReleaseName;versionCodes=@([string]$VersionCode);status='completed';releaseNotes=@(@{language='en-US';text=$Notes})}
         $null=Invoke-PlayRequest -Client $Client -Token $Token -Method PUT -Uri "$root/tracks/$Track" -Body @{track=$Track;releases=@($release)}
         $null=Invoke-PlayRequest -Client $Client -Token $Token -Method POST -Uri "${root}:validate"
@@ -124,7 +160,8 @@ function Invoke-PlayPublish {
             throw
         }
         $committed=$true
-        return @{state='submitted';versionCode=$VersionCode;committed=$true;message='Google Play accepted the track edit. This is not proof of review approval or public availability.'}
+        $submitted=if($Listings.Count){'Google Play accepted the AAB, product descriptions and release notes in one edit.'}else{'Google Play accepted the AAB and release notes. Product descriptions were unchanged for this legacy release.'}
+        return @{state='submitted';versionCode=$VersionCode;committed=$true;listingLanguages=@($Listings | ForEach-Object {$_.language});message="$submitted This is not proof of review approval or public availability."}
     }finally{
         if($null -ne $edit -and !$committed -and $edit.id -match '^[A-Za-z0-9_-]+$'){
             try{$null=Invoke-PlayRequest -Client $Client -Token $Token -Method DELETE -Uri "$script:PlayRoot/applications/$PackageName/edits/$($edit.id)"}catch{Write-Warning 'Could not clean up the uncommitted edit; it will expire. No successful commit was confirmed.'}
@@ -132,4 +169,4 @@ function Invoke-PlayPublish {
     }
 }
 
-Export-ModuleMember -Function New-PlayHttpClient,Get-PlayAccessToken,Test-PlayBundle,Get-PlayReleases,Invoke-PlayPublish
+Export-ModuleMember -Function New-PlayHttpClient,Get-PlayAccessToken,Test-PlayBundle,Get-PlayReleases,Read-PlayListingMetadata,Invoke-PlayPublish
