@@ -49,7 +49,7 @@
 | [完整安装包 — MSIX，x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-x64.msix) | 完整 0.2.1 商店版，保留微软签名，包含一份共用的 .NET 运行环境。安装时无需再下载程序或运行环境。 |
 | [在线安装器 — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-Store-Setup.exe) | 微软签名的小安装器，联网下载当前[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)版本，需要可用的商店组件。 |
 
-两者使用同一商店身份，均无需开发者模式或导入证书。发布包由 GitHub Actions 构建；完整 MSIX 经微软签名后，仍在 Actions 中验证签名并实测安装，再上传 Release。旧版独立 EXE 仍未签名，新下载入口不使用它，见[代码签名政策](CODE_SIGNING_POLICY.md)。
+两者使用同一商店身份，均无需开发者模式或导入证书。发布包由 GitHub Actions 构建；完整 MSIX 保留微软签名，在 Actions 中核对微软官方校验值后上传 Release。旧版独立 EXE 仍未签名，新下载入口不使用它，见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ## 剪贴板快速复制，文件直接保存
 

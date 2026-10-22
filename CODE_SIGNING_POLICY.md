@@ -2,7 +2,7 @@
 
 ## Current status
 
-Windows 0.2.1.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). GitHub offers the complete Store-signed MSIX and Microsoft's signed online EXE installer. Both are retrieved unchanged from Microsoft. The full package is built on GitHub Actions before Store submission; the offline-package workflow verifies its catalog SHA-256, Windows-trusted Store signature, identity, version and fresh offline installation before adding it to the existing release. The online installer retains its verified Microsoft publisher and timestamp. This does not sign our old standalone EXE or earlier GitHub downloads, which remain unsigned. See [Store package and automation](docs/microsoft-store.md).
+Windows 0.2.1.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). GitHub offers the complete Store-signed MSIX and Microsoft's signed online EXE installer. Both are retrieved unchanged from Microsoft. The full package is built on GitHub Actions before Store submission; the offline-package workflow checks its checksum against Microsoft's HTTPS Store catalog before adding it to the existing release. Downloaded Store packages are not installed or executed for testing. The online installer retains its verified Microsoft publisher and timestamp. This does not sign our old standalone EXE or earlier GitHub downloads, which remain unsigned. See [Store package and automation](docs/microsoft-store.md).
 
 The separate SignPath Foundation integration for standalone distribution is proposed. Approval and production signing credentials are not configured. Preparing that integration does not make earlier downloads signed, and a build review publishes no new version.
 

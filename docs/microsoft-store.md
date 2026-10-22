@@ -18,8 +18,8 @@ The earlier standalone EXE is not signed by this process.
 GitHub also provides the **complete Microsoft-signed MSIX**, including the shared
 .NET runtime. It is built on GitHub Actions, signed through the Store, and retrieved
 unchanged from Microsoft by the offline-package workflow. Publication requires a
-matching catalog SHA-256, trusted Store signature, exact version and a fresh
-installation/startup test with runner networking and Developer Mode disabled.
+matching checksum from Microsoft's HTTPS Store catalog. Downloaded Store packages
+are not installed or executed for testing.
 The online EXE remains available alongside it. See [the signing workflow](windows-signing.md).
 
 ## Package

@@ -48,7 +48,7 @@ Your own devices. Free and open source.
 | [Full installer — MSIX, x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-x64.msix) | Complete 0.2.1 Store edition, Microsoft-signed, including one shared .NET runtime. No application or runtime downloads during installation. |
 | [Online installer — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-Store-Setup.exe) | Small Microsoft-signed installer; downloads the current [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) version. Requires Internet access and Store components. |
 
-Both options use the same Store identity. No Developer Mode or certificate import is required. Release packages are built on GitHub Actions. The full MSIX retains Microsoft's signature and is verified and installation-tested on Actions before publication. Earlier standalone GitHub EXEs remain unsigned; new downloads do not use them. See the [code signing policy](CODE_SIGNING_POLICY.md).
+Both options use the same Store identity. No Developer Mode or certificate import is required. Release packages are built on GitHub Actions. The full MSIX retains Microsoft's signature; Actions checks its checksum against Microsoft's HTTPS Store catalog before publication. Earlier standalone GitHub EXEs remain unsigned; new downloads do not use them. See the [code signing policy](CODE_SIGNING_POLICY.md).
 
 ## Clipboard for quick copies. Files for everything else.
 

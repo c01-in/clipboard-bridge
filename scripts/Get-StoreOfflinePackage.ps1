@@ -3,6 +3,10 @@
 param([Parameter(Mandatory)][string]$Version,[Parameter(Mandatory)][string]$OutputDirectory)
 $ErrorActionPreference='Stop'
 if($env:GITHUB_ACTIONS -ne 'true'){throw 'Full-package downloads run only on disposable GitHub Actions runners.'}
+if($Version -notmatch '^0\.\d+\.\d+\.0$'){throw 'Expected a 0.x.y.0 Store version.'}
+$taskDirectory=[IO.Path]::GetFullPath($OutputDirectory)
+if(!$taskDirectory.StartsWith([IO.Path]::GetFullPath($env:RUNNER_TEMP)+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Use disposable runner storage.'}
+New-Item -ItemType Directory -Path $taskDirectory -Force | Out-Null
 $taskIdentity=Get-Content (Join-Path (Split-Path $PSScriptRoot -Parent) 'windows/Store/identity.json') -Raw | ConvertFrom-Json
 $taskCatalog=Invoke-RestMethod ('https://displaycatalog.mp.microsoft.com/v7.0/products/'+$taskIdentity.storeId+'?fieldsTemplate=Details&market=US&languages=en-US,neutral')
 $taskExpectedName=$taskIdentity.name+'_'+$Version+'_x64__'+$taskIdentity.packageFamilyName.Split('_')[-1]
@@ -44,7 +48,7 @@ foreach($taskLocation in $taskFiles.SelectNodes('//*[local-name()="FileLocation"
     if($taskUri.Host -notin @('tlu.dl.delivery.mp.microsoft.com','dl.delivery.mp.microsoft.com')){throw 'Unexpected download host in Microsoft update metadata.'}
     if($taskUri.Scheme -notin @('http','https')){throw 'Unexpected Microsoft delivery URL scheme.'}
     # Preserve Microsoft's delivery URL. Legacy Windows Update CDN hosts use HTTP;
-    # authenticate bytes against HTTPS catalog/update metadata and the Store signature.
+    # authenticate bytes against the checksums in HTTPS catalog/update metadata.
     $taskHead=Invoke-WebRequest -Uri $taskUri.Uri -Method Head
     if([long]($taskHead.Headers['Content-Length'] -join '') -eq [long]$taskPackages[0].MaxDownloadSizeInBytes){$taskDownloads+=@{Uri=$taskUri.Uri;Sha1=$taskLocation.FileDigest}}
 }
@@ -56,4 +60,6 @@ $taskDigest=[Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash $ta
 if($taskDigest -cne $taskDownloads[0].Sha1){throw 'Downloaded bytes do not match Microsoft update metadata.'}
 $taskSha256=[Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash $taskOutput -Algorithm SHA256).Hash))
 if($taskPackages[0].HashAlgorithm -ne 'SHA256' -or $taskSha256 -cne $taskPackages[0].Hash){throw 'Downloaded full package does not match the SHA-256 in the HTTPS Store catalog.'}
-Write-Host 'Downloaded the exact full package from Microsoft; HTTPS catalog SHA-256 and update-service digest match. Windows trust verification follows.'
+@{sourceStoreId=$taskIdentity.storeId;version=$Version;packageFullName=$taskExpectedName;sha256=(Get-FileHash $taskOutput).Hash.ToLowerInvariant();expectedSha256=[Convert]::ToHexString([Convert]::FromBase64String($taskPackages[0].Hash)).ToLowerInvariant();sizeBytes=(Get-Item $taskOutput).Length} | ConvertTo-Json | Set-Content (Join-Path $taskDirectory 'download.json') -Encoding utf8NoBOM
+'Downloaded the unmodified Microsoft Store package. Official catalog SHA-256 and update-service checksum match. No installation or execution test was performed.' | Tee-Object -Variable taskResult
+$taskResult | Out-File $env:GITHUB_STEP_SUMMARY -Append

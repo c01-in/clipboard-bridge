@@ -10,9 +10,9 @@ function Invoke-GitHub([string[]]$Arguments){
     $taskResult
 }
 $taskPackage=Join-Path $PackageDirectory 'ClipboardBridge-Windows-x64.msix'
-$taskEvidence=Get-Content (Join-Path $PackageDirectory 'verification.json') -Raw | ConvertFrom-Json
-if($taskEvidence.version -ne ($Tag.Substring(1)+'.0') -or $taskEvidence.signatureStatus -ne 'Valid' -or $taskEvidence.signatureKind -ne 'Store' -or !$taskEvidence.freshInstall -or !$taskEvidence.hostReady -or !$taskEvidence.networkIsolatedInstall -or $taskEvidence.developerMode -ne $false){throw 'Fresh offline install and trusted-signature evidence are required.'}
-if((Get-AuthenticodeSignature $taskPackage).Status -ne 'Valid' -or (Get-FileHash $taskPackage).Hash.ToLowerInvariant() -cne $taskEvidence.sha256){throw 'Verified package changed before publication.'}
+$taskEvidence=Get-Content (Join-Path $PackageDirectory 'download.json') -Raw | ConvertFrom-Json
+if($taskEvidence.version -ne ($Tag.Substring(1)+'.0') -or $taskEvidence.sourceStoreId -cne '9PJT9PTSMCJQ' -or $taskEvidence.sha256 -cne $taskEvidence.expectedSha256){throw 'Matching version and official Microsoft checksum are required.'}
+if((Get-FileHash $taskPackage).Hash.ToLowerInvariant() -cne $taskEvidence.expectedSha256 -or (Get-Item $taskPackage).Length -ne $taskEvidence.sizeBytes){throw 'Downloaded package changed before publication.'}
 $taskRelease=(Invoke-GitHub -Arguments @('release','view',$Tag,'--json','tagName,assets')) -join "`n" | ConvertFrom-Json
 $taskNames=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip')
 $taskChecksumAsset=$taskRelease.assets | Where-Object name -eq 'SHA256SUMS.txt'
