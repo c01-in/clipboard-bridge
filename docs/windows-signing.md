@@ -30,6 +30,8 @@ Run **Build, sign and optionally publish installers** in GitHub Actions on `main
 
 After approval/configuration, repeat with `sign=true`, `publish=false` to exercise real signing without releasing. SignPath can require two approvals: first for the application binaries/MSIX, then for the final installer containing them. Each request may wait up to two hours; its link is available in the action log and final step summary. A signing timeout is a real failure, not permission to publish unsigned files.
 
+Public preview releases can use the explicit repository variable `WINDOWS_SIGNING_MODE=unsigned-preview`. Their EXE and first-party binaries are checked as unsigned and their release page warns about SmartScreen and unknown-publisher prompts. Android APK/AAB signing and all build, privacy and installation checks still run. No Developer Mode, certificate-store changes or disabling security software is required. Set `WINDOWS_SIGNING_MODE=signpath` only after the approved provider configuration is ready; failures in that mode never downgrade to unsigned publishing. Store submission/signing is independent.
+
 Publishing requires an existing matching `v0.x.y` tag and `publish=true`, or the existing tag-push release trigger. The Google Play job is explicitly disabled during build reviews even if Play upload is enabled for releases. A successful build review alone never publishes an app.
 
 ## Current limitations

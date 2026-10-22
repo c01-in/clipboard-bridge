@@ -6,7 +6,7 @@ Current source/review version: **0.2.0**. Its Windows 11 x64 full MSIX was submi
 
 | Channel | Current state and requirements |
 | --- | --- |
-| GitHub APK / standalone Windows EXE | Public 0.1.4 assets remain unchanged. New trusted EXE publication requires approved SignPath credentials; these are not configured. A tag alone cannot make that path succeed. |
+| GitHub APK / standalone Windows EXE | Android uses its persistent release signature. Standalone Windows previews are explicitly unsigned and may show SmartScreen or unknown-publisher warnings. Trusted EXE signing requires approved SignPath credentials, which are not configured. |
 | Google Play | Existing API publisher configured. From 0.2.0, the release AAB, product descriptions and What’s new are submitted together. Existing-review protection still applies. Approval is separate. |
 | Microsoft Store | First Windows submission in certification. Real API authentication verified; automatic update uploads remain gated until the first publication completes. Microsoft signs the Store MSIX, not GitHub EXEs. |
 
@@ -34,7 +34,7 @@ git tag v0.2.1
 git push origin v0.2.1
 ```
 
-The standalone release job requires approved SignPath configuration when signing/publishing. Once configured, it validates versions and privacy, runs protocol/localization/download checks and Android lint, builds signed APK/AAB files, signs/packages Windows installers, and checks a fresh Windows install/service/download/uninstall on a disposable runner. It then publishes the GitHub prerelease with checksums and library sources. Failures prevent publication. A manual unsigned build review leaves both `sign` and `publish` disabled; it is not a new public release. Temporary signing files are cleaned up. Store builds use the separate [Microsoft Store workflow](microsoft-store.md).
+Before publishing, explicitly configure `WINDOWS_SIGNING_MODE=unsigned-preview` for clearly labeled unsigned Windows previews, or `signpath` for trusted signing with the approved provider configuration. An unset mode fails; a signed build cannot fall back to unsigned output. The standalone release job validates versions and privacy, runs protocol/localization/download checks and Android lint, builds signed Android APK/AAB files, packages Windows installers, checks their actual signature state, and checks a fresh Windows install/service/download/uninstall on a disposable runner. It then publishes the GitHub prerelease with checksums, library sources and a signing notice. Failures prevent publication. A manual unsigned build review leaves both `sign` and `publish` disabled; it is not a new public release. Temporary signing files are cleaned up. Store builds use the separate [Microsoft Store workflow](microsoft-store.md).
 
 When `GOOGLE_PLAY_UPLOAD_ENABLED=true`, a following job submits the exact release AAB, product descriptions and What’s new to Google Play through the official API, in one edit. A description-update failure prevents committing the release; existing promotional video, screenshots and unmentioned locales are retained. Existing reviews are preserved by default. If an earlier review is pending, the summary reports `waiting_previous_review`; it does not claim submission or retry on a schedule. Approval still belongs to Google. The publisher needs Play store-presence edit permission as well as release permission; a 403 is a failure, not permission to omit descriptions.
 

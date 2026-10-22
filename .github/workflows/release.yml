@@ -29,7 +29,8 @@ jobs:
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
       CLIPBRIDGE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      SIGN_WINDOWS: ${{ github.event_name == 'push' || inputs.sign || inputs.publish }}
+      SIGN_WINDOWS: ${{ inputs.sign || ((github.event_name == 'push' || inputs.publish) && vars.WINDOWS_SIGNING_MODE == 'signpath') }}
+      WINDOWS_SIGNING_MODE: ${{ vars.WINDOWS_SIGNING_MODE }}
       PUBLISH_RELEASE: ${{ github.event_name == 'push' || inputs.publish }}
     defaults:
       run:
@@ -57,13 +58,15 @@ jobs:
           SIGNPATH_INSTALLER: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
           SIGNPATH_SUBJECT: ${{ vars.SIGNPATH_PUBLISHER }}
         run: |
+          if($env:PUBLISH_RELEASE -eq 'true' -and $env:WINDOWS_SIGNING_MODE -notin @('signpath','unsigned-preview')){throw 'Set WINDOWS_SIGNING_MODE explicitly to signpath or unsigned-preview before publishing.'}
           if($env:SIGN_WINDOWS -eq 'true'){
             foreach($name in @('SIGNPATH_TOKEN','SIGNPATH_ORG','SIGNPATH_PROJECT','SIGNPATH_POLICY','SIGNPATH_APPS','SIGNPATH_INSTALLER','SIGNPATH_SUBJECT')){
-              if(![Environment]::GetEnvironmentVariable($name)){throw "SignPath approval/configuration is required for signed builds: $name is missing. Use sign=false, publish=false for an unsigned review."}
+              if(![Environment]::GetEnvironmentVariable($name)){throw "SignPath approval/configuration is required for signed builds: $name is missing. Signed builds never fall back to unsigned publication."}
             }
             "CLIPBRIDGE_WINDOWS_SHARE_PUBLISHER=$env:SIGNPATH_SUBJECT" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           }else{
-            'Unsigned build review. SignPath is not called and nothing is published.' | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            $message=if($env:PUBLISH_RELEASE -eq 'true'){'Explicit unsigned Windows preview publication. SmartScreen / unknown-publisher warnings are possible. Android is signed with its existing release key.'}else{'Unsigned build review. Nothing is published.'}
+            $message | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           }
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
@@ -123,6 +126,16 @@ jobs:
           stage: installer
       - name: Verify Android signatures and update final checksums
         run: |
+          if($env:SIGN_WINDOWS -eq 'true'){
+            ./scripts/Test-WindowsSignatures.ps1 -PackageRoot dist -Publisher '${{ vars.SIGNPATH_PUBLISHER }}'
+            ./scripts/Test-WindowsSignatures.ps1 -PackageRoot dist/release -Publisher '${{ vars.SIGNPATH_PUBLISHER }}' -InstallerOnly
+          }else{
+            foreach($binary in @('dist/windows/service/ClipboardBridge.Service.exe','dist/windows/tray/ClipboardBridge.exe','dist/windows/cli/ClipboardBridge.Cli.exe','dist/release/ClipboardBridge-Windows-x64-Setup.exe')){
+              if((Get-AuthenticodeSignature -LiteralPath $binary).Status -ne 'NotSigned'){throw "Unexpected signature state in unsigned preview: $binary"}
+            }
+            $identity=[xml](Get-Content dist/windows/share/AppxManifest.xml -Raw)
+            if($identity.Package.Identity.Publisher -notmatch 'OID\.2\.25\.311729368913984317654407730594956997722=1'){throw 'Unsigned preview requires its explicit unsigned Share identity.'}
+          }
           $names=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip')
           $checksums=foreach($name in $names){(Get-FileHash (Join-Path 'dist/release' $name)).Hash.ToLowerInvariant()+'  '+$name}
           [IO.File]::WriteAllLines((Join-Path $PWD 'dist/release/SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
@@ -169,10 +182,11 @@ jobs:
 
           UnifiedPush library sources and their respective LGPL-2.1 and Apache-2.0 licenses are provided in ClipboardBridge-Android-Library-Sources.zip and the APK assets. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
 
-          Windows binaries, the Share identity and installer are verified against the approved SignPath publisher. See CODE_SIGNING_POLICY.md for the signing process.
           '@
           $versionNotes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.md')
           if(Test-Path -LiteralPath $versionNotes){$notes=Get-Content -LiteralPath $versionNotes -Raw}
+          $signatureNote=if($env:SIGN_WINDOWS -eq 'true'){'Windows binaries, Share identity and installer have verified Authenticode signatures from the configured publisher.'}else{'**Windows signature notice:** this GitHub EXE is unsigned. Windows SmartScreen or UAC may show an unknown-publisher warning. Developer Mode is not required. Microsoft Store certification/signing is separate and does not sign this EXE.'}
+          $notes+="`n`n$signatureNote`n"
           $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
           gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge.aab dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}

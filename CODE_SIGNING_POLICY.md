@@ -23,7 +23,7 @@ All signing inputs must be built from the public repository on GitHub-hosted run
 
 Windows signing happens in two stages: sign the binaries and Share identity, package those verified files into the installer, then sign the installer. Both stages require the provider's approval policy. The pipeline checks the trusted signature, publisher and timestamp before accepting results; a missing or invalid signature stops a signed build. Final checksums are generated after signing.
 
-Manual build reviews default to `sign=false` and `publish=false`. They neither request signatures nor publish GitHub releases or submit to Google Play. A publishing run requires successful signing; it cannot silently fall back to unsigned output.
+Manual build reviews default to `sign=false` and `publish=false`. They neither request signatures nor publish GitHub releases or submit to Google Play. Publishing requires the explicit repository setting `WINDOWS_SIGNING_MODE`: `signpath` requests trusted signing, while `unsigned-preview` permits visibly labeled unsigned Windows previews. Android remains signed with its persistent release key in both modes. The release workflow checks the actual signature state and appends the Windows signing notice to the download page. An unset or unknown publishing mode fails. A requested signed build cannot silently fall back to unsigned output when signing fails.
 
 ## Privacy and reporting
 
