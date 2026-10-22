@@ -107,6 +107,14 @@ draft, updates only its existing English description/release notes, then commits
 Other listing languages, images, pricing and policy fields are retained.
 Metadata failure leaves the draft uncommitted instead of submitting stale text.
 
+After a successful tag-triggered Store submission, the full-package workflow
+starts automatically. It waits for the matching GitHub release and up to two
+hours for the exact certified version in the public Store catalog, then checks
+Microsoft's checksums and attaches the complete MSIX alongside the online EXE.
+An older package is never substituted. If certification takes longer, rerun
+**Fetch Microsoft Store full package** with the existing tag and publication
+enabled after the version is public; no application rebuild is needed.
+
 References: [Microsoft Store automation](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions),
 [submission API prerequisites](https://learn.microsoft.com/en-us/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services),
 [packaging WinForms](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/publish-first-app),

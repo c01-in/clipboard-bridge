@@ -6,25 +6,29 @@ on:
         description: 'Existing release whose Store-signed package must match'
         required: true
         type: string
-        default: v0.2.1
+        default: v0.2.2
       publish:
         description: 'Add the verified trusted full package to this existing release'
         type: boolean
         default: false
+  workflow_run:
+    workflows: ['Microsoft Store build and deployment']
+    types: [completed]
 permissions:
   contents: write
 concurrency:
-  group: store-offline-verification
+  group: store-offline-${{ inputs.tag || github.event.workflow_run.head_branch }}
   cancel-in-progress: false
 jobs:
   verify:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_branch, 'v0.'))
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 150
     defaults:
       run:
         shell: pwsh
     env:
-      RELEASE_TAG: ${{ inputs.tag }}
+      RELEASE_TAG: ${{ inputs.tag || github.event.workflow_run.head_branch }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -38,20 +42,38 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Release tag does not exist.'}
           $version=([xml]($props -join "`n")).Project.PropertyGroup.Version
           if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Release and source versions differ.'}
-          gh release view $env:RELEASE_TAG --json tagName
-          if($LASTEXITCODE -ne 0){throw 'GitHub release does not exist.'}
+          # Store upload and GitHub publication run in parallel. A missing release
+          # is expected briefly; authentication/permission failures stay failures.
+          for($attempt=1;$attempt -le 120;$attempt++){
+            $result=gh api ('repos/'+$env:GITHUB_REPOSITORY+'/releases/tags/'+$env:RELEASE_TAG) 2>&1
+            if($LASTEXITCODE -eq 0){break}
+            if(($result -join "`n") -notmatch 'HTTP 404' -or $attempt -eq 120){throw 'Could not find the matching GitHub release.'}
+            Start-Sleep -Seconds 30
+          }
+      - name: Wait for the matching certified Store version
+        run: |
+          $identity=Get-Content windows/Store/identity.json -Raw | ConvertFrom-Json
+          $expected=$identity.name+'_'+$env:RELEASE_TAG.Substring(1)+'.0_x64__'+$identity.packageFamilyName.Split('_')[-1]
+          for($attempt=1;$attempt -le 240;$attempt++){
+            $catalog=Invoke-RestMethod ('https://displaycatalog.mp.microsoft.com/v7.0/products/'+$identity.storeId+'?fieldsTemplate=Details&market=US&languages=en-US,neutral') -TimeoutSec 30
+            $matching=@($catalog.Product.DisplaySkuAvailabilities.Sku.Properties.Packages | Where-Object {$_.PackageFullName -ceq $expected -and $_.PackageFormat -eq 'Msix'})
+            if($matching.Count -gt 0){break}
+            if($attempt -eq 240){throw 'Microsoft certification/catalog publication is still pending. Re-run this workflow after the matching Store version is public; no older package was published.'}
+            if($attempt -eq 1 -or $attempt % 10 -eq 0){Write-Output 'Waiting for Microsoft certification and the exact version in the public catalog; no package has been downloaded.'}
+            Start-Sleep -Seconds 30
+          }
       - name: Download official full package and check Microsoft checksums
         run: ./scripts/Get-StoreOfflinePackage.ps1 -Version ($env:RELEASE_TAG.Substring(1)+'.0') -OutputDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')
       - name: Preserve package and checksum receipt in Actions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: store-signed-offline-${{ inputs.tag }}
+          name: store-signed-offline-${{ env.RELEASE_TAG }}
           path: |
             ${{ runner.temp }}/store-offline/ClipboardBridge-Windows-x64.msix
             ${{ runner.temp }}/store-offline/download.json
           if-no-files-found: error
       - name: Add verified full package without changing the release version
-        if: inputs.publish
+        if: github.event_name == 'workflow_run' || inputs.publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/Publish-StoreOfflinePackage.ps1 -Tag $env:RELEASE_TAG -PackageDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')
