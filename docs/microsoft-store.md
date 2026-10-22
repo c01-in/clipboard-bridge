@@ -2,8 +2,11 @@
 
 Status: product reserved and publisher directory associated. Dedicated automation
 credentials passed real OAuth and read-only Store API access to this product,
-including after the temporary setup administrator role was revoked. The first
-submission is not complete, and no Store publication has occurred.
+including after the temporary setup administrator role was revoked. Version
+0.2.0.0 was submitted on 21 October 2026 (America/Los_Angeles). Partner Center
+and the Store API both confirm that the first submission is in certification.
+Its package is uploaded, the English listing is complete, and publishing is
+configured to begin automatically after certification passes.
 The app is **not live** in Microsoft Store yet.
 
 ## Package
