@@ -72,7 +72,13 @@ sealed class TrayContext : ApplicationContext
         window = new ClipboardWindow(); window.Changed += () => { if (!paused && receivedClipboardSequence != ClipboardWindow.Sequence) { debounce.Stop(); debounce.Start(); } }; window.ManualSend += async () => await Send(true);
         window.SettingsRequested += ShowSettings;
         var menu = new ContextMenuStrip();
-        menu.Items.Add(UiText.Get("win_send_now"), null, async (_, _) => await Send(true));
+        var toggle = new ToolStripMenuItem(UiText.Get("win_pause")) { CheckOnClick = true };
+        toggle.CheckedChanged += (_, _) => { paused = toggle.Checked; SavePreferences(); icon!.Text = paused ? UiText.Get("win_paused") : UiText.Get("win_automatic"); icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray; };
+        menu.Items.Add(toggle);
+        var sendNow = new ToolStripMenuItem(UiText.Get("win_send_now")) { ShortcutKeyDisplayString = "Ctrl+Alt+V" };
+        sendNow.Click += async (_, _) => await Send(true);
+        menu.Items.Add(sendNow);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(UiText.Get("files_choose"), null, (_, _) =>
         {
             using var dialog = new OpenFileDialog { Multiselect = true, Title = UiText.Get("files_choose"), CheckFileExists = true };
@@ -83,8 +89,7 @@ sealed class TrayContext : ApplicationContext
             try { Directory.CreateDirectory(FilePreferences.SaveDirectory); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(FilePreferences.SaveDirectory) { UseShellExecute = true }); }
             catch (Exception e) { Notify(e.Message, true); }
         });
-        var toggle = new ToolStripMenuItem(UiText.Get("win_pause")) { CheckOnClick = true };
-        toggle.CheckedChanged += (_, _) => { paused = toggle.Checked; SavePreferences(); icon!.Text = paused ? UiText.Get("win_paused") : UiText.Get("win_automatic"); icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray; }; menu.Items.Add(toggle);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(UiText.Get("win_open_settings"), null, (_, _) => ShowSettings());
         menu.Items.Add(UiText.Get("win_quit"), null, (_, _) => ExitThread());
         icon = new NotifyIcon { Icon = AppIcons.Tray, Text = UiText.Get("app_name"), Visible = true, ContextMenuStrip = menu };
@@ -93,7 +98,7 @@ sealed class TrayContext : ApplicationContext
         receiveTimer.Tick += async (_, _) => await Receive(); receiveTimer.Start();
         var pref = Path.Combine(FilePreferences.DirectoryPath, "paused.txt");
         paused = File.Exists(pref) && File.ReadAllText(pref) == "true"; toggle.Checked = paused;
-        if (showSettings || !File.Exists(pref)) ShowSettings();
+        if (showSettings) ShowSettings();
         if (!window.HotkeyRegistered) Notify(UiText.Get("win_hotkey_busy"), true);
     }
     void SavePreferences()
@@ -199,7 +204,11 @@ sealed class TrayContext : ApplicationContext
     void Notify(string text, bool error) { icon.BalloonTipTitle = error ? UiText.Get("win_attention") : UiText.Get("app_name"); icon.BalloonTipText = text.Length > 250 ? text[..250] : text; icon.BalloonTipIcon = error ? ToolTipIcon.Warning : ToolTipIcon.Info; icon.ShowBalloonTip(3500); }
     void ShowSettings()
     {
-        if (settings is null || settings.IsDisposed) settings = new SettingsForm();
+        if (settings is null || settings.IsDisposed)
+        {
+            settings = new SettingsForm();
+            settings.FormClosed += (_, _) => ExitThread();
+        }
         if (settings.WindowState == FormWindowState.Minimized) settings.WindowState = FormWindowState.Normal;
         settings.Show(); settings.Activate();
     }

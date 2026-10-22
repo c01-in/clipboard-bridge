@@ -83,11 +83,11 @@
     <string name="win_save_addresses">儲存備用位址</string>
     <string name="win_phone_update">安裝／更新手機 App</string>
     <string name="win_download_help">使用手機相機掃碼下載簽署 APK，依系統提示確認安裝。此 QR Code 僅用於安裝；開啟 App 後會自動尋找配對。</string>
-    <string name="win_send_now">立即傳送剪貼簿  Ctrl+Alt+V</string>
-    <string name="win_pause">暫停 Windows 自動傳送</string>
+    <string name="win_send_now">立即傳送剪貼簿</string>
+    <string name="win_pause">暫停自動傳送剪貼簿</string>
     <string name="win_paused">剪貼簿同步 · 已暫停</string>
     <string name="win_automatic">剪貼簿同步 · 自動</string>
-    <string name="win_open_settings">設定與手機配對</string>
+    <string name="win_open_settings">設定與配對…</string>
     <string name="win_quit">結束</string>
     <string name="win_attention">剪貼簿同步需要處理</string>
     <string name="win_connect_retry">暫時無法連接背景服務，正在重試…</string>

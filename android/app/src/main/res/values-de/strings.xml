@@ -83,11 +83,11 @@
     <string name="win_save_addresses">Zusätzliche Adressen speichern</string>
     <string name="win_phone_update">Handy-App installieren oder aktualisieren</string>
     <string name="win_download_help">Mit der Handykamera scannen und signierte App installieren. Der QR-Code dient nur zur Installation; danach erfolgt die Suche automatisch.</string>
-    <string name="win_send_now">Jetzt senden  Ctrl+Alt+V</string>
+    <string name="win_send_now">Jetzt senden</string>
     <string name="win_pause">Automatisches Senden pausieren</string>
     <string name="win_paused">Zwischenablage · Pausiert</string>
     <string name="win_automatic">Zwischenablage · Automatisch</string>
-    <string name="win_open_settings">Einstellungen und Kopplung</string>
+    <string name="win_open_settings">Einstellungen und Kopplung…</string>
     <string name="win_quit">Beenden</string>
     <string name="win_attention">Zwischenablage benötigt Aufmerksamkeit</string>
     <string name="win_connect_retry">Dienst momentan nicht erreichbar. Erneuter Versuch…</string>

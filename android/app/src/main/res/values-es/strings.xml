@@ -83,11 +83,11 @@
     <string name="win_save_addresses">Guardar direcciones adicionales</string>
     <string name="win_phone_update">Instalar o actualizar la app móvil</string>
     <string name="win_download_help">Escanea con la cámara para descargar la app firmada. El QR sirve para instalar; el emparejamiento es automático al abrirla.</string>
-    <string name="win_send_now">Enviar ahora  Ctrl+Alt+V</string>
+    <string name="win_send_now">Enviar ahora</string>
     <string name="win_pause">Pausar envío automático</string>
     <string name="win_paused">Portapapeles · En pausa</string>
     <string name="win_automatic">Portapapeles · Automático</string>
-    <string name="win_open_settings">Configuración y emparejamiento</string>
+    <string name="win_open_settings">Configuración y emparejamiento…</string>
     <string name="win_quit">Salir</string>
     <string name="win_attention">Se requiere atención</string>
     <string name="win_connect_retry">No se puede conectar al servicio. Reintentando…</string>

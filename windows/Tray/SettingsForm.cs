@@ -65,6 +65,11 @@ sealed class SettingsForm : Form
         Shown += async (_, _) => { try { await Ipc.Call(new Command("pairing-open")); } catch (Exception e) { state.Text = UiText.Get("win_status_error", UiText.Translate(e.Message)); } await RefreshStatus(); };
         timer.Tick += async (_, _) => await RefreshStatus();timer.Start();FormClosed += (_, _) => timer.Dispose();
     }
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        if (WindowState == FormWindowState.Minimized) Hide();
+    }
     static Button Button(string key, Func<Task> action)
     {
         var b = new Button { Text = UiText.Get(key), AutoSize = true, Margin = new Padding(0, 0, 10, 8) };

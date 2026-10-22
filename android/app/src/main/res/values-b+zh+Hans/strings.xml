@@ -83,11 +83,11 @@
     <string name="win_save_addresses">保存备用地址</string>
     <string name="win_phone_update">安装／更新手机 App</string>
     <string name="win_download_help">使用手机相机扫码下载签名 APK，按系统提示确认安装。此二维码仅用于安装；打开 App 后会自动发现配对。</string>
-    <string name="win_send_now">立即发送剪贴板  Ctrl+Alt+V</string>
-    <string name="win_pause">暂停 Windows 自动发送</string>
+    <string name="win_send_now">立即发送剪贴板</string>
+    <string name="win_pause">暂停自动发送剪贴板</string>
     <string name="win_paused">剪贴板同步 · 已暂停</string>
     <string name="win_automatic">剪贴板同步 · 自动</string>
-    <string name="win_open_settings">设置与手机配对</string>
+    <string name="win_open_settings">设置与配对…</string>
     <string name="win_quit">退出</string>
     <string name="win_attention">剪贴板同步需要处理</string>
     <string name="win_connect_retry">暂时无法连接后台服务，正在重试…</string>

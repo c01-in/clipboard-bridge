@@ -83,11 +83,11 @@
     <string name="win_save_addresses">Save additional addresses</string>
     <string name="win_phone_update">Install or update phone app</string>
     <string name="win_download_help">Scan with your phone camera to download the signed Android app. This QR code installs the app; pairing happens automatically after you open it.</string>
-    <string name="win_send_now">Send clipboard now  Ctrl+Alt+V</string>
-    <string name="win_pause">Pause automatic sending</string>
+    <string name="win_send_now">Send clipboard now</string>
+    <string name="win_pause">Pause automatic clipboard sending</string>
     <string name="win_paused">Clipboard Bridge · Paused</string>
     <string name="win_automatic">Clipboard Bridge · Automatic</string>
-    <string name="win_open_settings">Settings and pairing</string>
+    <string name="win_open_settings">Settings and pairing…</string>
     <string name="win_quit">Quit</string>
     <string name="win_attention">Clipboard Bridge needs attention</string>
     <string name="win_connect_retry">Cannot connect to the service right now. Retrying…</string>

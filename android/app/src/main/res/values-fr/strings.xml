@@ -83,11 +83,11 @@
     <string name="win_save_addresses">Enregistrer les adresses</string>
     <string name="win_phone_update">Installer ou mettre à jour l’app mobile</string>
     <string name="win_download_help">Scannez avec l’appareil photo pour télécharger l’app signée. Le QR sert à l’installation ; l’association se fait à l’ouverture.</string>
-    <string name="win_send_now">Envoyer maintenant  Ctrl+Alt+V</string>
+    <string name="win_send_now">Envoyer maintenant</string>
     <string name="win_pause">Suspendre l’envoi automatique</string>
     <string name="win_paused">Presse-papiers · En pause</string>
     <string name="win_automatic">Presse-papiers · Automatique</string>
-    <string name="win_open_settings">Réglages et association</string>
+    <string name="win_open_settings">Réglages et association…</string>
     <string name="win_quit">Quitter</string>
     <string name="win_attention">Action requise</string>
     <string name="win_connect_retry">Connexion au service impossible. Nouvelle tentative…</string>

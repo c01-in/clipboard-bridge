@@ -83,11 +83,11 @@
     <string name="win_save_addresses">Salvar endereços adicionais</string>
     <string name="win_phone_update">Instalar ou atualizar o app móvel</string>
     <string name="win_download_help">Leia com a câmera para baixar o app assinado. O QR instala o app; o pareamento é automático ao abri-lo.</string>
-    <string name="win_send_now">Enviar agora  Ctrl+Alt+V</string>
+    <string name="win_send_now">Enviar agora</string>
     <string name="win_pause">Pausar envio automático</string>
     <string name="win_paused">Área de transferência · Pausado</string>
     <string name="win_automatic">Área de transferência · Automático</string>
-    <string name="win_open_settings">Configurações e pareamento</string>
+    <string name="win_open_settings">Configurações e pareamento…</string>
     <string name="win_quit">Sair</string>
     <string name="win_attention">A área de transferência precisa de atenção</string>
     <string name="win_connect_retry">Não foi possível conectar ao serviço. Tentando novamente…</string>

@@ -83,11 +83,11 @@
     <string name="win_save_addresses">追加アドレスを保存</string>
     <string name="win_phone_update">スマートフォンのアプリをインストール・更新</string>
     <string name="win_download_help">カメラで読み取り、署名済みアプリをインストールしてください。これはインストール用です。起動後に自動検出します。</string>
-    <string name="win_send_now">今すぐ送信  Ctrl+Alt+V</string>
+    <string name="win_send_now">今すぐ送信</string>
     <string name="win_pause">自動送信を一時停止</string>
     <string name="win_paused">クリップボード同期・一時停止</string>
     <string name="win_automatic">クリップボード同期・自動</string>
-    <string name="win_open_settings">設定とペアリング</string>
+    <string name="win_open_settings">設定とペアリング…</string>
     <string name="win_quit">終了</string>
     <string name="win_attention">クリップボード同期の確認が必要です</string>
     <string name="win_connect_retry">サービスに接続できません。再試行中…</string>
