@@ -1,8 +1,9 @@
 # Microsoft Store
 
-Status: product reserved and publisher directory associated. Automation credentials
-can obtain an OAuth token; Store API authorization and the first submission are
-not complete. Obtaining a token alone does not prove permission to publish.
+Status: product reserved and publisher directory associated. Dedicated automation
+credentials passed real OAuth and read-only Store API access to this product,
+including after the temporary setup administrator role was revoked. The first
+submission is not complete, and no Store publication has occurred.
 The app is **not live** in Microsoft Store yet.
 
 ## Package
