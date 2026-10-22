@@ -44,7 +44,12 @@
 
 **当前版本：0.2.1 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
 
-[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)提供微软签名的 Windows 应用。新版 GitHub 中的 Windows EXE 是微软签名的在线安装器，会联网下载当前商店版本，需要可用的微软商店组件；无需开发者模式或导入证书。旧版独立 EXE 仍未签名，见[代码签名政策](CODE_SIGNING_POLICY.md)。
+| Windows 下载 | 安装方式 |
+| --- | --- |
+| [完整安装包 — MSIX，x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-x64.msix) | 完整 0.2.1 商店版，保留微软签名，包含一份共用的 .NET 运行环境。安装时无需再下载程序或运行环境。 |
+| [在线安装器 — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-Store-Setup.exe) | 微软签名的小安装器，联网下载当前[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)版本，需要可用的商店组件。 |
+
+两者使用同一商店身份，均无需开发者模式或导入证书。发布包由 GitHub Actions 构建；完整 MSIX 经微软签名后，仍在 Actions 中验证签名并实测安装，再上传 Release。旧版独立 EXE 仍未签名，新下载入口不使用它，见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ## 剪贴板快速复制，文件直接保存
 

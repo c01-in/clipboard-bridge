@@ -3,8 +3,8 @@
 Status: product reserved and publisher directory associated. Dedicated automation
 credentials passed real OAuth and read-only Store API access to this product,
 including after the temporary setup administrator role was revoked. Version
-0.2.0.0 was submitted on 21 October 2026 (America/Los_Angeles). Partner Center
-and the Store API now confirm that the first submission is **Published**.
+0.2.0.0 and 0.2.1.0 were submitted on 21 October 2026 (America/Los_Angeles).
+Partner Center and the Store API confirmed both submissions as **Published**.
 The public listing and WinGet's Microsoft Store catalog were verified on
 21 October 2026 (America/Los_Angeles).
 
@@ -14,6 +14,13 @@ current Store package. New GitHub releases mirror that unmodified installer
 after verifying its trusted Microsoft signature and timestamp. It requires
 Internet access and Microsoft Store components; it is not an offline EXE.
 The earlier standalone EXE is not signed by this process.
+
+GitHub also provides the **complete Microsoft-signed MSIX**, including the shared
+.NET runtime. It is built on GitHub Actions, signed through the Store, and retrieved
+unchanged from Microsoft by the offline-package workflow. Publication requires a
+matching catalog SHA-256, trusted Store signature, exact version and a fresh
+installation/startup test with runner networking and Developer Mode disabled.
+The online EXE remains available alongside it. See [the signing workflow](windows-signing.md).
 
 ## Package
 

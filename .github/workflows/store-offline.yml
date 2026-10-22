@@ -7,8 +7,12 @@ on:
         required: true
         type: string
         default: v0.2.1
+      publish:
+        description: 'Add the verified trusted full package to this existing release'
+        type: boolean
+        default: false
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: store-offline-verification
   cancel-in-progress: false
@@ -46,3 +50,8 @@ jobs:
             ${{ runner.temp }}/store-offline/ClipboardBridge-Windows-x64.msix
             ${{ runner.temp }}/store-offline/verification.json
           if-no-files-found: error
+      - name: Add verified full package without changing the release version
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/Publish-StoreOfflinePackage.ps1 -Tag $env:RELEASE_TAG -PackageDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')

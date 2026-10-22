@@ -43,7 +43,12 @@ Your own devices. Free and open source.
 
 **Current release: 0.2.1 preview.** No SDKs, local builds or phone debugging needed. The Microsoft Store edition requires Windows 11 or later, x64. Android requires Android 8.0 or later and Google Play Services. Google Play updates appear after Google's review.
 
-[Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) provides the Microsoft-signed Windows app. The Windows EXE in the new GitHub release is Microsoft's signed online installer for that Store product; it downloads the current Store version and needs Internet access and Microsoft Store components. No Developer Mode or certificate import is required. Earlier standalone GitHub EXEs remain unsigned. See the [code signing policy](CODE_SIGNING_POLICY.md).
+| Windows download | What you get |
+| --- | --- |
+| [Full installer — MSIX, x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-x64.msix) | Complete 0.2.1 Store edition, Microsoft-signed, including one shared .NET runtime. No application or runtime downloads during installation. |
+| [Online installer — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.1/ClipboardBridge-Windows-Store-Setup.exe) | Small Microsoft-signed installer; downloads the current [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) version. Requires Internet access and Store components. |
+
+Both options use the same Store identity. No Developer Mode or certificate import is required. Release packages are built on GitHub Actions. The full MSIX retains Microsoft's signature and is verified and installation-tested on Actions before publication. Earlier standalone GitHub EXEs remain unsigned; new downloads do not use them. See the [code signing policy](CODE_SIGNING_POLICY.md).
 
 ## Clipboard for quick copies. Files for everything else.
 

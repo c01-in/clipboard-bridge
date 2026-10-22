@@ -42,7 +42,9 @@ $taskDownloads=@()
 foreach($taskLocation in $taskFiles.SelectNodes('//*[local-name()="FileLocation"]')){
     $taskUri=[UriBuilder]::new($taskLocation.Url)
     if($taskUri.Host -notin @('tlu.dl.delivery.mp.microsoft.com','dl.delivery.mp.microsoft.com')){throw 'Unexpected download host in Microsoft update metadata.'}
-    $taskUri.Scheme='https';$taskUri.Port=-1
+    if($taskUri.Scheme -notin @('http','https')){throw 'Unexpected Microsoft delivery URL scheme.'}
+    # Preserve Microsoft's delivery URL. Legacy Windows Update CDN hosts use HTTP;
+    # authenticate bytes against HTTPS catalog/update metadata and the Store signature.
     $taskHead=Invoke-WebRequest -Uri $taskUri.Uri -Method Head
     if([long]($taskHead.Headers['Content-Length'] -join '') -eq [long]$taskPackages[0].MaxDownloadSizeInBytes){$taskDownloads+=@{Uri=$taskUri.Uri;Sha1=$taskLocation.FileDigest}}
 }
@@ -52,4 +54,6 @@ Invoke-WebRequest -Uri $taskDownloads[0].Uri -OutFile $taskOutput
 if((Get-Item $taskOutput).Length -ne [long]$taskPackages[0].MaxDownloadSizeInBytes){throw 'Downloaded full package is truncated.'}
 $taskDigest=[Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash $taskOutput -Algorithm SHA1).Hash))
 if($taskDigest -cne $taskDownloads[0].Sha1){throw 'Downloaded bytes do not match Microsoft update metadata.'}
-Write-Host 'Downloaded the exact full package from Microsoft over HTTPS; update-service digest matches. Windows trust verification follows.'
+$taskSha256=[Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash $taskOutput -Algorithm SHA256).Hash))
+if($taskPackages[0].HashAlgorithm -ne 'SHA256' -or $taskSha256 -cne $taskPackages[0].Hash){throw 'Downloaded full package does not match the SHA-256 in the HTTPS Store catalog.'}
+Write-Host 'Downloaded the exact full package from Microsoft; HTTPS catalog SHA-256 and update-service digest match. Windows trust verification follows.'
