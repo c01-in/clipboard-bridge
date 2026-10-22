@@ -58,14 +58,14 @@ jobs:
           SIGNPATH_INSTALLER: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
           SIGNPATH_SUBJECT: ${{ vars.SIGNPATH_PUBLISHER }}
         run: |
-          if($env:PUBLISH_RELEASE -eq 'true' -and $env:WINDOWS_SIGNING_MODE -notin @('signpath','unsigned-preview')){throw 'Set WINDOWS_SIGNING_MODE explicitly to signpath or unsigned-preview before publishing.'}
+          if($env:PUBLISH_RELEASE -eq 'true' -and $env:WINDOWS_SIGNING_MODE -notin @('signpath','microsoft-store')){throw 'Set WINDOWS_SIGNING_MODE explicitly to signpath or microsoft-store before publishing. Unsigned Windows installers are not published.'}
           if($env:SIGN_WINDOWS -eq 'true'){
             foreach($name in @('SIGNPATH_TOKEN','SIGNPATH_ORG','SIGNPATH_PROJECT','SIGNPATH_POLICY','SIGNPATH_APPS','SIGNPATH_INSTALLER','SIGNPATH_SUBJECT')){
               if(![Environment]::GetEnvironmentVariable($name)){throw "SignPath approval/configuration is required for signed builds: $name is missing. Signed builds never fall back to unsigned publication."}
             }
             "CLIPBRIDGE_WINDOWS_SHARE_PUBLISHER=$env:SIGNPATH_SUBJECT" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           }else{
-            $message=if($env:PUBLISH_RELEASE -eq 'true'){'Explicit unsigned Windows preview publication. SmartScreen / unknown-publisher warnings are possible. Android is signed with its existing release key.'}else{'Unsigned build review. Nothing is published.'}
+            $message=if($env:PUBLISH_RELEASE -eq 'true'){'Windows downloads use the Microsoft-signed Store online installer. The unsigned standalone build is tested but not published. Android uses its existing release key.'}else{'Unsigned build review. Nothing is published.'}
             $message | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           }
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
@@ -159,6 +159,14 @@ jobs:
           if($head.StatusCode -ne 200 -or [long]($head.Headers['Content-Length'] -join '') -ne (Get-Item dist/release/ClipboardBridge.apk).Length){throw 'Installed APK download is incomplete.'}
           & "$env:ProgramFiles/ClipboardBridge/scripts/Uninstall.ps1"
           if(Test-Path "$env:ProgramFiles/ClipboardBridge"){throw 'Uninstall left installed program files.'}
+      - name: Obtain Microsoft-signed Store installer for publication
+        if: env.PUBLISH_RELEASE == 'true' && env.WINDOWS_SIGNING_MODE == 'microsoft-store'
+        run: |
+          ./scripts/Get-StoreInstaller.ps1 -OutputPath dist/release/ClipboardBridge-Windows-Store-Setup.exe
+          # Standalone EXE/ZIP are CI review artifacts, not public release downloads.
+          $publicNames=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip')
+          $checksums=foreach($name in $publicNames){(Get-FileHash (Join-Path 'dist/release' $name)).Hash.ToLowerInvariant()+'  '+$name}
+          [IO.File]::WriteAllLines((Join-Path $PWD 'dist/release/SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: preview-${{ env.RELEASE_TAG }}
@@ -169,26 +177,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $notes=@'
-          Preview build for installation testing. Windows and Android use the same 0.x version.
-
-          Downloads: ClipboardBridge.apk (Android), ClipboardBridge.aab (maintainer upload artifact, not a phone installer), ClipboardBridge-Windows-x64-Setup.exe (Windows installer), ClipboardBridge-Windows-x64.zip (manual installation), SHA256SUMS.txt (checksums).
-
-          Automatic local pairing, text and one image, and nine system languages. Android asks for notification permission in the app. No debug mode is required. Existing installs can be updated using the same Android signing key; internal Android version codes continue increasing.
-
-          Android includes a copy/share link to the GitHub Releases page for installing the Windows companion, plus a privacy policy entry. The AAB is built for maintainer evaluation; Google Play approval has not been obtained. See docs/google-play.md for the registration-path review and remaining submission requirements.
-
-          Windows sends encrypted Web Push directly to Google using a per-computer VAPID key. No Firebase project, service-account file, shared sender secret or maintainer relay is required. Google Play Services and Google network access are still required. Android has a persistent pause/resume switch; old receive sessions are discarded after resuming. Existing pairs migrate automatically when both apps are updated.
-
-          UnifiedPush library sources and their respective LGPL-2.1 and Apache-2.0 licenses are provided in ClipboardBridge-Android-Library-Sources.zip and the APK assets. App source is available at this release tag. Short native-device push tests passed; long-term delivery still needs testing.
-
-          '@
           $versionNotes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.md')
-          if(Test-Path -LiteralPath $versionNotes){$notes=Get-Content -LiteralPath $versionNotes -Raw}
-          $signatureNote=if($env:SIGN_WINDOWS -eq 'true'){'Windows binaries, Share identity and installer have verified Authenticode signatures from the configured publisher.'}else{'**Windows signature notice:** this GitHub EXE is unsigned. Windows SmartScreen or UAC may show an unknown-publisher warning. Developer Mode is not required. Microsoft Store certification/signing is separate and does not sign this EXE.'}
+          if(!(Test-Path -LiteralPath $versionNotes)){throw 'Version-specific release notes are required before publishing.'}
+          $notes=Get-Content -LiteralPath $versionNotes -Raw
+          if($env:WINDOWS_SIGNING_MODE -eq 'microsoft-store'){
+            $assets=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip','SHA256SUMS.txt')
+            $signatureNote='**Windows download:** ClipboardBridge-Windows-Store-Setup.exe is the unmodified, timestamped Microsoft-signed online installer for our Store product. It downloads the current Store version and needs Internet access and Microsoft Store components. It is not an offline installer or the old standalone service edition. No Developer Mode or certificate import is needed. Store and standalone editions use separate local state; back up configuration and re-pair when changing editions. Do not run both brokers on the same port.'
+          }else{
+            $assets=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip','SHA256SUMS.txt')
+            $signatureNote='Windows binaries, Share identity and installer have verified Authenticode signatures from the configured publisher.'
+          }
           $notes+="`n`n$signatureNote`n"
           $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
-          gh release create $env:RELEASE_TAG dist/release/ClipboardBridge.apk dist/release/ClipboardBridge.aab dist/release/ClipboardBridge-Windows-x64-Setup.exe dist/release/ClipboardBridge-Windows-x64.zip dist/release/ClipboardBridge-Android-Library-Sources.zip dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
+          $paths=@($assets | ForEach-Object {Join-Path 'dist/release' $_})
+          gh release create $env:RELEASE_TAG @paths --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
       - name: Remove temporary signing material
         if: always()

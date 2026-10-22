@@ -1,14 +1,14 @@
 # Automated builds and releases
 
-Users install the Android APK or Windows setup EXE from [GitHub Releases](https://github.com/c01-in/clipboard-bridge/releases), without a build environment. Versions remain 0.x previews. The current GitHub release is **0.1.4**; GitHub publication is separate from Google Play submission and approval.
+Users install the Android APK or Microsoft-signed Windows online installer from [GitHub Releases](https://github.com/c01-in/clipboard-bridge/releases), without a build environment. Windows is also available directly from [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). Versions remain 0.x previews. The current version is **0.2.0**; GitHub publication is separate from Google Play submission and approval.
 
-Current source/review version: **0.2.0**. Its Windows 11 x64 full MSIX was submitted to Microsoft Store certification on 21 October 2026 (America/Los_Angeles), with automatic publication after approval. It is not live yet, and there is no 0.2.0 GitHub release. See [0.2.0 feature notes](release-notes/v0.2.0.md) and [Store setup/status](microsoft-store.md).
+Windows **0.2.0.0 is published in Microsoft Store**. The official Store installer downloads the current Store version rather than pinning a version in an offline bundle. See [0.2.0 feature notes](release-notes/v0.2.0.md) and [Store setup/status](microsoft-store.md).
 
 | Channel | Current state and requirements |
 | --- | --- |
-| GitHub APK / standalone Windows EXE | Android uses its persistent release signature. Standalone Windows previews are explicitly unsigned and may show SmartScreen or unknown-publisher warnings. Trusted EXE signing requires approved SignPath credentials, which are not configured. |
+| GitHub APK / Windows download | Android uses its persistent release signature. The Windows download is the unmodified Microsoft-signed Store online installer. Old standalone EXEs remain unsigned and are not the new download. |
 | Google Play | Existing API publisher configured. From 0.2.0, the release AAB, product descriptions and What’s new are submitted together. Existing-review protection still applies. Approval is separate. |
-| Microsoft Store | First Windows submission in certification. Real API authentication verified; automatic update uploads remain gated until the first publication completes. Microsoft signs the Store MSIX, not GitHub EXEs. |
+| Microsoft Store | Windows 0.2.0.0 published; public catalog verified. Real API authentication verified. Store update uploads remain separately gated pending update-path validation. Microsoft signs the Store MSIX and its official online installer, not our own standalone EXE. |
 
 ## One-time maintainer setup
 
@@ -34,7 +34,7 @@ git tag v0.2.1
 git push origin v0.2.1
 ```
 
-Before publishing, explicitly configure `WINDOWS_SIGNING_MODE=unsigned-preview` for clearly labeled unsigned Windows previews, or `signpath` for trusted signing with the approved provider configuration. An unset mode fails; a signed build cannot fall back to unsigned output. The standalone release job validates versions and privacy, runs protocol/localization/download checks and Android lint, builds signed Android APK/AAB files, packages Windows installers, checks their actual signature state, and checks a fresh Windows install/service/download/uninstall on a disposable runner. It then publishes the GitHub prerelease with checksums, library sources and a signing notice. Failures prevent publication. A manual unsigned build review leaves both `sign` and `publish` disabled; it is not a new public release. Temporary signing files are cleaned up. Store builds use the separate [Microsoft Store workflow](microsoft-store.md).
+Before publishing, explicitly configure `WINDOWS_SIGNING_MODE=microsoft-store` for the Microsoft-signed Store online installer, or `signpath` for trusted signing with the approved provider configuration. An unset mode fails; a signed build cannot fall back to unsigned output. The release job validates versions and privacy, runs protocol/localization/download checks and Android lint, builds signed Android APK/AAB files, packages Windows installers, checks their actual signature state, and checks a fresh standalone Windows install/service/download/uninstall on a disposable runner. In Store mode it then downloads and verifies the official Microsoft-signed online installer; the unsigned standalone EXE/ZIP are excluded from release assets and public checksums. Fresh standalone-runner checks do not claim Store installation was tested. The GitHub prerelease includes selected installers, checksums, library sources and a signing notice. Failures prevent publication. A manual unsigned build review leaves both `sign` and `publish` disabled. Temporary signing files are cleaned up. Store app updates use the separate [Microsoft Store workflow](microsoft-store.md).
 
 When `GOOGLE_PLAY_UPLOAD_ENABLED=true`, a following job submits the exact release AAB, product descriptions and What’s new to Google Play through the official API, in one edit. A description-update failure prevents committing the release; existing promotional video, screenshots and unmentioned locales are retained. Existing reviews are preserved by default. If an earlier review is pending, the summary reports `waiting_previous_review`; it does not claim submission or retry on a schedule. Approval still belongs to Google. The publisher needs Play store-presence edit permission as well as release permission; a 403 is a failure, not permission to omit descriptions.
 
@@ -50,6 +50,6 @@ Do not overwrite existing tags or assets. To upload an existing release such as 
 
 Public outputs are explicitly selected under `dist/release/`. They exclude `local/`, credentials, runtime configuration, pairing data and debug PDBs. `ClipboardBridge-Android-Library-Sources.zip` contains original UnifiedPush library sources and licenses; full app source is available at the release tag.
 
-The Windows installer is not Authenticode-signed and requests administrator privileges. Installed apps include their .NET runtime. Updates preserve service data; fresh installs use `%ProgramData%\ClipboardBridge`.
+The new Windows download is Microsoft's Authenticode-signed Store online installer. It needs Internet access and Microsoft Store components. The older standalone setup is unsigned and requests administrator privileges. Both editions include one shared .NET runtime; they use separate encrypted state and must be re-paired when switching. Do not run both brokers on the same port.
 
 CI and HTTP-fixture tests do not replace real-device permission, pairing, clipboard or long-term delivery checks. AAB validation and Google accepting an upload do not establish policy approval; see the [Google Play review](google-play.md).

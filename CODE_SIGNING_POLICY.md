@@ -2,7 +2,7 @@
 
 ## Current status
 
-Windows 0.2.0.0 is in Microsoft Store certification, configured to publish after approval; it is not live yet. Microsoft signs the Store MSIX after certification. This does not sign the standalone EXE or earlier GitHub downloads, which remain unsigned. See [Store package and automation](docs/microsoft-store.md).
+Windows 0.2.0.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). Microsoft signs the Store package. New GitHub Windows downloads use Microsoft's unmodified, Microsoft-signed online installer for this Store product; the workflow verifies its trusted signature, exact Microsoft publisher and timestamp. This does not sign our old standalone EXE or earlier GitHub downloads, which remain unsigned. See [Store package and automation](docs/microsoft-store.md).
 
 The separate SignPath Foundation integration for standalone distribution is proposed. Approval and production signing credentials are not configured. Preparing that integration does not make earlier downloads signed, and a build review publishes no new version.
 
@@ -23,7 +23,7 @@ All signing inputs must be built from the public repository on GitHub-hosted run
 
 Windows signing happens in two stages: sign the binaries and Share identity, package those verified files into the installer, then sign the installer. Both stages require the provider's approval policy. The pipeline checks the trusted signature, publisher and timestamp before accepting results; a missing or invalid signature stops a signed build. Final checksums are generated after signing.
 
-Manual build reviews default to `sign=false` and `publish=false`. They neither request signatures nor publish GitHub releases or submit to Google Play. Publishing requires the explicit repository setting `WINDOWS_SIGNING_MODE`: `signpath` requests trusted signing, while `unsigned-preview` permits visibly labeled unsigned Windows previews. Android remains signed with its persistent release key in both modes. The release workflow checks the actual signature state and appends the Windows signing notice to the download page. An unset or unknown publishing mode fails. A requested signed build cannot silently fall back to unsigned output when signing fails.
+Manual build reviews default to `sign=false` and `publish=false`. They neither request signatures nor publish GitHub releases or submit to Google Play. Publishing requires the explicit repository setting `WINDOWS_SIGNING_MODE`: `microsoft-store` publishes only the verified Microsoft Store online installer for Windows; `signpath` requests trusted signing of our standalone installer. Android remains signed with its persistent release key in both modes. The unsigned standalone EXE/ZIP can be built and tested as CI artifacts but are excluded from Store-mode release assets and public checksums. An unset or unknown publishing mode fails. A requested signed build cannot silently fall back to unsigned publication when signing fails.
 
 ## Privacy and reporting
 

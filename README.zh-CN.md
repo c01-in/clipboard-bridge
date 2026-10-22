@@ -4,14 +4,14 @@
 
 # Clipboard Bridge · 剪贴板同步
 
-> **0.2.0 预览版：多文件互传，Windows 商店审核中。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘、系统“共享 → 剪贴板同步”和桌面版“发送到”菜单。两端显示进度，剪贴板模式仍限文字或单张图片。微软商店尚未上线，GitHub 下载仍是 0.1.4，不包含这些新功能。详见[版本说明](docs/release-notes/v0.2.0.md)。
+> **0.2.0 预览版：多文件互传，Windows 微软商店版已上线。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘和系统“共享 → 剪贴板同步”。两端显示进度，剪贴板模式仍限文字或单张图片。详见[版本说明](docs/release-notes/v0.2.0.md)。
 
 **Windows 自动发送，Android 点击发送。**
 
 文字、单张图片进剪贴板；多张图片、视频和文档保存为文件。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![源码预览版 0.2.0](https://img.shields.io/badge/source_preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
+[![预览版 0.2.0](https://img.shields.io/badge/preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -33,22 +33,22 @@
 
 <div align="center">
 
-[![下载 Windows 版](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge-Windows-x64-Setup.exe)
-[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge.apk)
+[![从微软商店获取](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
+[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.0/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**
 
-[Windows 手动安装 ZIP、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
+[0.2.0 安装包、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.0)
 
 </div>
 
-**当前版本：0.1.4 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。Windows 安装时需要管理员权限，安装器尚未使用 Authenticode 签名。Android 需要 Android 8.0 或更新版本及 Google Play 服务。
+**当前版本：0.2.0 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
 
-[代码签名政策](CODE_SIGNING_POLICY.md)：现有 GitHub Windows EXE 仍未签名。Windows 11 x64 的 0.2.0 MSIX 已送微软商店认证，设置为通过后自动上架，目前尚未上线。商店签名不会替 GitHub 的 EXE 签名。
+[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)提供微软签名的 Windows 应用。新版 GitHub 中的 Windows EXE 是微软签名的在线安装器，会联网下载当前商店版本，需要可用的微软商店组件；无需开发者模式或导入证书。旧版独立 EXE 仍未签名，见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ## 剪贴板快速复制，文件直接保存
 
-以下为 0.2.0 源码和审核版功能；上方公开下载仍为 0.1.4。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
+以下为 0.2.0 功能。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
 
 | | 你可以做什么 |
 | :--- | :--- |
@@ -117,7 +117,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-GitHub 公开安装包仍为 0.1.4，两端当前源码／审核版为 0.2.0，文件新功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。同为桌面版时，先更新 Windows，再更新手机并打开一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+当前 Android APK 和 Windows 商店版均为 0.2.0，文件功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。更新两端后打开手机 App 一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 微软商店版使用独立的每用户加密配置。切换渠道前保留备份并重新配对，不要同时运行两个占用相同端口的 Windows 后台。商店版无需管理员系统服务或另装 .NET；Windows 组件共用随包附带的一份运行环境。
 
@@ -135,7 +135,7 @@ GitHub 公开安装包仍为 0.1.4，两端当前源码／审核版为 0.2.0，�
 - **正式版实机测试：** 原配对迁移、暂停持久化、旧会话拒收、文字与图片双向收发通过。[实机记录](docs/verification-0.1.1.md)
 - **Android 快捷分享：** 12 项模拟器检查通过，包含其他 App 的图片 URI 授权和屏幕重建后不重复发送。微信里第二条复制 Toast 的来源仍未确认。[分享验证](docs/android-sharing.md)
 - **文件互传：** 模拟器验证真实加密传输、保存后的哈希、空文件、大文件、取消和重试；不代表所有实机 Google 文件唤醒均已验证。[文件测试](docs/file-transfers.md#verification)
-- **商店打包：** MSIX、共用 CLR、真实每用户后台与 IPC、完整 APK 下载与哈希及微软 API 检查已通过。首次提交认证中，商店实际安装和更新仍待验证。[商店流程](docs/microsoft-store.md)
+- **商店打包：** MSIX、共用 CLR、真实每用户后台与 IPC、完整 APK 下载与哈希及微软 API 检查已通过。商店认证通过且已发布；完整的商店安装及更新验证另行记录。[商店流程](docs/microsoft-store.md)
 
 **尚未**验证所有 Android 厂商、长期锁屏、重启恢复及所有跨网组合。预览版不保证长期投递表现。
 

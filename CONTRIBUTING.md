@@ -59,7 +59,7 @@ For file-transfer changes, verify the bytes saved at the real destination, SHA-2
 
 ## Releases and security reports
 
-The latest public GitHub installers remain 0.1.4. Source/review builds are 0.2.0, and Windows 0.2.0.0 has been submitted to Microsoft Store certification; it is not live yet. Maintainers use the separate [release channels](docs/releases.md) and [Store workflow](docs/microsoft-store.md). Store update uploads remain disabled until the initial publication is complete; standalone signed EXE publication requires approved SignPath configuration. Do not push a release tag as a documentation or build-review step.
+The current preview is 0.2.0; Windows 0.2.0.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). New GitHub Windows downloads use the Microsoft-signed Store online installer, not the older unsigned standalone EXE. Maintainers use the separate [release channels](docs/releases.md) and [Store workflow](docs/microsoft-store.md). Store update uploads remain separately gated pending update-path validation; signing our standalone EXE still requires approved SignPath configuration. Do not push a release tag as a documentation or build-review step.
 
 Android and Windows visible versions must match, and Android's internal `versionCode` must keep increasing. Contributors do not need access to release secrets. A GitHub Release or successful CI run does not imply Google Play or Microsoft Store approval.
 

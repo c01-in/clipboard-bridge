@@ -10,7 +10,7 @@ Text and one image for your clipboard. Photos, videos and documents as files.
 Your own devices. Free and open source.
 
 [![Build](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![Source preview 0.2.0](https://img.shields.io/badge/source_preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
+[![Preview 0.2.0](https://img.shields.io/badge/preview-0.2.0-8B5CF6?style=flat-square)](docs/release-notes/v0.2.0.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Downloads](#download-and-try-it) · [Quick start](#install-pair-copy) · [Docs](#build-and-contribute)
@@ -32,23 +32,23 @@ Your own devices. Free and open source.
 
 <div align="center">
 
-[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-x64_EXE-6366F1?style=for-the-badge)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge-Windows-x64-Setup.exe)
-[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.1.4/ClipboardBridge.apk)
+[![Get it from Microsoft Store](https://img.shields.io/badge/Get_it_from-Microsoft_Store-6366F1?style=for-the-badge)](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)
+[![Download for Android](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.0/ClipboardBridge.apk)
 
 **Install both. Pair once. Start copying.**
 
-[Manual Windows ZIP, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.1.4)
+[0.2.0 installers, library sources & SHA-256 checksums](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.0)
 
 </div>
 
-**Current release: 0.1.4 preview.** No SDKs, local builds or phone debugging needed. Windows installation requires administrator permission; the installer is not Authenticode-signed. Android requires Android 8.0 or later and Google Play Services.
+**Current release: 0.2.0 preview.** No SDKs, local builds or phone debugging needed. The Microsoft Store edition requires Windows 11 or later, x64. Android requires Android 8.0 or later and Google Play Services. Google Play updates appear after Google's review.
 
-[Code signing policy](CODE_SIGNING_POLICY.md): existing Windows EXE downloads remain unsigned. The **0.2.0 Windows 11 x64 MSIX is in Microsoft Store certification**, with automatic publication after approval. It is not live yet; Store signing does not sign the existing GitHub EXE.
+[Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ) provides the Microsoft-signed Windows app. The Windows EXE in the new GitHub release is Microsoft's signed online installer for that Store product; it downloads the current Store version and needs Internet access and Microsoft Store components. No Developer Mode or certificate import is required. Earlier standalone GitHub EXEs remain unsigned. See the [code signing policy](CODE_SIGNING_POLICY.md).
 
 ## Clipboard for quick copies. Files for everything else.
 
 > [!NOTE]
-> **0.2.0 preview — Store review in progress.** The features below describe the current source and review builds. The public GitHub installers above are still **0.1.4** and do not include the new file-transfer features. There is no public 0.2.0 GitHub release yet. See [0.2.0 notes](docs/release-notes/v0.2.0.md), [file-transfer behavior](docs/file-transfers.md) and [Microsoft Store status](docs/microsoft-store.md).
+> **0.2.0 preview — files alongside your clipboard.** Use matching 0.2.0 apps for file transfers. See [version notes](docs/release-notes/v0.2.0.md), [file-transfer behavior](docs/file-transfers.md) and [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ).
 
 | | What you get |
 | :--- | :--- |
@@ -129,7 +129,7 @@ Both apps follow the system language. Other languages fall back to English.
 <details>
 <summary><strong>Upgrading, privacy & licenses</strong></summary>
 
-The public GitHub installers are 0.1.4; both current source/review apps are 0.2.0. New file features require matching 0.2.0 endpoints. Android internal version codes keep increasing and the existing signing key is reused. Within the desktop edition, update Windows first, then Android and open it once. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
+The current Android APK and Windows Store app are 0.2.0. File features require matching endpoints. Android internal version codes keep increasing and the existing signing key is reused. Update both apps and open Android once. Legacy Firebase configuration is preserved locally in `configuration.pre-webpush.dpapi` and is no longer used for push.
 
 The Microsoft Store edition has separate, per-user encrypted state from the standalone Windows service edition. Back up existing configuration and re-pair when switching editions; do not run both Windows brokers on the same port. The Store package needs neither administrator elevation nor a separate .NET installation. All Windows components share one bundled .NET runtime.
 
@@ -147,7 +147,7 @@ Our code is [MIT](LICENSE). The embedded UnifiedPush receiver retains LGPL-2.1; 
 - **Production device tests:** pairing migration, persistent pause, obsolete-session rejection, and text/image transfers in both directions passed. [Device evidence](docs/verification-0.1.1.md)
 - **Android sharing:** 12 emulator checks passed, including separate-app image URI grants and no duplicate submission after activity recreation. The reported second WeChat copy toast is still unattributed. [Sharing verification](docs/android-sharing.md)
 - **File transfers:** real encrypted C#/Android transfers, destination hashes, empty and larger-than-clipboard-limit files, cancellation and retries were exercised on an emulator. New file wake-ups through Google on every vendor/device are not established by those tests. [File verification](docs/file-transfers.md#verification)
-- **Store packaging and API:** full MSIX validation, one shared CLR, real per-user broker/IPC, complete Android companion download, and real Store OAuth/read access passed. The first Windows submission is in certification; Store-delivered installs and updates remain unverified. [Store workflow](https://github.com/c01-in/clipboard-bridge/actions/workflows/microsoft-store.yml)
+- **Store packaging and API:** full MSIX validation, one shared CLR, real per-user broker/IPC, complete Android companion download, and real Store OAuth/read access passed. Store certification passed and the app is published; complete Store-delivered installation/update testing remains separate. [Store workflow](https://github.com/c01-in/clipboard-bridge/actions/workflows/microsoft-store.yml)
 
 All vendors, prolonged sleep, reboot recovery and cross-network combinations have **not** been validated. This is a preview, not a guarantee of long-term delivery.
 

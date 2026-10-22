@@ -1,6 +1,6 @@
 # Google Play readiness review
 
-Reviewed: 16 October 2026. Current GitHub release: 0.1.4 (version code 8), package `com.colin.clipbridge`, target SDK 36. Production was initially submitted with 0.1.3 (version code 7). The 0.1.4 AAB was uploaded and submitted to production through GitHub Actions and the official Play API on 16 October 2026; Console showed automatic pre-review checks. Approval/public availability has not been confirmed.
+Reviewed: 21 October 2026 (America/Los_Angeles). Current source/release version: 0.2.0 (version code 9), package `com.colin.clipbridge`, target SDK 36. Production was initially submitted with 0.1.3 (version code 7), then 0.1.4 (version code 8) through GitHub Actions and the official Play API. The release API now confirms 0.1.4 as `RELEASE_LIFECYCLE_STATE_PUBLISHED`. The new 0.2.0 AAB, product description and What’s new are submitted together by the release workflow; its GitHub publication alone does not prove Play approval.
 
 **Finding: there is no established blanket ban on UnifiedPush, but this build is not yet confirmed ready for Google Play production.** Play Console accepted the signed 0.1.3 bundle (version code 7) and it has been published to internal testing. No blocking validation error or push-library incompatibility warning was shown. The internal release was marked **not reviewed**. A subsequent 0.1.3 production submission reached the changes-in-review page; this is not Google's confirmation of the native Web Push registration path or production approval.
 
@@ -14,7 +14,7 @@ Reviewed: 16 October 2026. Current GitHub release: 0.1.4 (version code 8), packa
 
 ## Production submission and automation
 
-The 0.1.3 production submission included the store listing, real screenshots, public support alias, privacy/Data safety declarations and IARC content rating. Before the 0.1.4 update, its verified state was **changes in review**, with managed publishing off. No approval or public availability has been verified. The 0.1.4 submission superseded that pending production version and retained the existing listing/policy submission.
+The 0.1.3 production submission included the store listing, real screenshots, public support alias, privacy/Data safety declarations and IARC content rating. Before the 0.1.4 update, its verified state was **changes in review**, with managed publishing off. The 0.1.4 submission superseded that pending version and retained the listing/policy submission. Its published lifecycle state was subsequently verified through the official API on 21 October 2026; new releases still need their own approval.
 
 [Google Play CI publishing](google-play-ci.md) uploads existing signed AAB assets through the official API, with a guard that preserves pending reviews. Its dedicated publisher is configured with app-scoped read/production permissions and encrypted credentials. [The real 0.1.4 upload run](https://github.com/c01-in/clipboard-bridge/actions/runs/38984131014) succeeded with `submitted`, `committed=true`, and version code 8. This run explicitly replaced the pending 0.1.3 review to submit the requested update; future automatic releases preserve reviews by default. CI validation without credentials is not a real upload. The preparation checklist below describes review considerations, not a claim that all earlier Console setup remains undone.
 
@@ -54,7 +54,7 @@ During fresh-install validation on 21 October 2026, that broadcast received no r
 5. **Complete the store submission.** Supply screenshots, listing, content rating, audience, ads declaration, reviewer steps and a Windows companion link. A reviewer needs a Windows computer, the same Wi-Fi and Google connectivity to test pairing/transfer; no account credentials are needed.
 6. **Check the developer account's testing requirement.** For personal accounts created after 13 November 2023, Google currently requires at least 12 opted-in testers for 14 continuous days before applying for production access. [Official requirement](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en). The account's creation date and resulting production eligibility have not been established.
 
-A Play app has been created, the 0.1.3 bundle published to internal testing, and 0.1.3 submitted for production review, subsequently updated to 0.1.4 through the official API. Production approval has not been confirmed. AAB generation, GitHub publication, CI success and internal test availability are separate from production approval.
+A Play app has been created and 0.1.4 is published in production according to the official release API. Version 0.2.0 follows the automated AAB/description/What’s new submission flow. AAB generation, GitHub publication, CI success and internal test availability remain separate from production approval of a new version.
 
 ## Companion download link
 

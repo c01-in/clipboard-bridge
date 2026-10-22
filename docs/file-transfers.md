@@ -1,6 +1,6 @@
 # File transfers — 0.2.0 preview
 
-This feature is not in the published GitHub 0.1.4 installers. Both endpoints need matching 0.2.0 builds. Windows 0.2.0.0 was submitted to Microsoft Store certification on 21 October 2026 (America/Los_Angeles), but is not live yet. No 0.2.0 GitHub release or Google Play upload is implied. See [version notes](release-notes/v0.2.0.md) and [Store status](microsoft-store.md).
+Both endpoints need matching 0.2.0 builds for file transfers. Windows 0.2.0.0 is published in [Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ); the new GitHub Windows download uses Microsoft's signed online installer for that Store product. Older 0.1.4 installers do not support this feature. See [version notes](release-notes/v0.2.0.md) and [Store details](microsoft-store.md).
 
 ## Clipboard or files
 

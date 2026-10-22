@@ -4,10 +4,16 @@ Status: product reserved and publisher directory associated. Dedicated automatio
 credentials passed real OAuth and read-only Store API access to this product,
 including after the temporary setup administrator role was revoked. Version
 0.2.0.0 was submitted on 21 October 2026 (America/Los_Angeles). Partner Center
-and the Store API both confirm that the first submission is in certification.
-Its package is uploaded, the English listing is complete, and publishing is
-configured to begin automatically after certification passes.
-The app is **not live** in Microsoft Store yet.
+and the Store API now confirm that the first submission is **Published**.
+The public listing and WinGet's Microsoft Store catalog were verified on
+21 October 2026 (America/Los_Angeles).
+
+**[Get Clipboard Bridge from Microsoft Store](https://apps.microsoft.com/detail/9PJT9PTSMCJQ).**
+The website's download is a small Microsoft-signed online EXE that installs the
+current Store package. New GitHub releases mirror that unmodified installer
+after verifying its trusted Microsoft signature and timestamp. It requires
+Internet access and Microsoft Store components; it is not an offline EXE.
+The earlier standalone EXE is not signed by this process.
 
 ## Package
 
@@ -41,7 +47,7 @@ Use `-LocalReview` only for an isolated, unsigned test package with a separate
 identity. It is not a Store submission. Local validation confirmed installation
 without developer mode or certificate-store changes, tray-driven broker startup,
 owner IPC, and broker recovery after termination. The review package was removed
-afterward. End-to-end Store certification and Store-delivered updates remain unverified.
+afterward. Store certification has passed; Store-delivered installation and update behavior have not yet both been verified on the user's everyday installation.
 
 The desktop edition and Store edition currently have separate encrypted state.
 Keep a backup and re-pair when changing distribution channels. Do not silently
