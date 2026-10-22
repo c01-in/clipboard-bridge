@@ -36,15 +36,6 @@ jobs:
           if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Release and source versions differ.'}
           gh release view $env:RELEASE_TAG --json tagName
           if($LASTEXITCODE -ne 0){throw 'GitHub release does not exist.'}
-      - name: Set up official Windows Package Manager
-        shell: powershell
-        run: |
-          $ErrorActionPreference='Stop'
-          [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
-          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
-          Install-Module Microsoft.WinGet.Client -Repository PSGallery -Force -Scope CurrentUser
-          Import-Module Microsoft.WinGet.Client
-          Repair-WinGetPackageManager -AllUsers -Force
       - name: Download and verify the unmodified Store-signed full package
         run: ./scripts/Test-StoreOfflineDownload.ps1 -Tag $env:RELEASE_TAG -OutputDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')
       - name: Preserve verified package and test evidence in Actions

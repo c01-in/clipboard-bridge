@@ -10,16 +10,7 @@ $taskIdentity=Get-Content (Join-Path (Split-Path $PSScriptRoot -Parent) 'windows
 $taskOutput=[IO.Path]::GetFullPath($OutputDirectory)
 if(!$taskOutput.StartsWith([IO.Path]::GetFullPath($env:RUNNER_TEMP)+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Use disposable runner storage.'}
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
-$taskWinGet=Get-Command winget.exe -ErrorAction SilentlyContinue
-if(!$taskWinGet){
-    $taskAppInstaller=Get-AppxPackage -Name Microsoft.DesktopAppInstaller
-    if(!$taskAppInstaller){throw 'Official WinGet installation is unavailable.'}
-    $taskWinGet=Get-Item (Join-Path $taskAppInstaller.InstallLocation 'winget.exe')
-}
-$taskWinGetPath=if($taskWinGet.Source){$taskWinGet.Source}else{$taskWinGet.FullName}
-& $taskWinGetPath --version
-& $taskWinGetPath download --id $taskIdentity.storeId --exact --source msstore --architecture x64 --platform Windows.Desktop --skip-license --accept-package-agreements --accept-source-agreements --disable-interactivity --download-directory $taskOutput
-if($LASTEXITCODE -ne 0){throw "Official Store package download failed (exit $LASTEXITCODE). No unsigned fallback is permitted."}
+& (Join-Path $PSScriptRoot 'Get-StoreOfflinePackage.ps1') -Version $taskVersion -OutputDirectory $taskOutput
 $taskCandidates=@(Get-ChildItem -LiteralPath $taskOutput -Recurse -File | Where-Object {$_.Extension -in @('.msix','.appx')})
 $taskMatches=@()
 foreach($taskCandidate in $taskCandidates){
@@ -36,7 +27,7 @@ if($taskMatches.Count -ne 1){throw 'Expected exactly one standalone full package
 $taskSelected=$taskMatches[0]
 if($taskSelected.Manifest.Package.Identity.Publisher -cne $taskIdentity.publisher -or $taskSelected.Manifest.Package.Identity.Version -cne $taskVersion -or $taskSelected.Manifest.Package.Identity.ProcessorArchitecture -cne 'x64'){throw 'Store package publisher, architecture or version does not match this release.'}
 $taskPackage=Join-Path $taskOutput 'ClipboardBridge-Windows-x64.msix'
-Copy-Item -LiteralPath $taskSelected.File.FullName -Destination $taskPackage
+if($taskSelected.File.FullName -cne $taskPackage){Copy-Item -LiteralPath $taskSelected.File.FullName -Destination $taskPackage}
 $taskSignature=Get-AuthenticodeSignature -LiteralPath $taskPackage
 if($taskSignature.Status -ne 'Valid' -or !$taskSignature.SignerCertificate){throw 'The downloaded MSIX does not have a Windows-trusted signature.'}
 $taskChain=[Security.Cryptography.X509Certificates.X509Chain]::new()
