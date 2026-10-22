@@ -76,7 +76,7 @@ public sealed class FileTransfers : BackgroundService
                     foreach (string part in Directory.EnumerateFiles(directory, "*.part"))
                         if (File.GetLastWriteTimeUtc(part) > lastActivity) lastActivity = File.GetLastWriteTimeUtc(part);
                 long remaining = new DateTimeOffset(lastActivity).ToUnixTimeMilliseconds() + (long)IncomingIdleTimeout.TotalMilliseconds - Now;
-                incomingIdleLease = new(clock.GetTimestamp(), TimeSpan.FromMilliseconds(Math.Clamp(remaining, 0, (long)IncomingIdleTimeout.TotalMilliseconds)));
+                incomingIdleLease = new(this.clock.GetTimestamp(), TimeSpan.FromMilliseconds(Math.Clamp(remaining, 0, (long)IncomingIdleTimeout.TotalMilliseconds)));
             }
             catch (Exception e) when (e is IOException or JsonException)
             { incoming = null; incomingLease = null; incomingIdleLease = null; File.Move(state, state + ".invalid", true); }
