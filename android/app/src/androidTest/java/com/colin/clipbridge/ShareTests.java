@@ -161,6 +161,28 @@ public class ShareTests {
             assertEquals(0,context.getSystemService(NotificationManager.class).getActiveNotifications().length);
         }
     }
+    @Test public void externalOpenWithForwardsTheSelectedReadGrantToFileSending()throws Exception{
+        Instrumentation.ActivityMonitor monitor=instrumentation.addMonitor(FileShareActivity.class.getName(),null,false);
+        try{
+            context.startActivity(new Intent().setClassName(instrumentation.getContext().getPackageName(),ShareSourceActivity.class.getName())
+                .putExtra("mode","view-document").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            activity=monitor.waitForActivityWithTimeout(10000);assertNotNull("VIEW did not reach file sending",activity);
+            Intent intent=activity.getIntent();assertTrue(ShareInput.asFiles(intent));
+            Uri selected=ShareInput.files(intent).get(0);
+            assertEquals("view-fixture.pdf",selected.getLastPathSegment());assertEquals(selected,intent.getClipData().getItemAt(0).getUri());
+            try(InputStream input=context.getContentResolver().openInputStream(selected)){
+                assertNotNull(input);
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[128];int read;
+                while((read=input.read(buffer))!=-1)bytes.write(buffer,0,read);
+                assertEquals("%PDF-1.4\n% Clipboard Bridge open-with fixture\n%%EOF\n",bytes.toString(StandardCharsets.US_ASCII.name()));
+            }
+            long until=android.os.SystemClock.elapsedRealtime()+10000;
+            while(android.os.SystemClock.elapsedRealtime()<until&&(FileSendService.state==null||FileSendService.state.running))Thread.sleep(50);
+            assertNotNull(FileSendService.state);assertFalse(FileSendService.state.running);
+            assertFalse("Unpaired test must not transmit a file",FileSendService.state.success);
+            assertEquals(0,Config.prefs(context).getLong("outgoingSequence",0));
+        }finally{instrumentation.removeMonitor(monitor);}
+    }
     private Activity launch(Intent intent){
         Activity result=instrumentation.startActivitySync(intent.setClass(context,ShareActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         activity=result;

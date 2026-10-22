@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Portapapeles sincronizado</string>
+    <string name="send_to_computer">Enviar al ordenador</string>
     <string name="status_unpaired">Sin emparejar</string>
     <string name="status_paired">Emparejado. Listo para recibir de Windows.</string>
     <string name="send_clipboard">Enviar portapapeles a Windows</string>

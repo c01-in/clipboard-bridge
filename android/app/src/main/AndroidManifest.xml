@@ -17,19 +17,29 @@
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <activity android:name=".ShareActivity" android:exported="true" android:label="@string/app_name" android:theme="@style/ShareDialog" android:excludeFromRecents="true">
-            <intent-filter>
+        <activity android:name=".ShareActivity" android:exported="true" android:label="@string/send_to_computer" android:theme="@style/ShareDialog" android:excludeFromRecents="true">
+            <intent-filter android:label="@string/send_to_computer">
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="*/*"/>
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:label="@string/send_to_computer">
                 <action android:name="android.intent.action.SEND_MULTIPLE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="*/*"/>
             </intent-filter>
+            <intent-filter android:label="@string/send_to_computer">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content" android:mimeType="*/*"/>
+            </intent-filter>
+            <intent-filter android:label="@string/send_to_computer">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+            </intent-filter>
         </activity>
-        <activity android:name=".FileShareActivity" android:exported="false" android:label="@string/app_name" android:theme="@style/ShareDialog"/>
+        <activity android:name=".FileShareActivity" android:exported="false" android:label="@string/send_to_computer" android:theme="@style/ShareDialog"/>
         <service android:name=".FileSendService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:foregroundServiceType="dataSync" xmlns:tools="http://schemas.android.com/tools" tools:node="merge"/>
         <receiver android:name=".PushReceiver" android:exported="false">

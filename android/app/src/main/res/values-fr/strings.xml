@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Synchronisation du presse-papiers</string>
+    <string name="send_to_computer">Envoyer à l’ordinateur</string>
     <string name="status_unpaired">Pas encore associé</string>
     <string name="status_paired">Associé. Prêt à recevoir depuis Windows.</string>
     <string name="send_clipboard">Envoyer le presse-papiers à Windows</string>

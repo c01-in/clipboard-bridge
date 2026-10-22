@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Zwischenablage synchronisieren</string>
+    <string name="send_to_computer">An Computer senden</string>
     <string name="status_unpaired">Noch nicht gekoppelt</string>
     <string name="status_paired">Gekoppelt. Bereit zum Empfangen von Windows.</string>
     <string name="send_clipboard">Zwischenablage an Windows senden</string>

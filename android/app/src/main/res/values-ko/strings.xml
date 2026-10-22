@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">클립보드 동기화</string>
+    <string name="send_to_computer">컴퓨터로 보내기</string>
     <string name="status_unpaired">아직 페어링되지 않음</string>
     <string name="status_paired">페어링됨. Windows에서 수신할 준비가 되었습니다.</string>
     <string name="send_clipboard">Windows로 클립보드 전송</string>

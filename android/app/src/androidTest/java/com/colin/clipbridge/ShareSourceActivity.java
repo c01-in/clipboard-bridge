@@ -42,6 +42,15 @@ public final class ShareSourceActivity extends Activity {
         if(target==null)target="com.colin.clipbridge.debug";
         if(!"com.colin.clipbridge.debug".equals(target)&&!"com.colin.clipbridge".equals(target))throw new IllegalArgumentException("Unexpected test target");
         Intent share=new Intent(Intent.ACTION_SEND).setPackage(target);
+        if("view-document".equals(mode)){
+            try(FileOutputStream out=new FileOutputStream(new File(getCacheDir(),"view-fixture.pdf"))){
+                out.write("%PDF-1.4\n% Clipboard Bridge open-with fixture\n%%EOF\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            }catch(Exception e){throw new IllegalStateException(e);}
+            Uri uri=Uri.parse("content://"+getPackageName()+".fixture/view-fixture.pdf");
+            // Deliberately provide only Intent.data, as a file manager's Open with does.
+            startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(uri,"application/pdf").setPackage(target).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+            finish();return;
+        }
         if("files".equals(mode)){
             try{
                 byte[] buffer=new byte[256*1024];new java.security.SecureRandom().nextBytes(buffer);

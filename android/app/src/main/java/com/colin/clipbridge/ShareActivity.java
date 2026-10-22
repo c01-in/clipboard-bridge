@@ -13,7 +13,7 @@ import android.widget.TextView;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** A single tap in Android's share sheet sends to the already paired computer. */
+/** Receives Android share/open-with requests for the already paired computer. */
 public final class ShareActivity extends Activity {
     private Transfer transfer;
     private TextView status;
@@ -22,12 +22,11 @@ public final class ShareActivity extends Activity {
         super.onCreate(saved);
         try{
             if(ShareInput.asFiles(getIntent())){
-                Intent files=new Intent(getIntent()).setClass(this,FileShareActivity.class);
-                files.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Intent files=ShareInput.fileIntent(getIntent()).setClass(this,FileShareActivity.class);
                 startActivity(files);finish();return;
             }
         }catch(Exception ignored){/* Display a normal, actionable share validation error below. */}
-        setTitle(R.string.app_name);
+        setTitle(R.string.send_to_computer);
         LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(24*getResources().getDisplayMetrics().density);layout.setPadding(pad,pad,pad,pad);
         status=new TextView(this);status.setTextSize(17);layout.addView(status);

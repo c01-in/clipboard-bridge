@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">クリップボード同期</string>
+    <string name="send_to_computer">パソコンに送信</string>
     <string name="status_unpaired">未ペアリング</string>
     <string name="status_paired">ペアリング済み。Windows から受信できます。</string>
     <string name="send_clipboard">Windows にクリップボードを送信</string>

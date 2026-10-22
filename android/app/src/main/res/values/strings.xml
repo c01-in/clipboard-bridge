@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Clipboard Bridge</string>
+    <string name="send_to_computer">Send to computer</string>
     <string name="status_unpaired">Not paired yet</string>
     <string name="status_paired">Paired. Ready to receive from Windows.</string>
     <string name="send_clipboard">Send clipboard to Windows</string>

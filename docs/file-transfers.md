@@ -9,14 +9,17 @@ Both endpoints need matching 0.2.0 builds for file transfers. Windows 0.2.0.0 is
 | Android: **Send clipboard** | Text or one image goes to the computer clipboard after a tap. |
 | Android: **Send one image to clipboard** | The system picker allows one image; it goes to the computer clipboard. |
 | Android: **Send files…** | The system picker allows multiple images, videos, documents or other files. All are saved as files. Even one image stays a file through this entry point. |
-| Another Android app: share one image through **Clipboard Bridge** | The image goes to the computer clipboard. |
-| Another Android app: share multiple images, a video, or attachments through **Clipboard Bridge** | Original files are saved on the computer. |
-| Another Android app: share plain text through **Clipboard Bridge** | Opens an explicit Send clipboard button; no automatic text upload. A `.txt` attachment is a file. |
+| Another Android app: share one image through **Send to computer** | The image goes to the computer clipboard. |
+| Another Android app: share multiple images, a video, or attachments through **Send to computer** | Original files are saved on the computer. |
+| Another Android app: share plain text through **Send to computer** | Opens an explicit Send clipboard button; no automatic text upload. A `.txt` attachment is a file. |
+| Android file manager: **Open with → Send to computer** | Sends the selected file to computer storage, including a single image or text document. |
 | Windows tray: **Send files…** | Select multiple files in the system picker and send them to Android storage. |
 | Explorer on Windows 11: **Share → Clipboard Bridge** | Sends one or more files to Android storage through the native Share target. |
 | Explorer: **Send to → Clipboard Bridge** | Sends the entire selected file list as one batch. On Windows 11, use **Show more options** for the classic Send to menu. |
 
 The classic Send to shortcut belongs to the standalone desktop installer. The Store MSIX declares the native Share target without that legacy shortcut. The Windows sending window closes three seconds after success; failure and cancellation remain visible. See [Windows Share](windows-sharing.md).
+
+Android's share and Open with entries use the localized action name **Send to computer**; the launcher keeps the app name. Open with accepts only the selected `content://` file with its temporary read grant. Availability depends on the source app offering a system Open with chooser; web links and raw filesystem paths are excluded.
 
 Files never change the clipboard and are never opened or executed automatically. Original bytes are preserved; clipboard images retain PNG conversion and the 16 MiB limit.
 

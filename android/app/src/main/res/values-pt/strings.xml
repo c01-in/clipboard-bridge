@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Área de transferência</string>
+    <string name="send_to_computer">Enviar para o computador</string>
     <string name="status_unpaired">Ainda não pareado</string>
     <string name="status_paired">Pareado. Pronto para receber do Windows.</string>
     <string name="send_clipboard">Enviar área de transferência ao Windows</string>

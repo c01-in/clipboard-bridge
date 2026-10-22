@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">剪貼簿同步</string>
+    <string name="send_to_computer">傳送到電腦</string>
     <string name="status_unpaired">尚未配對</string>
     <string name="status_paired">已配對，等待 Windows 剪貼簿。</string>
     <string name="send_clipboard">傳送剪貼簿至 Windows</string>

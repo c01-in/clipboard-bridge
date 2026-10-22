@@ -16,7 +16,7 @@ public final class FileShareActivity extends Activity {
     private boolean visible;
     private final Runnable refresh=new Runnable(){public void run(){if(visible){render();handler.postDelayed(this,300);}}};
     @Override public void onCreate(Bundle saved){
-        super.onCreate(saved);setTitle(R.string.app_name);
+        super.onCreate(saved);setTitle(R.string.send_to_computer);
         LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);int pad=(int)(24*getResources().getDisplayMetrics().density);layout.setPadding(pad,pad,pad,pad);
         status=new TextView(this);status.setTextSize(18);layout.addView(status);
         name=new TextView(this);layout.addView(name);
@@ -30,7 +30,7 @@ public final class FileShareActivity extends Activity {
                 ArrayList<Uri> uris=ShareInput.files(getIntent());
                 if(uris.isEmpty())throw new Exception(getString(R.string.error_share_content));
                 Intent service=new Intent(this,FileSendService.class).putExtra("jobId",jobId).putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                service.setClipData(getIntent().getClipData());
+                service.setClipData(ShareInput.grants(uris));
                 startForegroundService(service);
             }catch(Exception e){status.setText(getString(R.string.send_failed,e.getMessage()));close.setText(android.R.string.ok);}
         }
