@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ClipboardBridge;
 
-public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = Bridge.PipeName, PairingHub? pairing = null, FileTransfers? files = null) : BackgroundService
+public sealed class Broker(Vault vault, WebPushSender sender, string? pipeName = null, PairingHub? pairing = null, FileTransfers? files = null) : BackgroundService
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly string pendingPath = Path.Combine(vault.DataDir, "pending.json");
@@ -56,7 +56,7 @@ public sealed class Broker(Vault vault, WebPushSender sender, string pipeName = 
             security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
             var owner = vault.Read().OwnerSid;
             if (owner.Length > 0) security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(owner), PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance, AccessControlType.Allow));
-            using var pipe = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 4096, 4096, security);
+            using var pipe = NamedPipeServerStreamAcl.Create(pipeName ?? Bridge.PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 4096, 4096, security);
             try
             {
                 await pipe.WaitForConnectionAsync(ct);

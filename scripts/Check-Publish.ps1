@@ -28,6 +28,24 @@ if ($UseLocalSecrets) {
         $taskDeployment = Get-Content -LiteralPath $taskDeploymentFile -Raw | ConvertFrom-Json
         foreach ($taskName in @('firebaseProject','googleAccount','senderServiceAccount','localEndpoint')) { Add-PrivateValue $taskDeployment.$taskName }
     }
+    $taskStoreDirectory = Join-Path $taskRepo 'local\microsoft-store'
+    $taskStoreStatusFile = Join-Path $taskStoreDirectory 'account-status.json'
+    if (Test-Path -LiteralPath $taskStoreStatusFile) {
+        $taskStoreStatus = Get-Content -LiteralPath $taskStoreStatusFile -Raw | ConvertFrom-Json
+        foreach ($taskName in @('personalSignIn','personalTenantDomain','publisherSignIn')) { Add-PrivateValue $taskStoreStatus.$taskName }
+        if ($taskStoreStatus.personalTenantDomain) { Add-PrivateValue ($taskStoreStatus.personalTenantDomain.Split('.')[0]) }
+    }
+    foreach ($taskName in @('store-publisher-account.dpapi','store-ci-credential.dpapi','personal-graph-session.dpapi','azure-user-session.dpapi')) {
+        $taskStoreSecretFile = Join-Path $taskStoreDirectory $taskName
+        if (!(Test-Path -LiteralPath $taskStoreSecretFile)) { continue }
+        if (!$IsWindows) { throw 'Checking local Store recovery credentials requires PowerShell 7 on Windows.' }
+        Add-Type -AssemblyName System.Security.Cryptography.ProtectedData
+        $taskStoreBytes = [Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($taskStoreSecretFile),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)
+        try {
+            $taskStoreSecret = [Text.Encoding]::UTF8.GetString($taskStoreBytes) | ConvertFrom-Json
+            foreach ($taskField in @('username','password','clientSecret','access_token','refresh_token')) { Add-PrivateValue $taskStoreSecret.$taskField }
+        } finally { [Array]::Clear($taskStoreBytes,0,$taskStoreBytes.Length); $taskStoreSecret=$null }
+    }
     $taskVaultFile = Join-Path $taskRepo 'local\runtime\configuration.dpapi'
     if (Test-Path -LiteralPath $taskVaultFile) {
         if (!$IsWindows) { throw '读取本机 DPAPI 配置的精确值检查需要 PowerShell 7 on Windows。' }

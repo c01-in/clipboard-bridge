@@ -15,9 +15,13 @@ if (ownerArgument >= 0)
     new Vault().Update(c => c.OwnerSid = owner.Value);
     return;
 }
+bool firstUserHost = true;
+using var userHostMutex = DesktopDeployment.PerUser ? new Mutex(false, "Local\\ClipboardBridge.Broker." + DesktopDeployment.OwnerSid, out firstUserHost) : null;
+if (!firstUserHost) return;
+if (DesktopDeployment.PerUser) new Vault().Update(c => c.OwnerSid = DesktopDeployment.OwnerSid);
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseWindowsService(o => o.ServiceName = "ClipboardBridge");
-builder.WebHost.UseUrls("http://0.0.0.0:45871");
+builder.WebHost.UseUrls("http://0.0.0.0:" + DesktopDeployment.HttpPort);
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 12 * 1024);
 builder.Logging.ClearProviders();
 builder.Services.AddSingleton<Vault>();
@@ -44,7 +48,7 @@ AndroidDownload.Map(app, () => Path.GetFullPath(Path.Combine(AppContext.BaseDire
 app.MapPost("/api/pairing/{id}/confirm", (string id, Box body, PairingHub hub, HttpContext context) =>
     PairResult(() => hub.ConfirmPhone(id, body, context.Connection.RemoteIpAddress!.MapToIPv4())));
 app.MapGet("/api/pairing/{id}/configuration", (string id, PairingHub hub, HttpContext context) =>
-    PairResult(() => hub.Configuration(id, context.Connection.RemoteIpAddress!.MapToIPv4(), "http://" + context.Connection.LocalIpAddress!.MapToIPv4() + ":45871")));
+    PairResult(() => hub.Configuration(id, context.Connection.RemoteIpAddress!.MapToIPv4(), "http://" + context.Connection.LocalIpAddress!.MapToIPv4() + ":" + DesktopDeployment.HttpPort)));
 app.MapPost("/api/pairing/{id}/complete", async (string id, Box body, Broker broker, HttpContext context, CancellationToken ct) =>
 {
     try { return Results.Json(await broker.CompletePairing(id, body, context.Connection.RemoteIpAddress!.MapToIPv4(), ct), Bridge.Json); }

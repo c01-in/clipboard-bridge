@@ -3,7 +3,7 @@ using ClipboardBridge;
 
 static class FilePreferences
 {
-    public static string DirectoryPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge");
+    public static string DirectoryPath => DesktopDeployment.PerUser ? Path.Combine(Bridge.DataDir, "preferences") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge");
     public static string ShareStagingDirectory
     {
         get

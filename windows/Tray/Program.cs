@@ -24,13 +24,13 @@ static class Program
             if (args.Length > 1) Application.Run(new FileSendForm(args.Skip(1).ToArray()));
             return;
         }
-        using var mutex = new Mutex(true, "Local\\ClipboardBridge.Tray", out bool first);
-        bool showSettings = args.Contains("--settings");
+        using var mutex = new Mutex(true, DesktopDeployment.PerUser ? "Local\\ClipboardBridge.Tray.Store" : "Local\\ClipboardBridge.Tray", out bool first);
+        bool showSettings = args.Contains("--settings") || (DesktopDeployment.PerUser && !ShareFiles.StartedAtLogin());
         if (!first)
         {
             if (showSettings)
             {
-                var existing = FindWindowEx(new IntPtr(-3), IntPtr.Zero, null, "ClipboardBridge.Clipboard");
+                var existing = FindWindowEx(new IntPtr(-3), IntPtr.Zero, null, ClipboardWindow.WindowCaption);
                 if (existing != IntPtr.Zero) PostMessage(existing, ClipboardWindow.OpenSettingsMessage, IntPtr.Zero, IntPtr.Zero);
             }
             return;
@@ -43,6 +43,7 @@ static class Ipc
 {
     public static async Task<Reply> Call(Command command)
     {
+        await StoreHost.EnsureRunning();
         using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(35));
         using var pipe = new NamedPipeClientStream(".", Bridge.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation);
         await pipe.ConnectAsync(2000, ct.Token);
@@ -90,14 +91,14 @@ sealed class TrayContext : ApplicationContext
         icon.DoubleClick += (_, _) => ShowSettings();
         debounce.Tick += async (_, _) => { debounce.Stop(); await Send(false); };
         receiveTimer.Tick += async (_, _) => await Receive(); receiveTimer.Start();
-        var pref = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge", "paused.txt");
+        var pref = Path.Combine(FilePreferences.DirectoryPath, "paused.txt");
         paused = File.Exists(pref) && File.ReadAllText(pref) == "true"; toggle.Checked = paused;
         if (showSettings || !File.Exists(pref)) ShowSettings();
         if (!window.HotkeyRegistered) Notify(UiText.Get("win_hotkey_busy"), true);
     }
     void SavePreferences()
     {
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipboardBridge");
+        var dir = FilePreferences.DirectoryPath;
         Directory.CreateDirectory(dir); File.WriteAllText(Path.Combine(dir, "paused.txt"), paused ? "true" : "false");
     }
     async Task Send(bool manual)
@@ -207,6 +208,7 @@ sealed class TrayContext : ApplicationContext
 
 sealed class ClipboardWindow : NativeWindow, IDisposable
 {
+    public static string WindowCaption => DesktopDeployment.PerUser ? "ClipboardBridge.Clipboard.Store" : "ClipboardBridge.Clipboard";
     public const uint OpenSettingsMessage = 0x8001;
     [DllImport("user32.dll")] static extern bool AddClipboardFormatListener(IntPtr hwnd);
     [DllImport("user32.dll")] static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
@@ -216,7 +218,7 @@ sealed class ClipboardWindow : NativeWindow, IDisposable
     public static uint Sequence => GetClipboardSequenceNumber();
     public event Action? Changed, ManualSend, SettingsRequested;
     public bool HotkeyRegistered { get; }
-    public ClipboardWindow() { CreateHandle(new CreateParams { Caption = "ClipboardBridge.Clipboard", Parent = new IntPtr(-3) }); AddClipboardFormatListener(Handle); HotkeyRegistered = RegisterHotKey(Handle, 1, 0x4000 | 0x0001 | 0x0002, 0x56); }
+    public ClipboardWindow() { CreateHandle(new CreateParams { Caption = WindowCaption, Parent = new IntPtr(-3) }); AddClipboardFormatListener(Handle); HotkeyRegistered = RegisterHotKey(Handle, 1, 0x4000 | 0x0001 | 0x0002, 0x56); }
     protected override void WndProc(ref Message m) { if (m.Msg == 0x031D) Changed?.Invoke(); if (m.Msg == 0x0312) ManualSend?.Invoke(); if (m.Msg == OpenSettingsMessage) SettingsRequested?.Invoke(); base.WndProc(ref m); }
     public void Dispose() { RemoveClipboardFormatListener(Handle); UnregisterHotKey(Handle, 1); DestroyHandle(); }
 }

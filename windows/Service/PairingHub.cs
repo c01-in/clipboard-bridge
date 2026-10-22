@@ -64,8 +64,8 @@ public sealed class PairingHub
                 var h = Bridge.Decode<KnownHello>(packet); var c = vault.Read();
                 if (h.Nonce.Length != 44 || (h.ComputerId.Length != 0 && h.ComputerId != c.ComputerId) ||
                     !PairingCrypto.Verify(c.Key, "reconnect\n" + h.ComputerId + "\n" + h.Nonce, h.Proof)) return null;
-                string proof = PairingCrypto.Proof(c.Key, "known\n" + h.ComputerId + "\n" + c.ComputerId + "\n" + h.Nonce + "\n45871");
-                return Bridge.Encode(new KnownOffer(PairingCrypto.Protocol, "known", c.ComputerId, h.ComputerId, h.Nonce, 45871, proof));
+                string proof = PairingCrypto.Proof(c.Key, "known\n" + h.ComputerId + "\n" + c.ComputerId + "\n" + h.Nonce + "\n" + DesktopDeployment.HttpPort);
+                return Bridge.Encode(new KnownOffer(PairingCrypto.Protocol, "known", c.ComputerId, h.ComputerId, h.Nonce, DesktopDeployment.HttpPort, proof));
             }
             Prune(); if (kind != "hello" || searchingUntil <= Now) return null;
             var hello = Bridge.Decode<PairHello>(packet);
@@ -75,7 +75,7 @@ public sealed class PairingHub
             if (existing is not null) return existing.Hello == hello ? Bridge.Encode(existing.Offer) : null;
             if (sessions.Count >= 16) return null;
             using var identity = new PairingIdentity();
-            var offer = new PairOffer(PairingCrypto.Protocol, "offer", Guid.NewGuid().ToString("N"), Environment.MachineName, identity.Nonce, identity.PublicKey, 45871, Now + 120_000);
+            var offer = new PairOffer(PairingCrypto.Protocol, "offer", Guid.NewGuid().ToString("N"), Environment.MachineName, identity.Nonce, identity.PublicKey, DesktopDeployment.HttpPort, Now + 120_000);
             string key = identity.Agree(hello.PublicKey, PairingCrypto.Transcript(hello, offer));
             sessions.Add(offer.Id, new Session { Hello = hello, Offer = offer, Address = address, TransportKey = key });
             return Bridge.Encode(offer);

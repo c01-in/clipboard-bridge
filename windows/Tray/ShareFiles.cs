@@ -26,6 +26,11 @@ sealed class ShareFiles : IDisposable
         uint length = 0;
         return GetCurrentPackageFullName(ref length, IntPtr.Zero) == 15700 ? "unpackaged" : Package.Current.Id.FullName;
     }
+    public static bool StartedAtLogin()
+    {
+        uint length = 0;
+        return GetCurrentPackageFullName(ref length, IntPtr.Zero) != 15700 && AppInstance.GetActivatedEventArgs() is StartupTaskActivatedEventArgs;
+    }
     public async Task<string[]> Read(CancellationToken ct)
     {
         operation.ReportStarted();

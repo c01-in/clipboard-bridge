@@ -9,10 +9,10 @@ namespace ClipboardBridge;
 
 public static class Bridge
 {
-    public const string PipeName = "ClipboardBridge-v1";
+    public static string PipeName => DesktopDeployment.PipeName;
     public const int MaxBytes = 16 * 1024 * 1024;
     public static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
-    public static readonly string DataDir = Environment.GetEnvironmentVariable("CLIPBOARD_BRIDGE_DATA") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ClipboardBridge");
+    public static readonly string DataDir = DesktopDeployment.DataDirectory;
     public static byte[] Encode<T>(T value) => JsonSerializer.SerializeToUtf8Bytes(value, Json);
     public static T Decode<T>(byte[] bytes) => JsonSerializer.Deserialize<T>(bytes, Json) ?? throw new InvalidDataException("空数据");
     public static string Seal(byte[] bytes, string key)
@@ -48,7 +48,7 @@ public static class Bridge
         .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
         .SelectMany(n => n.GetIPProperties().UnicastAddresses)
         .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork && !a.Address.ToString().StartsWith("169.254."))
-        .Select(a => "http://" + a.Address + ":45871").Distinct();
+        .Select(a => "http://" + a.Address + ":" + DesktopDeployment.HttpPort).Distinct();
 }
 
 public sealed record Command(string Op, string? Mime = null, string? Data = null, string? Value = null);
@@ -85,6 +85,7 @@ public sealed class Vault
 {
     private readonly object gate = new();
     private readonly string path;
+    private static DataProtectionScope ProtectionScope => DesktopDeployment.PerUser ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine;
     public string DataDir { get; }
     public Vault(string? dataDir = null) { DataDir = dataDir ?? Bridge.DataDir; Directory.CreateDirectory(DataDir); path = Path.Combine(DataDir, "configuration.dpapi"); }
     public Configuration Read()
@@ -92,7 +93,7 @@ public sealed class Vault
         lock (gate)
         {
             if (!File.Exists(path)) { var first = new Configuration(); Write(first); return first; }
-            byte[] bytes = ProtectedData.Unprotect(File.ReadAllBytes(path), null, DataProtectionScope.LocalMachine);
+            byte[] bytes = ProtectedData.Unprotect(File.ReadAllBytes(path), null, ProtectionScope);
             var value = Bridge.Decode<Configuration>(bytes);
             using var document = JsonDocument.Parse(bytes);
             if (!document.RootElement.TryGetProperty("vapidPrivateKey", out _))
@@ -109,7 +110,7 @@ public sealed class Vault
     {
         lock (gate)
         {
-            var bytes = ProtectedData.Protect(Bridge.Encode(value), null, DataProtectionScope.LocalMachine);
+            var bytes = ProtectedData.Protect(Bridge.Encode(value), null, ProtectionScope);
             File.WriteAllBytes(path + ".tmp", bytes); File.Move(path + ".tmp", path, true);
         }
     }

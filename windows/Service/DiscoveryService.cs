@@ -9,7 +9,7 @@ public sealed class DiscoveryService(PairingHub pairing) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var udp = new UdpClient(new IPEndPoint(IPAddress.Any, 45872));
+        using var udp = new UdpClient(new IPEndPoint(IPAddress.Any, DesktopDeployment.DiscoveryPort));
         while (!stoppingToken.IsCancellationRequested)
         {
             var packet = await udp.ReceiveAsync(stoppingToken);
