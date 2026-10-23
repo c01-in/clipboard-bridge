@@ -39,8 +39,10 @@ public final class ReceivedFilesActivity extends Activity {
     }
     static Intent fileIntent(Context context,Uri uri){
         String type=context.getContentResolver().getType(uri);
-        return new Intent(Intent.ACTION_VIEW).setDataAndType(uri,type==null?"application/octet-stream":type)
-            .setClipData(ClipData.newRawUri("",uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Intent intent=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,type==null?"application/octet-stream":type)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.setClipData(ClipData.newRawUri("",uri));
+        return intent;
     }
     static Intent locationIntent(JSONObject receipt)throws Exception{
         String folder=receipt.optString("folder","");
