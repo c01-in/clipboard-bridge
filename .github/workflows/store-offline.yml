@@ -1,5 +1,7 @@
 name: Fetch Microsoft Store full package
 on:
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch:
     inputs:
       tag:
@@ -21,9 +23,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: windows-latest
-    timeout-minutes: 150
+    timeout-minutes: 20
     defaults:
       run:
         shell: pwsh
@@ -35,9 +37,21 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
       - name: Verify existing release version
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if('${{ github.event_name }}' -eq 'schedule'){
+            $releases=gh api ('repos/'+$env:GITHUB_REPOSITORY+'/releases?per_page=20') | ConvertFrom-Json
+            if($LASTEXITCODE -ne 0){throw 'Could not read GitHub releases.'}
+            $latest=$releases | Where-Object {!$_.draft -and $_.tag_name -match '^v0\.\d+\.\d+$'} | Sort-Object published_at -Descending | Select-Object -First 1
+            if(!$latest -or @($latest.assets | Where-Object name -eq 'ClipboardBridge-Windows-x64.msix').Count){
+              'The latest release already has its complete Store package; no work needed.' >> $env:GITHUB_STEP_SUMMARY
+              exit 0
+            }
+            $env:RELEASE_TAG=$latest.tag_name
+            "RELEASE_TAG=$env:RELEASE_TAG" >> $env:GITHUB_ENV
+          }
           if(!$env:RELEASE_TAG){
             $env:RELEASE_TAG='v'+([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version
             "RELEASE_TAG=$env:RELEASE_TAG" >> $env:GITHUB_ENV
@@ -49,21 +63,25 @@ jobs:
           if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Release and source versions differ.'}
           gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY
           if($LASTEXITCODE -ne 0){throw 'Could not find the matching GitHub release.'}
+          'needed=true' >> $env:GITHUB_OUTPUT
       - name: Wait for the matching certified Store version
+        if: steps.release.outputs.needed == 'true'
+        id: catalog
         run: |
           $identity=Get-Content windows/Store/identity.json -Raw | ConvertFrom-Json
           $expected=$identity.name+'_'+$env:RELEASE_TAG.Substring(1)+'.0_x64__'+$identity.packageFamilyName.Split('_')[-1]
-          for($attempt=1;$attempt -le 240;$attempt++){
-            $catalog=Invoke-RestMethod ('https://displaycatalog.mp.microsoft.com/v7.0/products/'+$identity.storeId+'?fieldsTemplate=Details&market=US&languages=en-US,neutral') -TimeoutSec 30
-            $matching=@($catalog.Product.DisplaySkuAvailabilities.Sku.Properties.Packages | Where-Object {$_.PackageFullName -ceq $expected -and $_.PackageFormat -eq 'Msix'})
-            if($matching.Count -gt 0){break}
-            if($attempt -eq 240){throw 'Microsoft certification/catalog publication is still pending. Re-run this workflow after the matching Store version is public; no older package was published.'}
-            if($attempt -eq 1 -or $attempt % 10 -eq 0){Write-Output 'Waiting for Microsoft certification and the exact version in the public catalog; no package has been downloaded.'}
-            Start-Sleep -Seconds 30
+          $catalog=Invoke-RestMethod ('https://displaycatalog.mp.microsoft.com/v7.0/products/'+$identity.storeId+'?fieldsTemplate=Details&market=US&languages=en-US,neutral') -TimeoutSec 30
+          $matching=@($catalog.Product.DisplaySkuAvailabilities.Sku.Properties.Packages | Where-Object {$_.PackageFullName -ceq $expected -and $_.PackageFormat -eq 'Msix'})
+          if(!$matching.Count){
+            'Microsoft certification/catalog publication is pending. Cloud checks run every six hours and will attach the exact signed version automatically. No older package was substituted.' >> $env:GITHUB_STEP_SUMMARY
+            exit 0
           }
+          'ready=true' >> $env:GITHUB_OUTPUT
       - name: Download official full package and check Microsoft checksums
+        if: steps.catalog.outputs.ready == 'true'
         run: ./scripts/Get-StoreOfflinePackage.ps1 -Version ($env:RELEASE_TAG.Substring(1)+'.0') -OutputDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')
       - name: Preserve package and checksum receipt in Actions
+        if: steps.catalog.outputs.ready == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: store-signed-offline-${{ env.RELEASE_TAG }}
@@ -72,7 +90,7 @@ jobs:
             ${{ runner.temp }}/store-offline/download.json
           if-no-files-found: error
       - name: Add verified full package without changing the release version
-        if: github.event_name == 'workflow_run' || inputs.publish
+        if: steps.catalog.outputs.ready == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/Publish-StoreOfflinePackage.ps1 -Tag $env:RELEASE_TAG -PackageDirectory (Join-Path $env:RUNNER_TEMP 'store-offline')

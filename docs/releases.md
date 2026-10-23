@@ -20,7 +20,7 @@ Commit the same visible version in `Directory.Build.props` and `android/app/buil
 
 Failures stop the affected job and appear in GitHub's workflow notification email. Existing versions and tags are never overwritten. A store accepting a submission is separate from approving it. An existing Google review is preserved; the workflow summary explains when a submission must wait.
 
-Microsoft signs the full MSIX after certification. A separate automatic **Fetch Microsoft Store full package** workflow waits for that exact version, verifies Microsoft's catalog checksums, and adds it to the same GitHub release. The main Publish workflow does not wait for this certification. Downloaded Store packages are never installed or executed for testing.
+Microsoft signs the full MSIX after certification. A separate automatic **Fetch Microsoft Store full package** workflow checks for that exact version, verifies Microsoft's catalog checksums, and adds it to the same GitHub release. If certification is pending, it finishes normally and scheduled cloud checks retry every six hours for the latest release. The main Publish workflow does not wait for certification. Downloaded Store packages are never installed or executed for testing.
 
 ## Development and recovery
 
