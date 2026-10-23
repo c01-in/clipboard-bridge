@@ -6,12 +6,10 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 
 final class Notices {
-    static void received(Context c,int resource,String id){
-        Config.status(c,resource);
-        NotificationManager manager=c.getSystemService(NotificationManager.class);
-        manager.cancel(1);
-        if(Build.VERSION.SDK_INT<33||c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)
-            manager.notify(id,24,create(c,c.getString(resource)));
+    static void received(Context c,int resource){
+        // Android 13+ supplies clipboard-write feedback; avoid a duplicate result.
+        if(Build.VERSION.SDK_INT>=33){Config.status(c,resource);c.getSystemService(NotificationManager.class).cancel(1);}
+        else show(c,resource);
     }
     static Notification create(Context c,String text){
         return builder(c,text).build();

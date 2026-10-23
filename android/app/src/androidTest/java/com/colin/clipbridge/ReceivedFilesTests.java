@@ -59,7 +59,7 @@ public final class ReceivedFilesTests {
         String other=FileTransfer.id();
         Notification notification=ReceivedFilesActivity.notification(context,"Saved 1 file",id,record);
         manager.notify(id,23,notification);manager.notify(other,23,Notices.create(context,"another saved batch"));
-        Notices.received(context,R.string.received_image,other);
+        manager.notify(other,24,Notices.create(context,"unrelated clipboard result"));
         Thread.sleep(100);
         tap(notification.actions[0].actionIntent,Intent.ACTION_VIEW);
         Thread.sleep(100);

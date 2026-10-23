@@ -62,7 +62,7 @@ public final class ReceivedFilesActivity extends Activity {
             if("open".equals(getIntent().getAction())&&receipt.getJSONArray("files").length()==1)
                 openFile(Uri.parse(receipt.getJSONArray("files").getJSONObject(0).getString("uri")));
             else if("details".equals(getIntent().getAction())&&receipt.getJSONArray("files").length()==1)
-                new AlertDialog.Builder(this).setMessage(R.string.files_sent)
+                new AlertDialog.Builder(this).setMessage(getString(R.string.files_received_phone,"1"))
                     .setPositiveButton(R.string.files_open_file,(dialog,which)->{
                         try{openFile(Uri.parse(receipt.getJSONArray("files").getJSONObject(0).getString("uri")));}catch(Exception e){unavailable(true);}
                     }).setNeutralButton(R.string.files_view_location,(dialog,which)->showLocation())
