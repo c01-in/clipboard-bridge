@@ -4,7 +4,7 @@
     <string name="send_to_computer">An Computer senden</string>
     <string name="status_unpaired">Noch nicht gekoppelt</string>
     <string name="status_paired">Gekoppelt. Bereit zum Empfangen von Windows.</string>
-    <string name="send_clipboard">Zwischenablage an Windows senden</string>
+    <string name="send_clipboard">In die Zwischenablage des Computers kopieren</string>
     <string name="send_help">Text oder ein Bild. Der Inhalt wird erst beim Tippen auf Senden gelesen.</string>
     <string name="connection_heading">Mit einem Computer verbinden</string>
     <string name="discovery_help">App auf beiden Geräten öffnen und mit demselben WLAN verbinden. Keine Adressen oder Links eingeben.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">Dateien konnten nicht gespeichert werden: %1$s</string>
     <string name="files_folder_heading">Empfangene Dateien speichern unter</string>
     <string name="files_change_folder">Ordner ändern…</string>
-    <string name="files_clipboard_image">Ein Bild an die Zwischenablage senden</string>
+    <string name="files_clipboard_image">Ein Bild in die Zwischenablage des Computers kopieren</string>
     <string name="files_name_long">Der Dateiname ist zu lang (maximal 240 Zeichen).</string>
     <string name="files_selection_limit">Wähle 1–1.000 Dateien.</string>
     <string name="files_read_failed">Lesen fehlgeschlagen: %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">%1$s Dateien gespeichert.</string>
     <string name="files_choose_receive_folder">Empfangsordner auswählen</string>
     <string name="files_folder_saved">Empfangsordner gespeichert.</string>
+    <string name="files_open_file">Datei öffnen</string>
+    <string name="files_view_location">Speicherort anzeigen</string>
+    <string name="files_open_unavailable">Diese Datei oder dieser Speicherort kann nicht geöffnet werden. Die Datei wurde möglicherweise verschoben oder gelöscht, oder es ist keine passende App verfügbar.</string>
 </resources>

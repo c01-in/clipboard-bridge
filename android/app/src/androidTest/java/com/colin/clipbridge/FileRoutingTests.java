@@ -61,9 +61,15 @@ public final class FileRoutingTests {
             assertEquals(1,matches.size());assertEquals(ShareActivity.class.getName(),matches.get(0).activityInfo.name);
             assertEquals(context.getString(R.string.send_to_computer),matches.get(0).loadLabel(pm).toString());
         }
-        for(String action:new String[]{Intent.ACTION_SEND,Intent.ACTION_SEND_MULTIPLE}){
-            java.util.List<android.content.pm.ResolveInfo> matches=pm.queryIntentActivities(new Intent(action).setType("*/*").setPackage(context.getPackageName()),PackageManager.MATCH_DEFAULT_ONLY);
+        for(String mime:new String[]{"application/pdf","video/mp4","text/plain","application/octet-stream"}){
+            java.util.List<android.content.pm.ResolveInfo> matches=pm.queryIntentActivities(new Intent(Intent.ACTION_SEND).setType(mime).setPackage(context.getPackageName()),PackageManager.MATCH_DEFAULT_ONLY);
             assertEquals(1,matches.size());assertEquals(context.getString(R.string.send_to_computer),matches.get(0).loadLabel(pm).toString());
+        }
+        for(String mime:new String[]{"image/png","image/jpeg","image/webp","image/*"}){
+            java.util.List<android.content.pm.ResolveInfo> single=pm.queryIntentActivities(new Intent(Intent.ACTION_SEND).setType(mime).setPackage(context.getPackageName()),PackageManager.MATCH_DEFAULT_ONLY);
+            assertEquals(1,single.size());assertEquals(context.getString(R.string.send_clipboard),single.get(0).loadLabel(pm).toString());
+            java.util.List<android.content.pm.ResolveInfo> multiple=pm.queryIntentActivities(new Intent(Intent.ACTION_SEND_MULTIPLE).setType(mime).setPackage(context.getPackageName()),PackageManager.MATCH_DEFAULT_ONLY);
+            assertEquals(1,multiple.size());assertEquals(context.getString(R.string.send_to_computer),multiple.get(0).loadLabel(pm).toString());
         }
         assertEquals(1,pm.queryIntentActivities(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("content://test.example/unknown-type")).setPackage(context.getPackageName()),PackageManager.MATCH_DEFAULT_ONLY).size());
         assertEquals(context.getString(R.string.app_name),context.getApplicationInfo().loadLabel(pm).toString());

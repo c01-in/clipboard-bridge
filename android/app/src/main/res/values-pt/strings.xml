@@ -4,7 +4,7 @@
     <string name="send_to_computer">Enviar para o computador</string>
     <string name="status_unpaired">Ainda não pareado</string>
     <string name="status_paired">Pareado. Pronto para receber do Windows.</string>
-    <string name="send_clipboard">Enviar área de transferência ao Windows</string>
+    <string name="send_clipboard">Copiar para a área de transferência do computador</string>
     <string name="send_help">Texto ou uma imagem. A leitura ocorre apenas ao tocar em Enviar.</string>
     <string name="connection_heading">Conectar a um computador</string>
     <string name="discovery_help">Abra o app nos dois dispositivos e use a mesma rede Wi-Fi. Não é preciso digitar endereços ou links.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">Não foi possível salvar arquivos: %1$s</string>
     <string name="files_folder_heading">Salvar arquivos recebidos em</string>
     <string name="files_change_folder">Alterar pasta…</string>
-    <string name="files_clipboard_image">Enviar uma imagem à área de transferência</string>
+    <string name="files_clipboard_image">Copiar uma imagem para a área de transferência do computador</string>
     <string name="files_name_long">Nome muito longo (máximo de 240 caracteres).</string>
     <string name="files_selection_limit">Selecione de 1 a 1.000 arquivos.</string>
     <string name="files_read_failed">Não foi possível ler: %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">%1$s arquivos salvos.</string>
     <string name="files_choose_receive_folder">Escolher pasta de recebimento</string>
     <string name="files_folder_saved">Pasta de recebimento salva.</string>
+    <string name="files_open_file">Abrir arquivo</string>
+    <string name="files_view_location">Ver localização</string>
+    <string name="files_open_unavailable">Não foi possível abrir este arquivo ou local. Ele pode ter sido movido ou excluído, ou não há um aplicativo compatível.</string>
 </resources>

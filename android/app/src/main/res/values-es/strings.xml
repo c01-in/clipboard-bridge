@@ -4,7 +4,7 @@
     <string name="send_to_computer">Enviar al ordenador</string>
     <string name="status_unpaired">Sin emparejar</string>
     <string name="status_paired">Emparejado. Listo para recibir de Windows.</string>
-    <string name="send_clipboard">Enviar portapapeles a Windows</string>
+    <string name="send_clipboard">Copiar al portapapeles del ordenador</string>
     <string name="send_help">Texto o una imagen. Solo se lee al tocar Enviar.</string>
     <string name="connection_heading">Conectar a un equipo</string>
     <string name="discovery_help">Abre la app en ambos dispositivos y usa la misma Wi-Fi. No introduzcas direcciones ni enlaces.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">No se pudieron guardar los archivos: %1$s</string>
     <string name="files_folder_heading">Guardar archivos recibidos en</string>
     <string name="files_change_folder">Cambiar carpeta…</string>
-    <string name="files_clipboard_image">Enviar una imagen al portapapeles</string>
+    <string name="files_clipboard_image">Copiar una imagen al portapapeles del ordenador</string>
     <string name="files_name_long">El nombre es demasiado largo (máximo 240 caracteres).</string>
     <string name="files_selection_limit">Selecciona entre 1 y 1.000 archivos.</string>
     <string name="files_read_failed">No se pudo leer: %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">%1$s archivos guardados.</string>
     <string name="files_choose_receive_folder">Elegir carpeta de recepción</string>
     <string name="files_folder_saved">Carpeta de recepción guardada.</string>
+    <string name="files_open_file">Abrir archivo</string>
+    <string name="files_view_location">Ver ubicación</string>
+    <string name="files_open_unavailable">No se puede abrir este archivo o ubicación. Puede haberse movido o eliminado, o no hay una aplicación compatible.</string>
 </resources>

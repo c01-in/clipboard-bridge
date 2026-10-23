@@ -4,7 +4,7 @@
     <string name="send_to_computer">Send to computer</string>
     <string name="status_unpaired">Not paired yet</string>
     <string name="status_paired">Paired. Ready to receive from Windows.</string>
-    <string name="send_clipboard">Send clipboard to Windows</string>
+    <string name="send_clipboard">Copy to computer clipboard</string>
     <string name="send_help">Text or one image. Your clipboard is read only when you tap Send.</string>
     <string name="connection_heading">Connect to a computer</string>
     <string name="discovery_help">Open Clipboard Bridge on both devices and connect to the same Wi-Fi. No addresses or pairing links to enter.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">Could not save files: %1$s</string>
     <string name="files_folder_heading">Save received files to</string>
     <string name="files_change_folder">Change folder…</string>
-    <string name="files_clipboard_image">Send one image to clipboard</string>
+    <string name="files_clipboard_image">Copy one image to computer clipboard</string>
     <string name="files_name_long">The filename is too long (maximum 240 characters).</string>
     <string name="files_selection_limit">Select 1–1,000 files.</string>
     <string name="files_read_failed">Could not read: %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">Saved %1$s files.</string>
     <string name="files_choose_receive_folder">Choose receiving folder</string>
     <string name="files_folder_saved">Receiving folder saved.</string>
+    <string name="files_open_file">Open file</string>
+    <string name="files_view_location">Show location</string>
+    <string name="files_open_unavailable">Cannot open this file or location. It may have been moved or deleted, or no compatible app is available.</string>
 </resources>

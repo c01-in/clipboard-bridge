@@ -4,7 +4,7 @@
     <string name="send_to_computer">发送到电脑</string>
     <string name="status_unpaired">尚未配对</string>
     <string name="status_paired">已配对，等待 Windows 剪贴板。</string>
-    <string name="send_clipboard">发送剪贴板到 Windows</string>
+    <string name="send_clipboard">复制到电脑剪贴板</string>
     <string name="send_help">支持文字和单张图片；只在点击发送时读取手机剪贴板。</string>
     <string name="connection_heading">连接电脑</string>
     <string name="discovery_help">两边打开剪贴板同步，并连接同一 Wi-Fi。无需输入地址或配对链接。</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">无法保存文件：%1$s</string>
     <string name="files_folder_heading">接收文件保存到</string>
     <string name="files_change_folder">更改文件夹…</string>
-    <string name="files_clipboard_image">发送单张图片到剪贴板</string>
+    <string name="files_clipboard_image">复制单张图片到电脑剪贴板</string>
     <string name="files_name_long">文件名过长，最多 240 个字符。</string>
     <string name="files_selection_limit">请选择 1–1,000 个文件。</string>
     <string name="files_read_failed">无法读取：%1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">已保存 %1$s 个文件。</string>
     <string name="files_choose_receive_folder">选择接收文件夹</string>
     <string name="files_folder_saved">接收文件夹已保存。</string>
+    <string name="files_open_file">打开文件</string>
+    <string name="files_view_location">查看位置</string>
+    <string name="files_open_unavailable">无法打开此文件或位置。文件可能已被移动、删除，或没有可用的打开应用。</string>
 </resources>

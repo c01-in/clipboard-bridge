@@ -31,6 +31,12 @@ Android 10+ defaults to **Downloads/Clipboard Bridge**, using MediaStore pending
 
 Both endpoints show progress. Android displays a temporary foreground notification during file transfer and stops the service afterward. There is still no permanent Android clipboard listener or idle foreground service.
 
+### Pending Android improvements (not yet released)
+
+Single-image **Share** uses **Copy to computer clipboard**; multi-image sharing, other file attachments and **Open with** use **Send to computer**. This changes the action label without changing the existing clipboard/file routing.
+
+After a successful file receive, Android notifications offer **Open file** for one file and **Show location** for a batch. Single-file notifications also offer Show location. Opening a file grants its viewer read access to that file only. Show location opens the system file picker at the saved receiving folder; select a file there to open it. No broad storage permission is added, and nothing opens automatically. A batch remembers its receiving folder even if the setting changes later. Deleted files, revoked folder access and missing viewers report an error instead of reporting another transfer failure.
+
 ## Protocol and limits
 
 `POST /api/files` exchanges AES-GCM-encrypted envelopes with the existing pairing key. Every request includes a fresh nonce, operation, transfer ID and phone generation; responses echo the nonce and ID. File index, offset and content are authenticated inside the envelope. Google receives only an encrypted wake-up, with no file names, paths or bytes.

@@ -4,7 +4,7 @@
     <string name="send_to_computer">Envoyer à l’ordinateur</string>
     <string name="status_unpaired">Pas encore associé</string>
     <string name="status_paired">Associé. Prêt à recevoir depuis Windows.</string>
-    <string name="send_clipboard">Envoyer le presse-papiers à Windows</string>
+    <string name="send_clipboard">Copier dans le presse-papiers de l’ordinateur</string>
     <string name="send_help">Texte ou une image. Lecture uniquement lorsque vous touchez Envoyer.</string>
     <string name="connection_heading">Connecter un ordinateur</string>
     <string name="discovery_help">Ouvrez l’application sur les deux appareils et utilisez le même Wi-Fi. Aucune adresse ni aucun lien à saisir.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">Impossible d’enregistrer les fichiers : %1$s</string>
     <string name="files_folder_heading">Enregistrer les fichiers reçus dans</string>
     <string name="files_change_folder">Changer de dossier…</string>
-    <string name="files_clipboard_image">Envoyer une image au presse-papiers</string>
+    <string name="files_clipboard_image">Copier une image dans le presse-papiers de l’ordinateur</string>
     <string name="files_name_long">Nom trop long (240 caractères maximum).</string>
     <string name="files_selection_limit">Sélectionnez entre 1 et 1 000 fichiers.</string>
     <string name="files_read_failed">Lecture impossible : %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">%1$s fichiers enregistrés.</string>
     <string name="files_choose_receive_folder">Choisir le dossier de réception</string>
     <string name="files_folder_saved">Dossier de réception enregistré.</string>
+    <string name="files_open_file">Ouvrir le fichier</string>
+    <string name="files_view_location">Afficher l’emplacement</string>
+    <string name="files_open_unavailable">Impossible d’ouvrir ce fichier ou cet emplacement. Il a peut-être été déplacé ou supprimé, ou aucune application compatible n’est disponible.</string>
 </resources>

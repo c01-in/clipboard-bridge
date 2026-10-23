@@ -26,7 +26,7 @@ public final class ShareActivity extends Activity {
                 startActivity(files);finish();return;
             }
         }catch(Exception ignored){/* Display a normal, actionable share validation error below. */}
-        setTitle(R.string.send_to_computer);
+        setTitle(R.string.send_clipboard);
         LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);
         int pad=(int)(24*getResources().getDisplayMetrics().density);layout.setPadding(pad,pad,pad,pad);
         status=new TextView(this);status.setTextSize(17);layout.addView(status);

@@ -4,7 +4,7 @@
     <string name="send_to_computer">傳送到電腦</string>
     <string name="status_unpaired">尚未配對</string>
     <string name="status_paired">已配對，等待 Windows 剪貼簿。</string>
-    <string name="send_clipboard">傳送剪貼簿至 Windows</string>
+    <string name="send_clipboard">複製到電腦剪貼簿</string>
     <string name="send_help">支援文字與單張圖片；僅在點選傳送時讀取手機剪貼簿。</string>
     <string name="connection_heading">連接電腦</string>
     <string name="discovery_help">兩邊開啟剪貼簿同步，並連接同一 Wi-Fi。不必輸入位址或配對連結。</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">無法儲存檔案：%1$s</string>
     <string name="files_folder_heading">接收檔案儲存至</string>
     <string name="files_change_folder">變更資料夾…</string>
-    <string name="files_clipboard_image">傳送單張圖片到剪貼簿</string>
+    <string name="files_clipboard_image">複製單張圖片到電腦剪貼簿</string>
     <string name="files_name_long">檔案名稱過長，最多 240 個字元。</string>
     <string name="files_selection_limit">請選擇 1–1,000 個檔案。</string>
     <string name="files_read_failed">無法讀取：%1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">已儲存 %1$s 個檔案。</string>
     <string name="files_choose_receive_folder">選擇接收資料夾</string>
     <string name="files_folder_saved">接收資料夾已儲存。</string>
+    <string name="files_open_file">開啟檔案</string>
+    <string name="files_view_location">查看位置</string>
+    <string name="files_open_unavailable">無法開啟此檔案或位置。檔案可能已移動、刪除，或沒有可用的開啟應用程式。</string>
 </resources>

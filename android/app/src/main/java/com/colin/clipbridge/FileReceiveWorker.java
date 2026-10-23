@@ -46,6 +46,7 @@ public final class FileReceiveWorker extends Worker {
             File directory=new File(context.getFilesDir(),"file-receipts");if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("Cannot create file receipts.");
             journal=new File(directory,id+".json");
             record=journal.isFile()?new JSONObject(new String(Files.readAllBytes(journal.toPath()),StandardCharsets.UTF_8)):new JSONObject().put("files",new JSONArray());
+            if(!record.has("folder"))record.put("folder",Config.prefs(context).getString("receiveFolder",""));
             if(record.optBoolean("complete")&&record.optLong("sequence")==wake.getLong("sequence")&&generation.equals(record.optString("receiveGeneration"))){
                 if(!record.optBoolean("acknowledged")){session.request("saved",null);record.put("acknowledged",true);persist(journal,record);}
                 return Result.success();
@@ -61,7 +62,7 @@ public final class FileReceiveWorker extends Worker {
                 JSONObject item=files.getJSONObject(i);long size=item.getLong("size");
                 if(i<receipts.length()&&receipts.getJSONObject(i).optBoolean("done")){done+=size;continue;}
                 if(i<receipts.length())delete(context,Uri.parse(receipts.getJSONObject(i).getString("uri")));
-                Uri output=create(context,item);
+                Uri output=create(context,item,record.getString("folder"));
                 receipts.put(i,new JSONObject().put("uri",output.toString()).put("done",false));persist(journal,record);
                 try(OutputStream stream=context.getContentResolver().openOutputStream(output,"w")){
                     if(stream==null)throw new IOException(context.getString(R.string.files_save_failed,item.getString("name")));
@@ -91,7 +92,8 @@ public final class FileReceiveWorker extends Worker {
             session.retry("saved",null,()->isStopped()||!SyncState.accepts(context,acceptedGeneration));
             record.put("acknowledged",true);persist(journal,record);
             Config.status(context,R.string.files_received_phone,String.valueOf(files.length()));
-            showResult(context,context.getString(R.string.files_received_phone,String.valueOf(files.length())));
+            if(Build.VERSION.SDK_INT<33||context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)
+                context.getSystemService(NotificationManager.class).notify(23,ReceivedFilesActivity.notification(context,context.getString(R.string.files_received_phone,String.valueOf(files.length())),id,record));
             return Result.success();
         }catch(Exception e){
             if(isStopped()||SyncState.paused(context)){cleanupPartial(context,record);return Result.failure();}
@@ -112,14 +114,13 @@ public final class FileReceiveWorker extends Worker {
         try(FileOutputStream output=new FileOutputStream(temporary)){output.write(value.toString().getBytes(StandardCharsets.UTF_8));output.getFD().sync();}
         Files.move(temporary.toPath(),journal.toPath(),StandardCopyOption.REPLACE_EXISTING);
     }
-    private static Uri create(Context context,JSONObject item)throws Exception{
+    private static Uri create(Context context,JSONObject item,String selected)throws Exception{
         String name=item.getString("name").replace('/','_').replace('\\','_').replace('\0','_');
         if(name.isEmpty()||name.length()>240)throw new IOException("Invalid filename.");
         String mime=item.optString("mime","application/octet-stream");
         if("application/octet-stream".equals(mime)){
             int dot=name.lastIndexOf('.');if(dot>=0){String detected=android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substring(dot+1).toLowerCase(java.util.Locale.ROOT));if(detected!=null)mime=detected;}
         }
-        String selected=Config.prefs(context).getString("receiveFolder","");
         if(!selected.isEmpty()){
             Uri tree=Uri.parse(selected);Uri parent=DocumentsContract.buildDocumentUriUsingTree(tree,DocumentsContract.getTreeDocumentId(tree));
             Uri result=DocumentsContract.createDocument(context.getContentResolver(),parent,mime,name);if(result==null)throw new IOException(context.getString(R.string.files_folder_invalid));return result;

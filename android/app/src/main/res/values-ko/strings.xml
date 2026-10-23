@@ -4,7 +4,7 @@
     <string name="send_to_computer">컴퓨터로 보내기</string>
     <string name="status_unpaired">아직 페어링되지 않음</string>
     <string name="status_paired">페어링됨. Windows에서 수신할 준비가 되었습니다.</string>
-    <string name="send_clipboard">Windows로 클립보드 전송</string>
+    <string name="send_clipboard">컴퓨터 클립보드에 복사</string>
     <string name="send_help">텍스트 또는 이미지 한 장. 전송을 누를 때만 클립보드를 읽습니다.</string>
     <string name="connection_heading">컴퓨터 연결</string>
     <string name="discovery_help">두 기기에서 앱을 열고 같은 Wi-Fi에 연결하세요. 주소나 페어링 링크 입력은 필요 없습니다.</string>
@@ -166,7 +166,7 @@
     <string name="files_save_failed">파일을 저장할 수 없습니다: %1$s</string>
     <string name="files_folder_heading">받은 파일 저장 위치</string>
     <string name="files_change_folder">폴더 변경…</string>
-    <string name="files_clipboard_image">이미지 한 장을 클립보드로 보내기</string>
+    <string name="files_clipboard_image">이미지 한 장을 컴퓨터 클립보드에 복사</string>
     <string name="files_name_long">파일 이름이 너무 깁니다(최대 240자).</string>
     <string name="files_selection_limit">파일 1~1,000개를 선택하세요.</string>
     <string name="files_read_failed">읽을 수 없습니다: %1$s</string>
@@ -177,4 +177,7 @@
     <string name="files_received_phone">파일 %1$s개를 저장했습니다.</string>
     <string name="files_choose_receive_folder">수신 폴더 선택</string>
     <string name="files_folder_saved">수신 폴더를 저장했습니다.</string>
+    <string name="files_open_file">파일 열기</string>
+    <string name="files_view_location">저장 위치 보기</string>
+    <string name="files_open_unavailable">이 파일 또는 위치를 열 수 없습니다. 이동되거나 삭제되었거나 호환되는 앱이 없을 수 있습니다.</string>
 </resources>

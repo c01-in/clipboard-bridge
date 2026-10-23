@@ -18,6 +18,11 @@
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
         <activity android:name=".ShareActivity" android:exported="true" android:label="@string/send_to_computer" android:theme="@style/ShareDialog" android:excludeFromRecents="true">
+            <intent-filter android:label="@string/send_clipboard" android:order="1">
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
             <intent-filter android:label="@string/send_to_computer">
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -40,6 +45,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".FileShareActivity" android:exported="false" android:label="@string/send_to_computer" android:theme="@style/ShareDialog"/>
+        <activity android:name=".ReceivedFilesActivity" android:exported="false" android:theme="@style/ShareDialog" android:excludeFromRecents="true"/>
         <service android:name=".FileSendService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:foregroundServiceType="dataSync" xmlns:tools="http://schemas.android.com/tools" tools:node="merge"/>
         <receiver android:name=".PushReceiver" android:exported="false">
