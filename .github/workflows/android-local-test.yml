@@ -41,7 +41,11 @@ jobs:
         run: |
           set -euo pipefail
           sdkmanager 'emulator' 'platforms;android-35' 'system-images;android-35;aosp_atd;x86_64'
-          printf 'no\n' | avdmanager create avd --force --name clipbridge-check --package 'system-images;android-35;aosp_atd;x86_64'
+          export ANDROID_USER_HOME="$RUNNER_TEMP/clipbridge-android"
+          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          printf 'no\n' | avdmanager create avd --force --name clipbridge-check --path "$ANDROID_AVD_HOME/clipbridge-check.avd" --package 'system-images;android-35;aosp_atd;x86_64'
+          test -f "$ANDROID_AVD_HOME/clipbridge-check.ini"
           sudo chmod 666 /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -avd clipbridge-check -port 5580 -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 1536 -cores 2 > "$RUNNER_TEMP/emulator.log" 2>&1 &
           emulator_pid=$!
