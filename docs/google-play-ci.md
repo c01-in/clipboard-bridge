@@ -69,6 +69,7 @@ Keep Android/Windows versions aligned and increase Android `versionCode`. Each u
 
 - `docs/release-notes/v0.x.y.play.txt`: English **What’s new**, 1–500 characters.
 - `docs/release-notes/v0.x.y.play-listing.json`: product title, short description and full description, with the matching version and package. English `en-US` is required; explicit additional locales are supported. Title/short/full limits are 30/80/4,000 characters.
+- The 0.2.3 listing includes `en-US`, `zh-CN`, `zh-TW`, `de-DE`, `es-ES`, `pt-BR`, `fr-FR`, `ja-JP` and `ko-KR`. Carry these localized listings forward and update their feature text together. Android string translations do not populate Play listings. Chinese titles include the brand and “剪贴板同步” / “剪貼簿同步”; other titles retain the brand with a localized action or feature. Metadata-only edits do not require an APK rebuild or a version increase. A successful API commit confirms submission; public approval and search indexing are separate.
 
 From 0.2.0, missing, invalid, oversized, duplicate-locale or mismatched product text stops publication. CI also verifies that the current source version includes these files. The workflow extracts both from the selected release tag, so a later `main` description cannot advertise new functions on an older AAB. Pre-0.2.0 tags keep the legacy notes-only path for no-rebuild uploads.
 
