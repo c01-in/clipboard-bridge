@@ -6,21 +6,12 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 
 final class Notices {
-    static void dismissViewed(Context c){
+    static void received(Context c,int resource,String id){
+        Config.status(c,resource);
         NotificationManager manager=c.getSystemService(NotificationManager.class);
-        // AutoCancel only handles notification taps. Opening the launcher must also
-        // dismiss completed results, without removing an active transfer's notice.
-        for(android.service.notification.StatusBarNotification item:manager.getActiveNotifications()){
-            int id=item.getId(),flags=item.getNotification().flags;
-            if((id==1||id==21||id==23)&&(flags&(Notification.FLAG_ONGOING_EVENT|Notification.FLAG_FOREGROUND_SERVICE))==0)
-                manager.cancel(item.getTag(),id);
-        }
-    }
-    static void received(Context c,int resource){
-        // Android 13+ already shows clipboard-write feedback. Keep the in-app status,
-        // but remove the progress notification rather than adding a second "copied" result.
-        if(Build.VERSION.SDK_INT>=33){Config.status(c,resource);c.getSystemService(NotificationManager.class).cancel(1);}
-        else show(c,resource);
+        manager.cancel(1);
+        if(Build.VERSION.SDK_INT<33||c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)
+            manager.notify(id,24,create(c,c.getString(resource)));
     }
     static Notification create(Context c,String text){
         return builder(c,text).build();

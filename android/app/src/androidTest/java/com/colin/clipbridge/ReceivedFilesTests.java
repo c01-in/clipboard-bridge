@@ -34,7 +34,7 @@ public final class ReceivedFilesTests {
         Config.prefs(context).edit().putBoolean("notificationIntroShown",true).commit();
         host=instrumentation.startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     }
-    @After public void cleanup(){if(host!=null)instrumentation.runOnMainSync(host::finish);manager.cancel(23);if(journal!=null)journal.delete();if(image!=null)image.delete();}
+    @After public void cleanup(){if(host!=null)instrumentation.runOnMainSync(host::finish);manager.cancelAll();if(journal!=null)journal.delete();if(image!=null)image.delete();}
     private Intent tap(PendingIntent action,String expectedAction)throws Exception{
         AtomicReference<Intent> launched=new AtomicReference<>();
         Instrumentation.ActivityMonitor monitor=new Instrumentation.ActivityMonitor(){
@@ -48,12 +48,28 @@ public final class ReceivedFilesTests {
         finally{instrumentation.removeMonitor(monitor);}
     }
     @Test public void singleFileNotificationOpensExactlyTheSavedUriWithReadOnlyGrant()throws Exception{
-        Notification notification=ReceivedFilesActivity.notification(context,"Saved 1 file",id,record);manager.notify(23,notification);
+        Notification notification=ReceivedFilesActivity.notification(context,"Saved 1 file",id,record);manager.notify(id,23,notification);
         assertEquals(2,notification.actions.length);assertEquals(context.getString(R.string.files_open_file),notification.actions[0].title.toString());
         assertEquals(context.getString(R.string.files_view_location),notification.actions[1].title.toString());
         Intent open=tap(notification.actions[0].actionIntent,Intent.ACTION_VIEW);
         assertEquals(uri,open.getData());assertEquals("image/png",open.getType());assertEquals(uri,open.getClipData().getItemAt(0).getUri());
         assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,open.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+    }
+    @Test public void openingOneReceiptPreservesOtherFileAndClipboardNotifications()throws Exception{
+        String other=FileTransfer.id();
+        Notification notification=ReceivedFilesActivity.notification(context,"Saved 1 file",id,record);
+        manager.notify(id,23,notification);manager.notify(other,23,Notices.create(context,"another saved batch"));
+        Notices.received(context,R.string.received_image,other);
+        Thread.sleep(100);
+        tap(notification.actions[0].actionIntent,Intent.ACTION_VIEW);
+        Thread.sleep(100);
+        boolean original=false,another=false,clipboard=false;
+        for(android.service.notification.StatusBarNotification item:manager.getActiveNotifications()){
+            original|=id.equals(item.getTag())&&item.getId()==23;
+            another|=other.equals(item.getTag())&&item.getId()==23;
+            clipboard|=other.equals(item.getTag())&&item.getId()==24;
+        }
+        assertFalse(original);assertTrue("Other file notification disappeared",another);assertTrue("Clipboard notification disappeared",clipboard);
     }
     @Test public void multipleFileNotificationShowsTheSavedLocationEvenAfterPreferenceChanges()throws Exception{
         String tree="content://com.android.externalstorage.documents/tree/primary%3ADocuments";

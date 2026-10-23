@@ -50,7 +50,7 @@ public class ReceiveWorker extends Worker {
                 }
                 if(!Config.prefs(c).edit().putLong("lastSequence",seq).putString("lastId",id).putString("lastMime",mime).commit())throw new Exception(LocalText.get(R.string.error_save_receipt));
             }
-            if(!SyncState.paused(c))Notices.received(c,mime.equals("image/png")?R.string.received_image:R.string.received_text);
+            if(!SyncState.paused(c))Notices.received(c,mime.equals("image/png")?R.string.received_image:R.string.received_text,id);
             ack(c,manifest,"applied",null);return Result.success();
         }catch(Exception e){
             if(isStopped()||SyncState.paused(c))return Result.failure();

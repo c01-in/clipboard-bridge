@@ -22,7 +22,6 @@ public class MainActivity extends Activity {
     private int discoveryGeneration;
     private final Runnable refresh=new Runnable(){public void run(){if(visible){refreshSync();handler.postDelayed(this,1500);}}};
     private void refreshSync(){
-        Notices.dismissViewed(this);
         status.setText(Config.statusText(this));updatingSwitch=true;syncSwitch.setChecked(!SyncState.paused(this));updatingSwitch=false;
         if(SyncState.paused(this))sendStatus.setText(R.string.sync_pause_help);
         if(!sending)sendButton.setEnabled(Config.prefs(this).contains("config")&&SyncState.ready(this));

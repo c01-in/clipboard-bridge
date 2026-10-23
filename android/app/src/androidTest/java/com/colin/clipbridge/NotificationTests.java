@@ -27,30 +27,23 @@ public final class NotificationTests {
     }
     void open(){activity=instrumentation.startActivitySync(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setClass(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
     boolean has(int id){return Arrays.stream(manager.getActiveNotifications()).anyMatch(n->n.getId()==id);}
-    void awaitGone(int... ids)throws Exception{
-        long until=System.currentTimeMillis()+5000;
-        while(System.currentTimeMillis()<until){
-            boolean remaining=false;for(int id:ids)remaining|=has(id);
-            if(!remaining)return;Thread.sleep(50);
-        }
-        for(int id:ids)assertFalse("Read notification remains: "+id,has(id));
-    }
-    @Test public void launcherOpenClearsResultsAndPreservesOngoingTransfer()throws Exception{
+    @Test public void launcherOpenPreservesResultsAndOngoingTransfer()throws Exception{
         manager.notify(1,Notices.create(context,"test status"));
         manager.notify("sent",21,Notices.create(context,"test sent"));
         manager.notify(23,Notices.create(context,"test received"));
         Notification progress=Notices.create(context,"test transfer");progress.flags|=Notification.FLAG_ONGOING_EVENT;
         manager.notify(20,progress);Thread.sleep(150);
         assertTrue(has(1));assertTrue(has(21));assertTrue(has(23));assertTrue(has(20));
-        open();awaitGone(1,21,23);
+        open();Thread.sleep(1800);
+        assertTrue(has(1));assertTrue(has(21));assertTrue(has(23));
         assertTrue("Opening the app removed an ongoing transfer notice",has(20));
     }
-    @Test public void resultPostedWhileOpenClearsButBackgroundResultRemainsUntilReopen()throws Exception{
-        open();manager.notify(21,Notices.create(context,"test result while visible"));awaitGone(21);
+    @Test public void resultsStayVisibleUntilTheUserDismissesThem()throws Exception{
+        open();manager.notify(21,Notices.create(context,"test result while visible"));Thread.sleep(1800);assertTrue(has(21));
         instrumentation.runOnMainSync(activity::finish);activity=null;instrumentation.waitForIdleSync();
         manager.notify(23,Notices.create(context,"test unread background result"));Thread.sleep(1800);
         assertTrue("Unread background result disappeared before opening",has(23));
-        open();awaitGone(23);
+        open();Thread.sleep(1800);assertTrue(has(21));assertTrue(has(23));
     }
     @Test public void openingAppKeepsOngoingSyncAndFileProgress()throws Exception{
         Notification progress=Notices.create(context,"test active transfer");progress.flags|=Notification.FLAG_ONGOING_EVENT;

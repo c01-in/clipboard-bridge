@@ -51,7 +51,7 @@ public final class FileSendService extends Service {
                     String result=job.success?getString(R.string.files_sent):getString(R.string.send_failed,job.error);
                     Config.status(this,job.success?R.string.files_sent:R.string.send_failed,job.error);
                     if(Build.VERSION.SDK_INT<33||checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)
-                        getSystemService(NotificationManager.class).notify(21,Notices.create(this,result));
+                        getSystemService(NotificationManager.class).notify(job.id,21,Notices.create(this,result));
                     // A notification Cancel intent also receives a new startId.
                     stopSelf(latestStartId);
                 });

@@ -93,14 +93,14 @@ public final class FileReceiveWorker extends Worker {
             record.put("acknowledged",true);persist(journal,record);
             Config.status(context,R.string.files_received_phone,String.valueOf(files.length()));
             if(Build.VERSION.SDK_INT<33||context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)
-                context.getSystemService(NotificationManager.class).notify(23,ReceivedFilesActivity.notification(context,context.getString(R.string.files_received_phone,String.valueOf(files.length())),id,record));
+                context.getSystemService(NotificationManager.class).notify(id,23,ReceivedFilesActivity.notification(context,context.getString(R.string.files_received_phone,String.valueOf(files.length())),id,record));
             return Result.success();
         }catch(Exception e){
             if(isStopped()||SyncState.paused(context)){cleanupPartial(context,record);return Result.failure();}
             if(getRunAttemptCount()<2&&wake!=null&&(session==null||!session.expired()))return Result.retry();
             cleanupPartial(context,record);
             if(session!=null)try{session.request("reject",new JSONObject().put("data",String.valueOf(e.getMessage())));}catch(Exception ignored){}
-            Config.status(context,R.string.files_save_failed,String.valueOf(e.getMessage()));showResult(context,context.getString(R.string.files_save_failed,String.valueOf(e.getMessage())));
+            Config.status(context,R.string.files_save_failed,String.valueOf(e.getMessage()));showResult(context,context.getString(R.string.files_save_failed,String.valueOf(e.getMessage())),id);
             return Result.failure();
         }
     }
@@ -131,9 +131,9 @@ public final class FileReceiveWorker extends Worker {
         Uri result=context.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI,values);if(result==null)throw new IOException(context.getString(R.string.files_folder_invalid));return result;
     }
     private static void delete(Context context,Uri uri){try{if("media".equals(uri.getAuthority()))context.getContentResolver().delete(uri,null,null);else DocumentsContract.deleteDocument(context.getContentResolver(),uri);}catch(Exception ignored){}}
-    private static void showResult(Context context,String text){
+    private static void showResult(Context context,String text,String id){
         if(Build.VERSION.SDK_INT<33||context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED){
-            Notification notification=Notices.create(context,text);context.getSystemService(NotificationManager.class).notify(23,notification);
+            Notification notification=Notices.create(context,text);context.getSystemService(NotificationManager.class).notify(id,23,notification);
         }
     }
 }

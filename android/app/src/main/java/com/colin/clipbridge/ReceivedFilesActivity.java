@@ -23,7 +23,7 @@ public final class ReceivedFilesActivity extends Activity {
         JSONArray files=receipt.getJSONArray("files");
         Notification.Builder notice=Notices.builder(context,text);
         PendingIntent folder=action(context,id,"folder");
-        notice.setContentIntent(files.length()==1?action(context,id,"open"):folder);
+        notice.setContentIntent(files.length()==1?action(context,id,"details"):folder);
         if(files.length()==1)notice.addAction(new Notification.Action.Builder(null,context.getString(R.string.files_open_file),action(context,id,"open")).build());
         return notice.addAction(new Notification.Action.Builder(null,context.getString(R.string.files_view_location),folder).build()).build();
     }
@@ -58,9 +58,15 @@ public final class ReceivedFilesActivity extends Activity {
         try{
             receipt=readReceipt(this,getIntent().getStringExtra("batchId"));
             if(saved!=null&&saved.getBoolean("waitingForPicker")){waitingForPicker=true;return;}
-            getSystemService(NotificationManager.class).cancel(23);
+            getSystemService(NotificationManager.class).cancel(getIntent().getStringExtra("batchId"),23);
             if("open".equals(getIntent().getAction())&&receipt.getJSONArray("files").length()==1)
                 openFile(Uri.parse(receipt.getJSONArray("files").getJSONObject(0).getString("uri")));
+            else if("details".equals(getIntent().getAction())&&receipt.getJSONArray("files").length()==1)
+                new AlertDialog.Builder(this).setMessage(R.string.files_sent)
+                    .setPositiveButton(R.string.files_open_file,(dialog,which)->{
+                        try{openFile(Uri.parse(receipt.getJSONArray("files").getJSONObject(0).getString("uri")));}catch(Exception e){unavailable(true);}
+                    }).setNeutralButton(R.string.files_view_location,(dialog,which)->showLocation())
+                    .setNegativeButton(android.R.string.cancel,(dialog,which)->finish()).setOnCancelListener(dialog->finish()).show();
             else showLocation();
         }catch(Exception e){unavailable(false);}
     }
