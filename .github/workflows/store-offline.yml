@@ -12,44 +12,43 @@ on:
         type: boolean
         default: false
   workflow_run:
-    workflows: ['Microsoft Store build and deployment']
+    workflows: ['Publish']
     types: [completed]
 permissions:
   contents: write
 concurrency:
-  group: store-offline-${{ inputs.tag || github.event.workflow_run.head_branch }}
+  group: store-offline-${{ inputs.tag || github.event.workflow_run.head_sha }}
   cancel-in-progress: false
 jobs:
   verify:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_branch, 'v0.'))
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: windows-latest
     timeout-minutes: 150
     defaults:
       run:
         shell: pwsh
     env:
-      RELEASE_TAG: ${{ inputs.tag || github.event.workflow_run.head_branch }}
+      RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
       - name: Verify existing release version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if(!$env:RELEASE_TAG){
+            $env:RELEASE_TAG='v'+([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version
+            "RELEASE_TAG=$env:RELEASE_TAG" >> $env:GITHUB_ENV
+          }
           if($env:RELEASE_TAG -notmatch '^v0\.\d+\.\d+$'){throw 'An existing 0.x.y release is required.'}
           $props=git show ($env:RELEASE_TAG+':Directory.Build.props')
           if($LASTEXITCODE -ne 0){throw 'Release tag does not exist.'}
           $version=([xml]($props -join "`n")).Project.PropertyGroup.Version
           if($env:RELEASE_TAG -ne ('v'+$version)){throw 'Release and source versions differ.'}
-          # Store upload and GitHub publication run in parallel. A missing release
-          # is expected briefly; authentication/permission failures stay failures.
-          for($attempt=1;$attempt -le 120;$attempt++){
-            $result=gh api ('repos/'+$env:GITHUB_REPOSITORY+'/releases/tags/'+$env:RELEASE_TAG) 2>&1
-            if($LASTEXITCODE -eq 0){break}
-            if(($result -join "`n") -notmatch 'HTTP 404' -or $attempt -eq 120){throw 'Could not find the matching GitHub release.'}
-            Start-Sleep -Seconds 30
-          }
+          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY
+          if($LASTEXITCODE -ne 0){throw 'Could not find the matching GitHub release.'}
       - name: Wait for the matching certified Store version
         run: |
           $identity=Get-Content windows/Store/identity.json -Raw | ConvertFrom-Json

@@ -1,0 +1,1 @@
+Shorter Copy to PC action for sharing one image. Received-file notifications offer Open file and Show location, including single images saved as files. Separate transfer notifications stay available when you open another notification or the app. Existing pairing is preserved. Clipboard and file sending remain separate.

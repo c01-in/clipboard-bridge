@@ -1,73 +1,58 @@
-name: Build, sign and optionally publish installers
+name: Publish
 on:
+  workflow_dispatch:
   push:
     tags: ['v0.*']
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Existing preview tag when publishing; leave empty for a build review'
-        required: false
-        type: string
-      sign:
-        description: 'Request SignPath signing (requires approved project configuration)'
-        type: boolean
-        default: false
-      publish:
-        description: 'Publish a GitHub release and enable the configured Play upload'
-        type: boolean
-        default: false
 permissions:
   contents: write
   actions: read
+  id-token: write
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  group: publish
   cancel-in-progress: false
 jobs:
-  release:
+  build:
+    name: Build and test once
     runs-on: windows-latest
-    timeout-minutes: 270
-    env:
-      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
-      CLIPBRIDGE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      SIGN_WINDOWS: ${{ inputs.sign || ((github.event_name == 'push' || inputs.publish) && vars.WINDOWS_SIGNING_MODE == 'signpath') }}
-      WINDOWS_SIGNING_MODE: ${{ vars.WINDOWS_SIGNING_MODE }}
-      PUBLISH_RELEASE: ${{ github.event_name == 'push' || inputs.publish }}
+    timeout-minutes: 45
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     defaults:
       run:
         shell: pwsh
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GOOGLE_PLAY_ENABLED: ${{ vars.GOOGLE_PLAY_UPLOAD_ENABLED }}
+      MICROSOFT_STORE_ENABLED: ${{ vars.MICROSOFT_STORE_UPLOAD_ENABLED }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
-      - name: Validate preview tag and versions
+      - name: Check version and release descriptions
+        id: version
         run: |
+          $ErrorActionPreference='Stop'
           $version=([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version
-          if($env:PUBLISH_RELEASE -eq 'true' -and ($env:RELEASE_TAG -notmatch '^v0\.\d+\.\d+$' -or $env:RELEASE_TAG -ne ('v'+$version))){throw 'Tag must match the declared 0.x.y preview version.'}
-          if($version -notmatch '^0\.\d+\.\d+$'){throw 'Preview version must use 0.x.y.'}
+          if($version -notmatch '^0\.\d+\.\d+$'){throw 'Use a 0.x.y release version.'}
+          $tag='v'+$version
+          if($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne $tag){throw 'Tag and source version differ.'}
           $android=Get-Content android/app/build.gradle -Raw
-          if($android -notmatch ('versionName '''+[regex]::Escape($version)+'''')){throw 'Android and Windows versions differ.'}
-          ./scripts/Check-Publish.ps1 -IncludeHistory
-      - name: Check requested signing configuration
-        env:
-          SIGNPATH_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
-          SIGNPATH_ORG: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          SIGNPATH_PROJECT: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          SIGNPATH_POLICY: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
-          SIGNPATH_APPS: ${{ vars.SIGNPATH_APPLICATIONS_CONFIGURATION }}
-          SIGNPATH_INSTALLER: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
-          SIGNPATH_SUBJECT: ${{ vars.SIGNPATH_PUBLISHER }}
-        run: |
-          if($env:PUBLISH_RELEASE -eq 'true' -and $env:WINDOWS_SIGNING_MODE -notin @('signpath','microsoft-store')){throw 'Set WINDOWS_SIGNING_MODE explicitly to signpath or microsoft-store before publishing. Unsigned Windows installers are not published.'}
-          if($env:SIGN_WINDOWS -eq 'true'){
-            foreach($name in @('SIGNPATH_TOKEN','SIGNPATH_ORG','SIGNPATH_PROJECT','SIGNPATH_POLICY','SIGNPATH_APPS','SIGNPATH_INSTALLER','SIGNPATH_SUBJECT')){
-              if(![Environment]::GetEnvironmentVariable($name)){throw "SignPath approval/configuration is required for signed builds: $name is missing. Signed builds never fall back to unsigned publication."}
-            }
-            "CLIPBRIDGE_WINDOWS_SHARE_PUBLISHER=$env:SIGNPATH_SUBJECT" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          }else{
-            $message=if($env:PUBLISH_RELEASE -eq 'true'){'Windows downloads use the Microsoft-signed Store online installer. The unsigned standalone build is tested but not published. Android uses its existing release key.'}else{'Unsigned build review. Nothing is published.'}
-            $message | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if($android -notmatch ("versionName '"+[regex]::Escape($version)+"'")){throw 'Android and Windows versions differ.'}
+          foreach($suffix in @('.md','.play.txt','.play-listing.json','.store-listing.json')){
+            if(!(Test-Path -LiteralPath ('docs/release-notes/'+$tag+$suffix))){throw "Missing release descriptions: $tag$suffix"}
           }
+          $store=Get-Content ('docs/release-notes/'+$tag+'.store-listing.json') -Raw | ConvertFrom-Json
+          if($store.version -ne $version -or $store.storeId -cne '9PJT9PTSMCJQ' -or !$store.description -or !$store.releaseNotes){throw 'Invalid Store descriptions.'}
+          if($env:GOOGLE_PLAY_ENABLED -ne 'true' -or $env:MICROSOFT_STORE_ENABLED -ne 'true'){throw 'Configure both Store publishers before using Publish.'}
+          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+          if($LASTEXITCODE -eq 0){throw "Version $tag is already published. Prepare a new version before clicking Publish."}
+          $LASTEXITCODE=0
+          $existing=git rev-parse -q --verify ('refs/tags/'+$tag) 2>$null
+          if($LASTEXITCODE -eq 0 -and $existing -ne $env:GITHUB_SHA){throw 'Existing tag points to different source; tags are never overwritten.'}
+          $LASTEXITCODE=0
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          ./scripts/Check-Publish.ps1
+          ./scripts/Test-GooglePlay.ps1
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: '10.0.x'
@@ -76,135 +61,118 @@ jobs:
           distribution: microsoft
           java-version: '21'
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
-      - name: Install Android SDK components
+      - name: Install Android build components
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Restore persistent signing key
+      - name: Restore existing Android signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if(!$env:KEYSTORE_BASE64 -or !$env:CLIPBRIDGE_STORE_PASSWORD){throw 'Configure the two Android signing secrets before publishing.'}
+          if(!$env:KEYSTORE_BASE64){throw 'Missing Android signing key.'}
           $keyFile=Join-Path $env:RUNNER_TEMP 'clipboard-release.jks'
           [IO.File]::WriteAllBytes($keyFile,[Convert]::FromBase64String($env:KEYSTORE_BASE64))
-          "CLIPBRIDGE_KEYSTORE=$keyFile" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          "JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=$env:RUNNER_TEMP" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Run protocol, localization and download checks
+          "CLIPBRIDGE_KEYSTORE=$keyFile" >> $env:GITHUB_ENV
+          "JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
+      - name: Run standard tests and build both apps
+        env:
+          CLIPBRIDGE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
+          if(!$env:CLIPBRIDGE_STORE_PASSWORD){throw 'Missing Android signing password.'}
           dotnet run --project windows/Tests/Tests.csproj -c Release
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-          ./android/gradlew.bat -p android lintDebug --no-daemon --console=plain
+          ./android/gradlew.bat -p android lintRelease --no-daemon --console=plain
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-      - name: Build Windows applications and signed Android apps
-        run: |
           ./scripts/Build.ps1 -UseEnvironmentSigning -JavaHome $env:JAVA_HOME -AndroidSdk $env:ANDROID_HOME
-          ./scripts/Test-SignPath.ps1
-      - name: Sign first-party Windows binaries and Share identity
-        if: env.SIGN_WINDOWS == 'true'
-        uses: ./.github/actions/sign-windows
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
-          artifact-configuration-slug: ${{ vars.SIGNPATH_APPLICATIONS_CONFIGURATION }}
-          publisher: ${{ vars.SIGNPATH_PUBLISHER }}
-          stage: applications
-      - name: Package installer with the verified payload
+          ./scripts/Package-WindowsStore.ps1 -PackageRoot dist -OutputDirectory dist/store
+      - name: Verify signed downloads and prepare GitHub assets
         run: |
-          $arguments=@{AndroidSdk=$env:ANDROID_HOME}
-          if($env:SIGN_WINDOWS -eq 'true'){$arguments.ForPublication=$true}
-          ./scripts/Package.ps1 @arguments
-      - name: Sign the final Windows installer
-        if: env.SIGN_WINDOWS == 'true'
-        uses: ./.github/actions/sign-windows
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
-          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIGURATION }}
-          publisher: ${{ vars.SIGNPATH_PUBLISHER }}
-          stage: installer
-      - name: Verify Android signatures and update final checksums
-        run: |
-          if($env:SIGN_WINDOWS -eq 'true'){
-            ./scripts/Test-WindowsSignatures.ps1 -PackageRoot dist -Publisher '${{ vars.SIGNPATH_PUBLISHER }}'
-            ./scripts/Test-WindowsSignatures.ps1 -PackageRoot dist/release -Publisher '${{ vars.SIGNPATH_PUBLISHER }}' -InstallerOnly
-          }else{
-            foreach($binary in @('dist/windows/service/ClipboardBridge.Service.exe','dist/windows/tray/ClipboardBridge.exe','dist/windows/cli/ClipboardBridge.Cli.exe','dist/release/ClipboardBridge-Windows-x64-Setup.exe')){
-              if((Get-AuthenticodeSignature -LiteralPath $binary).Status -ne 'NotSigned'){throw "Unexpected signature state in unsigned preview: $binary"}
-            }
-            $identity=[xml](Get-Content dist/windows/share/AppxManifest.xml -Raw)
-            if($identity.Package.Identity.Publisher -notmatch 'OID\.2\.25\.311729368913984317654407730594956997722=1'){throw 'Unsigned preview requires its explicit unsigned Share identity.'}
+          & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify dist/ClipboardBridge.apk
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          & "$env:JAVA_HOME/bin/jarsigner.exe" -verify dist/ClipboardBridge.aab
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          New-Item -ItemType Directory -Path dist/release -Force | Out-Null
+          foreach($name in @('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Android-Library-Sources.zip')){
+            Copy-Item -LiteralPath ('dist/'+$name) -Destination ('dist/release/'+$name)
           }
-          $names=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip')
-          $checksums=foreach($name in $names){(Get-FileHash (Join-Path 'dist/release' $name)).Hash.ToLowerInvariant()+'  '+$name}
-          [IO.File]::WriteAllLines((Join-Path $PWD 'dist/release/SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
-          & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify dist/release/ClipboardBridge.apk
-          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-          & "$env:JAVA_HOME/bin/jarsigner.exe" -verify dist/release/ClipboardBridge.aab
-          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-          $bundle=[IO.Compression.ZipFile]::OpenRead((Resolve-Path dist/release/ClipboardBridge.aab).Path)
-          try{
-            $entries=@($bundle.Entries.FullName)
-            if('BundleConfig.pb' -notin $entries -or 'base/manifest/AndroidManifest.xml' -notin $entries -or !($entries -match '^META-INF/[^/]+\.(RSA|EC|DSA)$')){throw 'The Play upload artifact is not a signed Android App Bundle.'}
-          }finally{$bundle.Dispose()}
-      - name: Verify fresh Windows install and uninstall
-        run: |
-          $setup=Start-Process -FilePath (Resolve-Path dist/release/ClipboardBridge-Windows-x64-Setup.exe).Path -ArgumentList '--silent' -Wait -PassThru -WindowStyle Hidden
-          if($setup.ExitCode -ne 0){Get-Content "$env:LOCALAPPDATA/ClipboardBridge/install.log";throw 'Installer failed.'}
-          if((Get-Service ClipboardBridge).Status -ne 'Running'){throw 'Service is not running.'}
-          & "$env:ProgramFiles/ClipboardBridge/cli/ClipboardBridge.Cli.exe" status
-          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-          $head=Invoke-WebRequest http://127.0.0.1:45871/app/android -Method Head
-          if($head.StatusCode -ne 200 -or [long]($head.Headers['Content-Length'] -join '') -ne (Get-Item dist/release/ClipboardBridge.apk).Length){throw 'Installed APK download is incomplete.'}
-          & "$env:ProgramFiles/ClipboardBridge/scripts/Uninstall.ps1"
-          if(Test-Path "$env:ProgramFiles/ClipboardBridge"){throw 'Uninstall left installed program files.'}
-      - name: Obtain Microsoft-signed Store installer for publication
-        if: env.PUBLISH_RELEASE == 'true' && env.WINDOWS_SIGNING_MODE == 'microsoft-store'
-        run: |
           ./scripts/Get-StoreInstaller.ps1 -OutputPath dist/release/ClipboardBridge-Windows-Store-Setup.exe
-          # Standalone EXE/ZIP are CI review artifacts, not public release downloads.
-          $publicNames=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip')
-          $checksums=foreach($name in $publicNames){(Get-FileHash (Join-Path 'dist/release' $name)).Hash.ToLowerInvariant()+'  '+$name}
+          $names=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Android-Library-Sources.zip','ClipboardBridge-Windows-Store-Setup.exe')
+          $checksums=foreach($name in $names){(Get-FileHash ('dist/release/'+$name)).Hash.ToLowerInvariant()+'  '+$name}
           [IO.File]::WriteAllLines((Join-Path $PWD 'dist/release/SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: preview-${{ env.RELEASE_TAG }}
-          path: dist/release/*
+          name: store-package
+          path: |
+            dist/store/ClipboardBridge-Store-x64.msix
+            dist/store/store-package.json
           if-no-files-found: error
-      - name: Publish GitHub prerelease
-        if: env.PUBLISH_RELEASE == 'true'
+          retention-days: 3
+      - name: Publish GitHub downloads
         env:
-          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
-          $versionNotes=Join-Path 'docs/release-notes' ($env:RELEASE_TAG+'.md')
-          if(!(Test-Path -LiteralPath $versionNotes)){throw 'Version-specific release notes are required before publishing.'}
-          $notes=Get-Content -LiteralPath $versionNotes -Raw
-          if($env:WINDOWS_SIGNING_MODE -eq 'microsoft-store'){
-            $assets=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-Store-Setup.exe','ClipboardBridge-Android-Library-Sources.zip','SHA256SUMS.txt')
-            $signatureNote='**Windows download:** ClipboardBridge-Windows-Store-Setup.exe is the unmodified, timestamped Microsoft-signed online installer for our Store product. It downloads the current Store version and needs Internet access and Microsoft Store components. It is not an offline installer or the old standalone service edition. No Developer Mode or certificate import is needed. Store and standalone editions use separate local state; back up configuration and re-pair when changing editions. Do not run both brokers on the same port.'
-          }else{
-            $assets=@('ClipboardBridge.apk','ClipboardBridge.aab','ClipboardBridge-Windows-x64-Setup.exe','ClipboardBridge-Windows-x64.zip','ClipboardBridge-Android-Library-Sources.zip','SHA256SUMS.txt')
-            $signatureNote='Windows binaries, Share identity and installer have verified Authenticode signatures from the configured publisher.'
-          }
-          $notes+="`n`n$signatureNote`n"
-          $notes | Set-Content "$env:RUNNER_TEMP/release-notes.md" -Encoding utf8
-          $paths=@($assets | ForEach-Object {Join-Path 'dist/release' $_})
-          gh release create $env:RELEASE_TAG @paths --verify-tag --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file "$env:RUNNER_TEMP/release-notes.md"
+          $assets=@(Get-ChildItem -LiteralPath dist/release -File | ForEach-Object {$_.FullName})
+          gh release create $env:RELEASE_TAG @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title "$env:RELEASE_TAG · Preview" --notes-file ('docs/release-notes/'+$env:RELEASE_TAG+'.md')
           if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-      - name: Remove temporary signing material
+          'GitHub downloads published. Store submissions run next; Store approval is separate.' >> $env:GITHUB_STEP_SUMMARY
+      - name: Remove temporary signing key
         if: always()
         run: |
           if($env:CLIPBRIDGE_KEYSTORE -and (Test-Path -LiteralPath $env:CLIPBRIDGE_KEYSTORE)){Remove-Item -LiteralPath $env:CLIPBRIDGE_KEYSTORE -Force}
   play:
-    needs: release
-    if: (github.event_name == 'push' || inputs.publish) && vars.GOOGLE_PLAY_UPLOAD_ENABLED == 'true'
-    permissions:
-      contents: read
-      id-token: write
+    name: Submit Google Play
+    needs: build
     uses: ./.github/workflows/play-publish.yml
     with:
-      tag: ${{ github.event.inputs.tag || github.ref_name }}
+      tag: ${{ needs.build.outputs.tag }}
       mode: submit
       track: production
     secrets: inherit
+  store:
+    name: Submit Microsoft Store
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STORE_TAG: ${{ needs.build.outputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.build.outputs.tag }}
+      - name: Download the already built Store package
+        run: |
+          gh run download $env:GITHUB_RUN_ID --repo $env:GITHUB_REPOSITORY --name store-package --dir dist/store
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $receipt=Get-Content dist/store/store-package.json -Raw | ConvertFrom-Json
+          if($receipt.sha256 -cne (Get-FileHash dist/store/ClipboardBridge-Store-x64.msix).Hash){throw 'Store package checksum mismatch.'}
+      - uses: microsoft/microsoft-store-apppublisher@cc9910a8d59f2eb55cbb83df0a3800cf3b5300e0 # v1.4
+      - name: Upload package and updated descriptions
+        env:
+          MS_STORE_TENANT_ID: ${{ secrets.MS_STORE_TENANT_ID }}
+          MS_STORE_CLIENT_ID: ${{ secrets.MS_STORE_CLIENT_ID }}
+          MS_STORE_CLIENT_SECRET: ${{ secrets.MS_STORE_CLIENT_SECRET }}
+          MS_STORE_SELLER_ID: ${{ secrets.MS_STORE_SELLER_ID }}
+        run: |
+          foreach($name in @('MS_STORE_TENANT_ID','MS_STORE_CLIENT_ID','MS_STORE_CLIENT_SECRET','MS_STORE_SELLER_ID')){
+            if(![Environment]::GetEnvironmentVariable($name)){throw "Missing Store publisher setting: $name"}
+          }
+          msstore reconfigure --tenantId $env:MS_STORE_TENANT_ID --sellerId $env:MS_STORE_SELLER_ID --clientId $env:MS_STORE_CLIENT_ID --clientSecret $env:MS_STORE_CLIENT_SECRET
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $identity=Get-Content windows/Store/identity.json -Raw | ConvertFrom-Json
+          msstore publish (Resolve-Path dist/store/ClipboardBridge-Store-x64.msix).Path -id $identity.storeId --noCommit
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $metadata=Get-Content ('docs/release-notes/'+$env:STORE_TAG+'.store-listing.json') -Raw | ConvertFrom-Json
+          $draftJson=msstore submission get $identity.storeId
+          if($LASTEXITCODE -ne 0){throw 'Could not read the uploaded Store draft.'}
+          $draft=($draftJson -join "`n") | ConvertFrom-Json
+          $listing=$draft.listings.'en-us'.baseListing
+          if(!$listing){throw 'The existing English Store listing is missing.'}
+          $listing.description=$metadata.description
+          $listing.releaseNotes=$metadata.releaseNotes
+          $result=msstore submission update $identity.storeId ($draft | ConvertTo-Json -Depth 100 -Compress)
+          if($LASTEXITCODE -ne 0){throw 'Store descriptions were not saved; submission stopped.'}
+          msstore submission publish $identity.storeId
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          'Submitted to Microsoft Store. Certification and public availability remain separate.' >> $env:GITHUB_STEP_SUMMARY

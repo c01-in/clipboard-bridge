@@ -4,14 +4,14 @@
 
 # Clipboard Bridge · 剪贴板同步
 
-> **0.2.2 预览版：多文件互传，Windows 微软商店版已上线。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘和系统“共享 → 剪贴板同步”。两端显示进度，剪贴板模式仍限文字或单张图片。详见[版本说明](docs/release-notes/v0.2.2.md)。
+> **0.2.3 预览版：多文件互传，Windows 微软商店版已上线。** Android 通过系统选择器或分享菜单发送多张图片、视频及文件；Windows 可设置接收文件夹，也支持托盘和系统“共享 → 剪贴板同步”。两端显示进度，剪贴板模式仍限文字或单张图片。详见[版本说明](docs/release-notes/v0.2.3.md)。
 
 **Windows 自动发送，Android 点击发送。**
 
 文字、单张图片进剪贴板；多张图片、视频和文档保存为文件。免费、开源。
 
 [![构建](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/c01-in/clipboard-bridge/actions/workflows/ci.yml)
-[![预览版 0.2.2](https://img.shields.io/badge/preview-0.2.2-8B5CF6?style=flat-square)](docs/release-notes/v0.2.2.md)
+[![预览版 0.2.3](https://img.shields.io/badge/preview-0.2.3-8B5CF6?style=flat-square)](docs/release-notes/v0.2.3.md)
 [![MIT](https://img.shields.io/badge/app_license-MIT-14B8A6?style=flat-square)](LICENSE)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [下载安装](#下载安装) · [快速上手](#安装配对开始复制) · [开发文档](#开发与贡献)
@@ -38,31 +38,31 @@
 <a href="https://play.google.com/store/apps/details?id=com.colin.clipbridge"><img src="docs/assets/google-play-badge-en.png" alt="Get it on Google Play" height="66" align="middle"></a>
 <a href="https://apps.microsoft.com/detail/9PJT9PTSMCJQ"><img src="docs/assets/microsoft-store-badge-en.svg" alt="Download from the Microsoft Store" height="44" align="middle"></a>
 
-[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge.apk)
+[![下载 Android 版](https://img.shields.io/badge/Download_for_Android-APK-14B8A6?style=for-the-badge&logo=android&logoColor=white)](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.3/ClipboardBridge.apk)
 
 **安装两端，确认配对，开始复制。**
 
-[0.2.2 安装包、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.2)
+[0.2.3 安装包、库源码与 SHA-256 校验值](https://github.com/c01-in/clipboard-bridge/releases/tag/v0.2.3)
 
 </div>
 
-**当前版本：0.2.2 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
+**当前版本：0.2.3 预览版。** 普通用户无需 SDK、自行 build 或开启手机调试。微软商店版需要 Windows 11 或更新版本、x64；Android 需要 Android 8.0 或更新版本及 Google Play 服务。Google Play 更新需等待 Google 审核。
 
 | Windows 下载 | 安装方式 |
 | --- | --- |
-| [完整安装包 — MSIX，x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge-Windows-x64.msix) | 完整 0.2.2 商店版，保留微软签名，包含一份共用的 .NET 运行环境。安装时无需再下载程序或运行环境。 |
-| [在线安装器 — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.2/ClipboardBridge-Windows-Store-Setup.exe) | 微软签名的小安装器，联网下载当前[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)版本，需要可用的商店组件。 |
+| [完整安装包 — MSIX，x64](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.3/ClipboardBridge-Windows-x64.msix) | 完整 0.2.3 商店版，保留微软签名，包含一份共用的 .NET 运行环境。安装时无需再下载程序或运行环境。 |
+| [在线安装器 — EXE](https://github.com/c01-in/clipboard-bridge/releases/download/v0.2.3/ClipboardBridge-Windows-Store-Setup.exe) | 微软签名的小安装器，联网下载当前[微软商店](https://apps.microsoft.com/detail/9PJT9PTSMCJQ)版本，需要可用的商店组件。 |
 
 两者使用同一商店身份，均无需开发者模式或导入证书。发布包由 GitHub Actions 构建；完整 MSIX 会在对应版本通过微软认证、核对官方校验值后上传 Release。在此之前，在线安装器下载商店当前已发布的版本。旧版独立 EXE 仍未签名，新下载入口不使用它，见[代码签名政策](CODE_SIGNING_POLICY.md)。
 
 ## 剪贴板快速复制，文件直接保存
 
-以下为 0.2.2 功能。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
+以下为 0.2.3 功能。Android 空闲时无需常驻；文件传输期间会临时运行前台任务并显示进度通知，结束后停止。
 
 | | 你可以做什么 |
 | :--- | :--- |
 | **🖥️ Windows 复制即发送** | 自动发送文字或单张图片；也可使用 `Ctrl+Alt+V` 或托盘菜单手动发送。 |
-| **📱 通过 App 分享** | 在其他 App 的分享菜单选择“发送到电脑”：单张图片进入电脑剪贴板，纯文字需再点击发送；也可在前台 App 内发送剪贴板。 |
+| **📱 通过 App 分享** | 在其他 App 的分享菜单选择“复制到电脑”：单张图片进入电脑剪贴板；纯文字需再点击发送；也可在前台 App 内发送剪贴板。 |
 | **📁 多文件双向互传** | 手机调用系统选择器或分享菜单；电脑支持托盘选择、系统共享面板和桌面版“发送到”菜单。支持图片、视频、文档及其他文件，暂不支持文件夹。 |
 | **📂 自选保存路径** | Windows 默认保存到下载文件夹，在“设置 → 接收文件保存到 → 更改文件夹”修改；Android 10+ 默认保存到 Downloads/Clipboard Bridge，也可选定文件夹。 |
 | **📊 进度与保存回执** | 接收方实际保存并确认后才成功；Windows 发送成功窗口三秒后关闭，错误和取消仍保留提示。 |
@@ -79,7 +79,7 @@
 
 1. **安装两端。** 从开始菜单打开 Windows 设置，再打开手机 App。连接同一 Wi-Fi，按手机内的引导允许通知。
 2. **确认设备。** 手机选择自动发现的电脑，比较两端显示的六位确认码，并在两端确认。确认码不同就不要批准。
-3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可复制后打开 App 发送，或在系统分享菜单选择“发送到电脑”；0.2.2 分享纯文字还需点击发送。只有 Windows 实际写入并返回确认，手机才显示成功。
+3. **试一次复制。** Windows 复制文字或单张图片，在 Android 粘贴。反向可复制后打开 App 发送，或在系统分享菜单选择“发送到电脑”；0.2.3 分享纯文字还需点击发送。只有 Windows 实际写入并返回确认，手机才显示成功。
 
 还没安装电脑端？Android 的**获取 Windows 版**入口可复制或分享 [GitHub Releases 页面](https://github.com/c01-in/clipboard-bridge/releases)，在电脑上打开后自行选择安装包。
 
@@ -126,7 +126,7 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 <details>
 <summary><strong>升级、隐私与许可证</strong></summary>
 
-当前 Android APK 为 0.2.2；Windows 商店更新需等待微软认证。文件功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。更新两端后打开手机 App 一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
+当前 Android APK 为 0.2.3；Windows 商店更新需等待微软认证。文件功能要求两端匹配。Android 内部升级编号持续递增并沿用原签名。更新两端后打开手机 App 一次。旧 Firebase 配置保存在 `configuration.pre-webpush.dpapi` 加密备份中，不再用于推送。
 
 微软商店版使用独立的每用户加密配置。切换渠道前保留备份并重新配对，不要同时运行两个占用相同端口的 Windows 后台。商店版无需管理员系统服务或另装 .NET；Windows 组件共用随包附带的一份运行环境。
 
@@ -157,9 +157,9 @@ English · 简体中文 · 繁體中文 · Español · Português · Français �
 | [贡献指南](CONTRIBUTING.md) | [安全](SECURITY.md) |
 | [Google Play 发布评估](docs/google-play.md) | [隐私政策](PRIVACY.md) |
 | [文件互传](docs/file-transfers.md) | [Windows 系统共享](docs/windows-sharing.md) |
-| [微软商店](docs/microsoft-store.md) | [0.2.2 版本说明](docs/release-notes/v0.2.2.md) |
+| [微软商店](docs/microsoft-store.md) | [0.2.3 版本说明](docs/release-notes/v0.2.3.md) |
 
-GitHub Actions 自动构建和检查两端。微软商店 API 已配置，首次上架完成前自动提交更新仍关闭。独立签名 EXE 的发布另需 SignPath 批准和凭据，目前未配置。CI、GitHub Release 或上传成功都不等于商店审核通过，详见[发布渠道](docs/releases.md)。
+维护者只需在 **[Actions → Publish → Run workflow](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)** 点一次。GitHub Actions 在云端测试、构建一次，发布 GitHub 安装包，并自动向两个商店提交更新及描述。微软签名的完整 MSIX 在认证后自动补到同一版本。商店审核另需等待，详见[发布说明](docs/releases.md)。
 
 ---
 

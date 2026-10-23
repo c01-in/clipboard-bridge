@@ -1,11 +1,6 @@
 name: Build Android local test APKs
 on:
   workflow_dispatch:
-    inputs:
-      run_instrumentation:
-        description: Run share routing and received-file notification checks on a cloud emulator
-        type: boolean
-        default: false
 permissions:
   contents: read
 jobs:
@@ -35,55 +30,6 @@ jobs:
           cd android
           ./gradlew --no-daemon assembleRelease assembleDebug assembleDebugAndroidTest --console=plain --max-workers=2
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/release/app-release.apk
-      - name: Verify Android actions on a cloud emulator
-        if: inputs.run_instrumentation
-        shell: bash
-        run: |
-          set -euo pipefail
-          sdkmanager 'emulator' 'platforms;android-35' 'system-images;android-35;aosp_atd;x86_64'
-          export ANDROID_USER_HOME="$RUNNER_TEMP/clipbridge-android"
-          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
-          mkdir -p "$ANDROID_AVD_HOME"
-          printf 'no\n' | avdmanager create avd --force --name clipbridge-check --path "$ANDROID_AVD_HOME/clipbridge-check.avd" --package 'system-images;android-35;aosp_atd;x86_64'
-          test -f "$ANDROID_AVD_HOME/clipbridge-check.ini"
-          sudo chmod 666 /dev/kvm
-          "$ANDROID_HOME/emulator/emulator" -avd clipbridge-check -port 5580 -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 1536 -cores 2 > "$RUNNER_TEMP/emulator.log" 2>&1 &
-          emulator_pid=$!
-          cleanup() {
-            result=$?
-            if (( result != 0 )); then tail -n 100 "$RUNNER_TEMP/emulator.log"; fi
-            kill "$emulator_pid" 2>/dev/null || true
-            exit "$result"
-          }
-          trap cleanup EXIT
-          for attempt in $(seq 1 90); do
-            kill -0 "$emulator_pid"
-            if [[ "$(adb -s emulator-5580 get-state 2>/dev/null || true)" == device ]]; then break; fi
-            sleep 2
-          done
-          test "$(adb -s emulator-5580 get-state)" = device
-          for attempt in $(seq 1 90); do
-            if [[ "$(adb -s emulator-5580 shell getprop sys.boot_completed | tr -d '\r')" == 1 ]]; then break; fi
-            sleep 2
-          done
-          test "$(adb -s emulator-5580 shell getprop sys.boot_completed | tr -d '\r')" = 1
-          adb -s emulator-5580 shell pm list users | tee "$RUNNER_TEMP/android-users.txt"
-          grep -q 'UserInfo{0:' "$RUNNER_TEMP/android-users.txt"
-          adb -s emulator-5580 install --user 0 -r android/app/build/outputs/apk/debug/app-debug.apk
-          adb -s emulator-5580 install --user 0 -r -t android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-          adb -s emulator-5580 shell am instrument --user 0 -w -r -e class com.colin.clipbridge.FileRoutingTests,com.colin.clipbridge.ReceivedFilesTests,com.colin.clipbridge.NotificationTests com.colin.clipbridge.debug.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/android-instrumentation.log"
-          grep -Eq 'OK \([0-9]+ tests?\)' "$RUNNER_TEMP/android-instrumentation.log"
-          if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|shortMsg=' "$RUNNER_TEMP/android-instrumentation.log"; then exit 1; fi
-      - name: Keep cloud device diagnostics
-        if: always() && inputs.run_instrumentation
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: android-device-diagnostics
-          path: |
-            ${{ runner.temp }}/emulator.log
-            ${{ runner.temp }}/android-instrumentation.log
-          if-no-files-found: ignore
-          retention-days: 3
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-local-test

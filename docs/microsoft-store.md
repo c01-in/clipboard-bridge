@@ -90,16 +90,7 @@ access to this exact product. This must succeed before calling setup complete.
 Microsoft requires the initial app submission, including age ratings, to be
 created in Partner Center. The official CLI update flow requires a live app.
 
-The **Microsoft Store build and deployment** workflow defaults to build-only.
-It produces the full MSIX and tests the per-user broker without publishing.
-The package includes the signed Android companion; validation downloads it from
-the packaged broker and checks its length and SHA-256. Select `verify_api` for a
-read-only API check before the first publication, with `publish` left disabled.
-After authentication and the first Store publication are verified, set
-`MICROSOFT_STORE_UPLOAD_ENABLED=true`. Matching `v0.x.y` tags then trigger Store
-update submission; manual publication also requires a matching existing tag.
-Upload success does not mean certification passed or that the app is live.
-
+Use **[Actions → Publish](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)** for a new version. It builds both apps once, publishes GitHub downloads and submits the already-built packages and descriptions to both stores. Store API secrets and `MICROSOFT_STORE_UPLOAD_ENABLED=true` are configured in this repository. No separate Store build is required. Upload success and Store certification are separate.
 From 0.2.2, each tag also carries
 `docs/release-notes/v0.x.y.store-listing.json` with the English product description
 and release notes. CI uploads the package with `--noCommit`, reads the resulting
@@ -107,8 +98,8 @@ draft, updates only its existing English description/release notes, then commits
 Other listing languages, images, pricing and policy fields are retained.
 Metadata failure leaves the draft uncommitted instead of submitting stale text.
 
-After a successful tag-triggered Store submission, the full-package workflow
-starts automatically. It waits for the matching GitHub release and up to two
+After a successful Publish run, the full-package workflow
+starts automatically. It waits up to two
 hours for the exact certified version in the public Store catalog, then checks
 Microsoft's checksums and attaches the complete MSIX alongside the online EXE.
 An older package is never substituted. If certification takes longer, rerun

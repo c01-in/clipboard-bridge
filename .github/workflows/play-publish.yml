@@ -56,8 +56,6 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Test publishing safeguards
-        run: ./scripts/Test-GooglePlay.ps1
       - name: Verify existing release artifact
         id: artifact
         env:

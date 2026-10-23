@@ -1,47 +1,13 @@
-# Windows signing with SignPath
+# Windows signing and downloads
 
-Status: application/integration preparation; no production signing credentials or completed signing request yet. The hosted service and application-review process are separate: service availability does not guarantee acceptance of a new open-source project.
+Windows downloads use **Microsoft Store signing** for [Clipboard Bridge](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). Users can choose a complete MSIX or Microsoft's small online EXE. Both install the Store edition, with one shared .NET runtime. They require Windows 11 or later, x64. Developer Mode and certificate import are not required.
 
-The **Microsoft Store full MSIX**, version 0.2.1.0, is published. GitHub provides the complete Store-signed MSIX alongside Microsoft's signed online installer for [our Store product](https://apps.microsoft.com/detail/9PJT9PTSMCJQ). The online installer fetches the current Store version; the full MSIX contains the release version and its shared runtime. Earlier standalone GitHub EXEs remain unsigned. Store signing does not activate the proposed SignPath route described below. See [Store status and API workflow](microsoft-store.md).
+The online EXE is downloaded unchanged from Microsoft and checked for a valid, timestamped Microsoft Corporation signature. It installs the currently approved Store version, which can lag behind the GitHub Android APK while certification is pending.
 
-## Onboarding
+The full MSIX is built in GitHub Actions, submitted through the Store API and signed by Microsoft after certification. The automatic full-package workflow retrieves the exact release version from Microsoft's catalog and verifies its checksums before attaching it to GitHub. It never substitutes an older version. Downloaded Store packages are not installed or executed for testing.
 
-Apply through [SignPath Foundation](https://signpath.org/apply). If its embedded form fails to render, contact `info@signpath.io` with the repository, MIT license, existing releases, project purpose and [code signing policy](../CODE_SIGNING_POLICY.md), and ask whether new Foundation applications are being accepted. Do not claim a download history, reputation, MFA status or approval that has not been verified.
+Use **[Actions → Publish](https://github.com/c01-in/clipboard-bridge/actions/workflows/release.yml)** for a new release. It builds once and submits to both stores. Full-package retrieval runs separately so Store certification does not hold the main workflow open. If certification exceeds its waiting window, rerun **Fetch Microsoft Store full package** for the same tag with publication enabled; no rebuild is needed. See [release instructions](releases.md).
 
-Ask SignPath to configure the repository `c01-in/clipboard-bridge`, GitHub-hosted build origin and a manually approved production signing policy. The two proposed artifact configurations are [.signpath/applications.xml](../.signpath/applications.xml) and [.signpath/installer.xml](../.signpath/installer.xml). Provider-side configuration and acceptance are required; committing XML alone does not configure the service.
+The download helper uses XML protocol templates from [StoreLib](https://github.com/StoreDev/StoreLib/tree/3f2a98ffede0bf3f78321c194e884fd0aaf14c29) (MPL-2.0), fetched at a fixed commit in CI. It uses no shared device token, user login or publisher credentials. The app itself does not include StoreLib. Microsoft's legacy CDN can return HTTP file URLs; packages are accepted only after matching metadata checksums, including SHA-256 from the HTTPS catalog. TLS verification remains enabled.
 
-## Repository configuration after approval
-
-| Kind | Name | Value |
-|---|---|---|
-| Actions secret | `SIGNPATH_API_TOKEN` | Submitter token restricted to this project/policy |
-| Actions variable | `SIGNPATH_ORGANIZATION_ID` | Assigned organization UUID |
-| Actions variable | `SIGNPATH_PROJECT_SLUG` | Assigned project slug |
-| Actions variable | `SIGNPATH_SIGNING_POLICY_SLUG` | Approved manual signing policy |
-| Actions variable | `SIGNPATH_APPLICATIONS_CONFIGURATION` | Application-binary/MSIX configuration slug |
-| Actions variable | `SIGNPATH_INSTALLER_CONFIGURATION` | Installer configuration slug |
-| Actions variable | `SIGNPATH_PUBLISHER` | Exact X.509 certificate subject supplied by SignPath |
-
-The MSIX publisher must match that certificate subject exactly; do not guess it from the provider's display name. Private keys stay with SignPath. No PFX or Windows signing private key needs to be stored in GitHub. Keep any necessary local account/credential records outside the repository's tracked files and outside disposable caches.
-
-## Build without publishing
-
-Run **Build, sign and optionally publish installers** in GitHub Actions on `main`, leave `tag` empty, and leave `sign` and `publish` unchecked. This builds both applications, verifies Android signatures, tests a fresh Windows install/uninstall on the runner, and uploads review artifacts. Missing SignPath credentials do not fail this mode. Existing Android signing secrets are still needed to build the normal Android companion included with the Windows installer.
-
-After approval/configuration, repeat with `sign=true`, `publish=false` to exercise real signing without releasing. SignPath can require two approvals: first for the application binaries/MSIX, then for the final installer containing them. Each request may wait up to two hours; its link is available in the action log and final step summary. A signing timeout is a real failure, not permission to publish unsigned files.
-
-Public releases use `WINDOWS_SIGNING_MODE=microsoft-store`: CI downloads the unmodified installer from `get.microsoft.com` for product `9PJT9PTSMCJQ`, verifies a valid, timestamped Microsoft Corporation signature, and publishes it as `ClipboardBridge-Windows-Store-Setup.exe`. The unsigned standalone EXE/ZIP are excluded from release assets. Android APK/AAB signing and build, privacy and installation checks still run. No Developer Mode, certificate import or disabling security software is required. Set `WINDOWS_SIGNING_MODE=signpath` only after the approved provider configuration is ready; failures never downgrade to unsigned publishing.
-
-After Store certification, run **Fetch Microsoft Store full package** with the existing release tag and `publish=true`. This retrieves the complete, unmodified Store-signed MSIX from Microsoft and checks its checksum against the HTTPS Store catalog. Downloaded Store packages are not installed or executed for testing. A matching checksum is required to add the MSIX and its checksum to that same release; existing APK/AAB/online installer bytes and the version tag are preserved. No local build or binary download is involved.
-
-The download helper uses XML protocol templates from [StoreLib](https://github.com/StoreDev/StoreLib/tree/3f2a98ffede0bf3f78321c194e884fd0aaf14c29) (MPL-2.0), fetched at a fixed commit in CI. It uses no shared device token, user login or publisher credentials. The app itself does not include StoreLib. Microsoft's legacy update CDN can return HTTP file URLs; the file is accepted only after matching metadata checksums, including the SHA-256 fetched over HTTPS. The downloaded bytes are never modified. TLS certificate validation is never disabled.
-
-Publishing requires an existing matching `v0.x.y` tag and `publish=true`, or the existing tag-push release trigger. The Google Play job is explicitly disabled during build reviews even if Play upload is enabled for releases. A successful build review alone never publishes an app.
-
-## Current limitations
-
-The unsigned review path can be checked before approval. Trusted signing and returned-certificate validation can only be proven end to end after SignPath accepts the project and supplies production access. The current locally installed Share preview remains usable and is not replaced by this setup work.
-
-Free alternative: Microsoft Store signs MSIX submissions after certification. This needs a Store-compatible package and separate review; it does not sign the existing standalone EXE for GitHub distribution. Certum's open-source code-signing offering requires payment. Sigstore has its own verification trust model and is not a substitute for a Windows-trusted Authenticode publisher.
-
-References: [SignPath GitHub integration](https://docs.signpath.io/trusted-build-systems/github), [Foundation terms](https://signpath.org/terms), [service status](https://docs.signpath.io/status/), [Microsoft signing options](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options), [Certum purchase process](https://support.certum.eu/en/how-to-buy-code-signing/), [Sigstore trust model](https://docs.sigstore.dev/).
+Earlier standalone EXEs are unsigned; Microsoft Store does not sign those installers. SignPath integration was explored but is not part of the active release workflow. It has no production credentials and does not gate publication.
