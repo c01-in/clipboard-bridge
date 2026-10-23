@@ -57,7 +57,8 @@ sealed class TrayContext : ApplicationContext
 {
     readonly NotifyIcon icon;
     readonly ClipboardWindow window;
-    SettingsForm? settings;
+    MainForm? main;
+    readonly ToolStripMenuItem toggle;
     readonly System.Windows.Forms.Timer debounce = new() { Interval = 250 };
     readonly System.Windows.Forms.Timer receiveTimer = new() { Interval = 500 };
     readonly SemaphoreSlim sending = new(1, 1);
@@ -70,36 +71,50 @@ sealed class TrayContext : ApplicationContext
     public TrayContext(bool showSettings = false)
     {
         window = new ClipboardWindow(); window.Changed += () => { if (!paused && receivedClipboardSequence != ClipboardWindow.Sequence) { debounce.Stop(); debounce.Start(); } }; window.ManualSend += async () => await Send(true);
-        window.SettingsRequested += ShowSettings;
+        window.SettingsRequested += () => ShowWindow();
         var menu = new ContextMenuStrip();
-        var toggle = new ToolStripMenuItem(UiText.Get("win_pause")) { CheckOnClick = true };
-        toggle.CheckedChanged += (_, _) => { paused = toggle.Checked; SavePreferences(); icon!.Text = paused ? UiText.Get("win_paused") : UiText.Get("win_automatic"); icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray; };
+        toggle = new ToolStripMenuItem(UiText.Get("win_pause")) { CheckOnClick = true };
+        toggle.CheckedChanged += (_, _) => SetPaused(toggle.Checked);
+        menu.Items.Add(UiText.Get("win_home"), null, (_, _) => ShowWindow());
         menu.Items.Add(toggle);
         var sendNow = new ToolStripMenuItem(UiText.Get("win_send_now")) { ShortcutKeyDisplayString = "Ctrl+Alt+V" };
         sendNow.Click += async (_, _) => await Send(true);
         menu.Items.Add(sendNow);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(UiText.Get("files_choose"), null, (_, _) =>
-        {
-            using var dialog = new OpenFileDialog { Multiselect = true, Title = UiText.Get("files_choose"), CheckFileExists = true };
-            if (dialog.ShowDialog() == DialogResult.OK) new FileSendForm(dialog.FileNames).Show();
-        });
-        menu.Items.Add(UiText.Get("files_open_folder"), null, (_, _) =>
-        {
-            try { Directory.CreateDirectory(FilePreferences.SaveDirectory); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(FilePreferences.SaveDirectory) { UseShellExecute = true }); }
-            catch (Exception e) { Notify(e.Message, true); }
-        });
+        menu.Items.Add(UiText.Get("files_choose"), null, (_, _) => SendFiles());
+        menu.Items.Add(UiText.Get("files_open_folder"), null, (_, _) => OpenFolder());
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(UiText.Get("win_open_settings"), null, (_, _) => ShowSettings());
+        menu.Items.Add(UiText.Get("win_open_settings"), null, (_, _) => ShowWindow(true));
         menu.Items.Add(UiText.Get("win_quit"), null, (_, _) => ExitThread());
         icon = new NotifyIcon { Icon = AppIcons.Tray, Text = UiText.Get("app_name"), Visible = true, ContextMenuStrip = menu };
-        icon.DoubleClick += (_, _) => ShowSettings();
+        icon.DoubleClick += (_, _) => ShowWindow();
         debounce.Tick += async (_, _) => { debounce.Stop(); await Send(false); };
         receiveTimer.Tick += async (_, _) => await Receive(); receiveTimer.Start();
         var pref = Path.Combine(FilePreferences.DirectoryPath, "paused.txt");
         paused = File.Exists(pref) && File.ReadAllText(pref) == "true"; toggle.Checked = paused;
-        if (showSettings) ShowSettings();
+        if (showSettings) ShowWindow();
         if (!window.HotkeyRegistered) Notify(UiText.Get("win_hotkey_busy"), true);
+    }
+    void SetPaused(bool value)
+    {
+        if (paused != value) { paused = value; SavePreferences(); }
+        toggle.Checked = value;
+        icon.Text = paused ? UiText.Get("win_paused") : UiText.Get("win_automatic"); icon.Icon = paused ? AppIcons.Paused : AppIcons.Tray;
+        main?.RefreshPause();
+    }
+    void SendFiles()
+    {
+        using var dialog = new OpenFileDialog { Multiselect = true, Title = UiText.Get("files_choose"), CheckFileExists = true };
+        if (dialog.ShowDialog(main) == DialogResult.OK) new FileSendForm(dialog.FileNames).Show();
+    }
+    void OpenFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(FilePreferences.SaveDirectory);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(FilePreferences.SaveDirectory) { UseShellExecute = true });
+        }
+        catch (Exception e) { Notify(e.Message, true); }
     }
     void SavePreferences()
     {
@@ -202,15 +217,16 @@ sealed class TrayContext : ApplicationContext
         return ("", []);
     }
     void Notify(string text, bool error) { icon.BalloonTipTitle = error ? UiText.Get("win_attention") : UiText.Get("app_name"); icon.BalloonTipText = text.Length > 250 ? text[..250] : text; icon.BalloonTipIcon = error ? ToolTipIcon.Warning : ToolTipIcon.Info; icon.ShowBalloonTip(3500); }
-    void ShowSettings()
+    void ShowWindow(bool showSettings = false)
     {
-        if (settings is null || settings.IsDisposed)
+        if (main is null || main.IsDisposed)
         {
-            settings = new SettingsForm();
-            settings.FormClosed += (_, _) => ExitThread();
+            main = new MainForm(() => paused, SetPaused, () => Send(true), SendFiles, OpenFolder, ExitThread);
+            main.FormClosed += (_, _) => ExitThread();
         }
-        if (settings.WindowState == FormWindowState.Minimized) settings.WindowState = FormWindowState.Normal;
-        settings.Show(); settings.Activate();
+        main.ShowPage(showSettings);
+        if (main.WindowState == FormWindowState.Minimized) main.WindowState = FormWindowState.Normal;
+        main.Show(); main.Activate();
     }
     protected override void ExitThreadCore() { receiveTimer.Dispose(); icon.Visible = false; icon.Dispose(); debounce.Dispose(); window.Dispose(); base.ExitThreadCore(); }
 }

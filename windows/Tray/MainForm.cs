@@ -3,8 +3,14 @@ using System.Text.Json;
 using ClipboardBridge;
 using QRCoder;
 
-sealed class SettingsForm : Form
+sealed class MainForm : Form
 {
+    readonly TabControl pages = new() { Dock = DockStyle.Fill };
+    readonly TabPage home = new();
+    readonly TabPage settings = new();
+    readonly CheckBox pause = new() { AutoSize = true };
+    readonly Func<bool> isPaused;
+    bool updatingPause;
     readonly Label state = new() { AutoSize = true };
     readonly Label searchState = new() { AutoSize = true };
     readonly Label pairingHelp;
@@ -20,19 +26,44 @@ sealed class SettingsForm : Form
     {
         public override string ToString() => Peer.Name + "  ·  " + Peer.Code + "  ·  " + UiText.Get(Peer.Completed ? "win_pair_done" : Peer.ComputerApproved ? "win_wait_phone" : "win_confirm_here");
     }
-    public SettingsForm()
+    public MainForm(Func<bool> isPaused, Action<bool> setPaused, Func<Task> sendClipboard, Action sendFiles, Action openFolder, Action quit)
     {
-        Text = UiText.Get("win_settings_title"); Icon = AppIcons.Application; Font = new Font("Segoe UI", 10);
+        this.isPaused = isPaused;
+        Text = UiText.Get("app_name"); Icon = AppIcons.Application; Font = new Font("Segoe UI", 10);
         ClientSize = new Size(700, 600); MinimumSize = new Size(590, 500); StartPosition = FormStartPosition.CenterScreen;
-        var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(24) };
-        var content = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, GrowStyle = TableLayoutPanelGrowStyle.AddRows };
-        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));scroll.Controls.Add(content);Controls.Add(scroll);
+        home.Text = UiText.Get("win_home"); settings.Text = UiText.Get("win_settings");
+        pages.TabPages.AddRange([home, settings]); Controls.Add(pages);
+        TableLayoutPanel Page(TabPage page)
+        {
+            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(20) };
+            var body = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, GrowStyle = TableLayoutPanelGrowStyle.AddRows };
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); scroll.Controls.Add(body); page.Controls.Add(scroll);
+            scroll.SizeChanged += (_, _) =>
+            {
+                int width = Math.Max(250, scroll.ClientSize.Width - scroll.Padding.Horizontal - 22); body.Width = width;
+                foreach (var label in wrapping.Where(label => label.Parent == body)) label.MaximumSize = new Size(width, 0);
+            };
+            return body;
+        }
+        var main = Page(home);
+        state.Text = UiText.Get("win_connecting"); state.Margin = new Padding(0, 0, 0, 18); wrapping.Add(state); main.Controls.Add(state);
+        pause.Text = UiText.Get("win_pause"); pause.Margin = new Padding(0, 0, 0, 18); main.Controls.Add(pause);
+        pause.CheckedChanged += (_, _) => { if (!updatingPause) setPaused(pause.Checked); };
+        var primary = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0, 0, 0, 10) };
+        var send = Button("win_send_now", sendClipboard); primary.Controls.Add(send);
+        primary.Controls.Add(new Label { Text = "Ctrl+Alt+V", AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 9, 0, 0) });
+        main.Controls.Add(primary);
+        main.Controls.Add(Button("files_choose", () => { sendFiles(); return Task.CompletedTask; }));
+        main.Controls.Add(Button("files_open_folder", () => { openFolder(); return Task.CompletedTask; }));
+        main.Controls.Add(fileProgressText); wrapping.Add(fileProgressText); main.Controls.Add(fileProgress);
+        main.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
+        main.Controls.Add(Button("win_quit", () => { quit(); return Task.CompletedTask; }));
+        var content = Page(settings);
         Label Label(string key, float size = 10)
         {
             var label = new Label { Text = UiText.Get(key), AutoSize = true, Margin = new Padding(0, 0, 0, 12), Font = new Font(Font.FontFamily, size, size > 15 ? FontStyle.Bold : FontStyle.Regular) };
             wrapping.Add(label); content.Controls.Add(label); return label;
         }
-        state.Text = UiText.Get("win_connecting");state.Margin = new Padding(0, 0, 0, 20);wrapping.Add(state);content.Controls.Add(state);
         Label("files_folder_heading", 16);
         var folder = new TextBox { ReadOnly = true, Dock = DockStyle.Top, Text = FilePreferences.SaveDirectory };
         content.Controls.Add(folder);
@@ -42,29 +73,34 @@ sealed class SettingsForm : Form
             if (picker.ShowDialog(this) == DialogResult.OK) { FilePreferences.SaveDirectory = picker.SelectedPath; folder.Text = FilePreferences.SaveDirectory; }
             return Task.CompletedTask;
         }));
-        content.Controls.Add(fileProgressText); wrapping.Add(fileProgressText); content.Controls.Add(fileProgress);
         Label("win_pair_heading", 16);pairingHelp = Label("win_pair_help");pairingHelp.Visible = false;
         content.Controls.Add(phones);searchState.Margin = new Padding(0, 10, 0, 10);wrapping.Add(searchState);content.Controls.Add(searchState);
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0, 0, 0, 14) };
         actions.Controls.Add(Button("win_search_phones", async () => { await Ipc.Call(new Command("pairing-open")); await RefreshStatus(); }));
         approve.Text = UiText.Get("confirm_pair");approve.Click += async (_, _) => { try { await Approve(); } catch (Exception e) { MessageBox.Show(UiText.Translate(e.Message), UiText.Get("app_name")); } };actions.Controls.Add(approve);content.Controls.Add(actions);
         phones.SelectedIndexChanged += (_, _) => approve.Enabled = phones.SelectedItem is PhoneRow row && !row.Peer.ComputerApproved && !row.Peer.Completed;
-        content.Controls.Add(Button("win_phone_update", () => { Download(); return Task.CompletedTask; }));
         var advanced = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Top, ColumnCount = 1, Visible = false, Margin = new Padding(0, 14, 0, 0) };
         content.Controls.Add(Button("win_advanced", () => { advanced.Visible = !advanced.Visible; return Task.CompletedTask; }));
         var addressLabel = new Label { Text = UiText.Get("win_addresses"), AutoSize = true };wrapping.Add(addressLabel);advanced.Controls.Add(addressLabel);advanced.Controls.Add(addresses);
         advanced.Controls.Add(Button("win_save_addresses", () => Action(new Command("endpoints", Value: addresses.Text))));content.Controls.Add(advanced);
         var version = new Label
         {
-            Text = UiText.Get("about_version", typeof(SettingsForm).Assembly.GetName().Version!.ToString(3)),
+            Text = UiText.Get("about_version", typeof(MainForm).Assembly.GetName().Version!.ToString(3)),
             AutoSize = true, Dock = DockStyle.Bottom, ForeColor = SystemColors.GrayText,
             Padding = new Padding(24, 0, 24, 12)
         };
         Controls.Add(version);
-        scroll.SizeChanged += (_, _) => { int width = Math.Max(250, scroll.ClientSize.Width - scroll.Padding.Horizontal - 22);content.Width = width; foreach (var label in wrapping) label.MaximumSize = new Size(width, 0); };
-        Shown += async (_, _) => { try { await Ipc.Call(new Command("pairing-open")); } catch (Exception e) { state.Text = UiText.Get("win_status_error", UiText.Translate(e.Message)); } await RefreshStatus(); };
+        Shown += async (_, _) => await RefreshStatus();
+        pages.SelectedIndexChanged += async (_, _) =>
+        {
+            if (pages.SelectedTab == settings)
+                try { await Ipc.Call(new Command("pairing-open")); } catch (Exception e) { searchState.Text = UiText.Translate(e.Message); }
+            await RefreshStatus();
+        };
         timer.Tick += async (_, _) => await RefreshStatus();timer.Start();FormClosed += (_, _) => timer.Dispose();
     }
+    public void ShowPage(bool showSettings) { pages.SelectedTab = showSettings ? settings : home; RefreshPause(); }
+    public void RefreshPause() { updatingPause = true; pause.Checked = isPaused(); updatingPause = false; }
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
@@ -87,6 +123,7 @@ sealed class SettingsForm : Form
         if (refreshing || IsDisposed) return; refreshing = true;
         try
         {
+            RefreshPause();
             var reply = await Ipc.Call(new Command("status"));if (IsDisposed) return;
             using var data = JsonDocument.Parse(reply.Value ?? "{}");var root = data.RootElement;
             string? device = root.GetProperty("device").GetString();
@@ -103,6 +140,7 @@ sealed class SettingsForm : Form
                 if (progress.Total > 0) fileProgress.Value = (int)Math.Clamp((double)progress.Bytes / progress.Total * 1000, 0, 1000);
                 fileProgressText.Text = progress.Status == "saving" ? UiText.Get("files_saving_pc") : UiText.Get("files_progress", (progress.Bytes / (1024d * 1024)).ToString("0.0") + " MiB", progress.Total < 0 ? "?" : (progress.Total / (1024d * 1024)).ToString("0.0") + " MiB");
             }
+            if (pages.SelectedTab != settings) return;
             var response = await Ipc.Call(new Command("pairing-status"));if (IsDisposed) return;
             if (!response.Ok || response.Value is null) { searchState.Text = response.Message; return; }
             var pairing = Bridge.Decode<PairState>(Encoding.UTF8.GetBytes(response.Value));

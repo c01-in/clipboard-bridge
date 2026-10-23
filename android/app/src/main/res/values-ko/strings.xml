@@ -64,7 +64,8 @@
     <string name="error_http">컴퓨터가 HTTP %1$s를 반환했습니다.</string>
     <string name="error_file_request">컴퓨터가 파일 요청을 거부했습니다(HTTP %1$s). Windows 앱 업데이트, 동기화 활성화 및 페어링 상태를 확인하세요.</string>
     <string name="error_connect">컴퓨터에 연결할 수 없습니다. Wi-Fi, Tailscale 및 방화벽을 확인하세요: %1$s</string>
-    <string name="win_settings_title">클립보드 동기화 · 설정</string>
+    <string name="win_home">홈</string>
+    <string name="win_settings">설정</string>
     <string name="win_heading">클립보드 공유</string>
     <string name="win_description">Windows에서는 자동 전송, 휴대폰에서는 전송을 누르세요.</string>
     <string name="win_connecting">백그라운드 서비스 연결 중…</string>

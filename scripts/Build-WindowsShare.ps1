@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$OutputDirectory)
+param([Parameter(Mandatory)][string]$OutputDirectory,[ValidateRange(1,65535)][int]$IdentityRevision=1)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskShare=Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) 'windows\share'
@@ -23,25 +23,9 @@ if($env:CLIPBRIDGE_WINDOWS_SHARE_CERT_THUMBPRINT){
     $taskPublisher=$taskCertificate.Subject
 }
 $taskPublisherXml=[Security.SecurityElement]::Escape($taskPublisher)
-$taskVersion=([xml](Get-Content (Join-Path $taskRoot 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version+'.1'
+$taskVersion=([xml](Get-Content (Join-Path $taskRoot 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version+'.'+$IdentityRevision
 $taskStage=Join-Path ([IO.Path]::GetTempPath()) ('ClipboardBridge-share-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path (Join-Path $taskStage 'share\Assets') -Force | Out-Null
-Add-Type -AssemblyName System.Drawing
-$taskIcon=[Drawing.Icon]::new((Join-Path $taskRoot 'windows\Tray\Assets\ClipboardBridge.ico'),256,256)
-try{
-    $taskSource=$taskIcon.ToBitmap()
-    try{
-        foreach($taskSize in @(44,150,50)){
-            $taskBitmap=[Drawing.Bitmap]::new($taskSize,$taskSize)
-            $taskGraphics=[Drawing.Graphics]::FromImage($taskBitmap)
-            try{
-                $taskGraphics.InterpolationMode=[Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-                $taskGraphics.DrawImage($taskSource,0,0,$taskSize,$taskSize)
-                $taskBitmap.Save((Join-Path $taskStage "share\Assets\Logo$taskSize.png"),[Drawing.Imaging.ImageFormat]::Png)
-            }finally{$taskGraphics.Dispose();$taskBitmap.Dispose()}
-        }
-    }finally{$taskSource.Dispose()}
-}finally{$taskIcon.Dispose()}
 $taskManifest=@"
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -61,13 +45,15 @@ $taskManifest=@"
 </Package>
 "@
 [IO.File]::WriteAllText((Join-Path $taskStage 'AppxManifest.xml'),$taskManifest,[Text.UTF8Encoding]::new($false))
-& $taskMakeAppx pack /d $taskStage /p (Join-Path $taskShare 'ClipboardBridge.Share.msix') /nv /o
-if($LASTEXITCODE -ne 0){throw 'Share identity package build failed.'}
+& (Join-Path $PSScriptRoot 'New-WindowsVisualAssets.ps1') -PackageRoot $taskStage -AssetPath 'share\Assets'
+& $taskMakeAppx pack /d $taskStage /p (Join-Path $taskShare 'ClipboardBridge.Share.msix') /nv /o *> (Join-Path $taskShare 'makeappx-output.txt')
+if($LASTEXITCODE -ne 0){Get-Content (Join-Path $taskShare 'makeappx-output.txt') -Tail 15;throw 'Share identity package build failed.'}
 if($taskCertificate){
     & (Join-Path $taskTools 'signtool.exe') sign /sha1 $taskCertificate.Thumbprint /s My /fd SHA256 (Join-Path $taskShare 'ClipboardBridge.Share.msix')
     if($LASTEXITCODE -ne 0){throw 'Windows Share identity signing failed.'}
 }
 Copy-Item -LiteralPath (Join-Path $taskStage 'AppxManifest.xml') -Destination $taskShare -Force
+Get-ChildItem -LiteralPath $taskStage -Filter '*.pri' -File | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $taskShare -Force}
 Get-ChildItem -LiteralPath (Join-Path $taskStage 'share\Assets') -File | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $taskShare 'Assets') -Force}
 # Keep a small, reproducible manifest/assets staging directory if cleanup is unavailable.
 Write-Host "Windows Share identity preview ready: $taskShare"

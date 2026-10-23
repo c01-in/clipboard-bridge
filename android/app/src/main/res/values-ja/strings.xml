@@ -64,7 +64,8 @@
     <string name="error_http">パソコンから HTTP %1$s が返されました。</string>
     <string name="error_file_request">パソコンがファイル要求を拒否しました（HTTP %1$s）。Windows アプリの更新、同期の有効化、ペアリングを確認してください。</string>
     <string name="error_connect">接続できません。Wi-Fi、Tailscale、ファイアウォールを確認してください：%1$s</string>
-    <string name="win_settings_title">クリップボード同期・設定</string>
+    <string name="win_home">ホーム</string>
+    <string name="win_settings">設定</string>
     <string name="win_heading">クリップボードを共有</string>
     <string name="win_description">Windows からは自動送信。スマートフォンからは送信をタップ。</string>
     <string name="win_connecting">バックグラウンドサービスに接続中…</string>

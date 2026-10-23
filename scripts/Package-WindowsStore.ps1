@@ -57,6 +57,7 @@ $taskManifest=@"
 </Package>
 "@
 [IO.File]::WriteAllText((Join-Path $taskStage 'AppxManifest.xml'),$taskManifest,[Text.UTF8Encoding]::new($false))
+& (Join-Path $PSScriptRoot 'New-WindowsVisualAssets.ps1') -PackageRoot $taskStage
 $taskNuget=if($env:NUGET_PACKAGES){$env:NUGET_PACKAGES}else{Join-Path $env:USERPROFILE '.nuget/packages'}
 $taskMakeAppx=Join-Path $taskNuget 'microsoft.windows.sdk.buildtools/10.0.26100.9169/bin/10.0.26100.0/x64/makeappx.exe'
 $taskPackage=Join-Path $taskOutput $(if($LocalReview){'ClipboardBridge-StoreReview-x64.msix'}else{'ClipboardBridge-Store-x64.msix'})

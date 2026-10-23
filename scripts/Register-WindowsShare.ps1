@@ -10,6 +10,8 @@ if($Unregister){
 if([Environment]::OSVersion.Version.Build -lt 22000){throw 'Windows Share preview requires Windows 11.'}
 $taskPackage=Join-Path $InstallRoot 'share\ClipboardBridge.Share.msix'
 if(!(Test-Path -LiteralPath $taskPackage)){throw 'Windows Share identity package is missing.'}
+# Sparse-package resource lookups use the external content root as well as its images.
+Get-ChildItem -LiteralPath (Join-Path $InstallRoot 'share') -Filter '*.pri' -File | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $InstallRoot -Force}
 $taskManifest=[xml](Get-Content -LiteralPath (Join-Path $InstallRoot 'share\AppxManifest.xml') -Raw)
 $taskArguments=@{Path=$taskPackage;ExternalLocation=[IO.Path]::GetFullPath($InstallRoot);ForceTargetApplicationShutdown=$true;ForceUpdateFromAnyVersion=$true}
 if($taskManifest.Package.Identity.Publisher -match 'OID\.2\.25\.311729368913984317654407730594956997722=1'){$taskArguments.AllowUnsigned=$true}

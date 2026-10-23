@@ -64,7 +64,8 @@
     <string name="error_http">O computador retornou HTTP %1$s.</string>
     <string name="error_file_request">O computador rejeitou a solicitação do arquivo (HTTP %1$s). Confirme que o Windows está atualizado, a sincronização está ativa e o pareamento é válido.</string>
     <string name="error_connect">Não foi possível conectar. Verifique Wi-Fi, Tailscale e firewall: %1$s</string>
-    <string name="win_settings_title">Área de transferência · Configurações</string>
+    <string name="win_home">Início</string>
+    <string name="win_settings">Configurações</string>
     <string name="win_heading">Compartilhe a área de transferência</string>
     <string name="win_description">O Windows envia automaticamente. No celular, toque em Enviar.</string>
     <string name="win_connecting">Conectando ao serviço…</string>

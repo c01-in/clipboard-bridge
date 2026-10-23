@@ -64,7 +64,8 @@
     <string name="error_http">El equipo devolvió HTTP %1$s.</string>
     <string name="error_file_request">El equipo rechazó la solicitud del archivo (HTTP %1$s). Comprueba que Windows esté actualizado, la sincronización activada y el emparejamiento válido.</string>
     <string name="error_connect">No se puede conectar. Comprueba Wi-Fi, Tailscale y cortafuegos: %1$s</string>
-    <string name="win_settings_title">Portapapeles · Configuración</string>
+    <string name="win_home">Inicio</string>
+    <string name="win_settings">Ajustes</string>
     <string name="win_heading">Comparte tu portapapeles</string>
     <string name="win_description">Windows envía automáticamente. En el teléfono, toca Enviar.</string>
     <string name="win_connecting">Conectando al servicio…</string>
