@@ -60,6 +60,19 @@ The desktop edition and Store edition currently have separate encrypted state.
 Keep a backup and re-pair when changing distribution channels. Do not silently
 stop or remove a working desktop service to make a Store test pass.
 
+### Generic icon in Explorer's quick Share submenu
+
+Version 0.2.3 includes the image variants and indexed resources for the Share
+target. An Explorer process that was already running before these resources were
+updated can retain a generic document icon, even after the app is reinstalled.
+On 23 October 2026, the correct app icon was verified in the actual quick Share
+submenu for both installed distribution channels after refreshing Explorer.
+The executable's icon and the full Share panel alone were not used as proof.
+
+If this occurs after updating, finish any file operations and restart Windows
+Explorer from Task Manager, or sign out and back in. App pairing is unaffected.
+The installer does not forcibly restart Explorer or close the user's windows.
+
 ## API and Actions
 
 The developer account must be associated with an owned Microsoft Entra workforce
