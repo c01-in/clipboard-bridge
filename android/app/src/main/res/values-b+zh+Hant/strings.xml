@@ -4,7 +4,7 @@
     <string name="send_to_computer">傳送到電腦</string>
     <string name="status_unpaired">尚未配對</string>
     <string name="status_paired">已配對，等待 Windows 剪貼簿。</string>
-    <string name="send_clipboard">複製到電腦剪貼簿</string>
+    <string name="send_clipboard">複製到電腦</string>
     <string name="send_help">支援文字與單張圖片；僅在點選傳送時讀取手機剪貼簿。</string>
     <string name="connection_heading">連接電腦</string>
     <string name="discovery_help">兩邊開啟剪貼簿同步，並連接同一 Wi-Fi。不必輸入位址或配對連結。</string>

@@ -4,7 +4,7 @@
     <string name="send_to_computer">Enviar para o computador</string>
     <string name="status_unpaired">Ainda não pareado</string>
     <string name="status_paired">Pareado. Pronto para receber do Windows.</string>
-    <string name="send_clipboard">Copiar para a área de transferência do computador</string>
+    <string name="send_clipboard">Copiar para PC</string>
     <string name="send_help">Texto ou uma imagem. A leitura ocorre apenas ao tocar em Enviar.</string>
     <string name="connection_heading">Conectar a um computador</string>
     <string name="discovery_help">Abra o app nos dois dispositivos e use a mesma rede Wi-Fi. Não é preciso digitar endereços ou links.</string>

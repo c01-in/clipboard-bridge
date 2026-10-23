@@ -4,7 +4,7 @@
     <string name="send_to_computer">パソコンに送信</string>
     <string name="status_unpaired">未ペアリング</string>
     <string name="status_paired">ペアリング済み。Windows から受信できます。</string>
-    <string name="send_clipboard">パソコンのクリップボードにコピー</string>
+    <string name="send_clipboard">PCにコピー</string>
     <string name="send_help">テキストまたは画像1枚。送信をタップしたときだけ読み取ります。</string>
     <string name="connection_heading">パソコンに接続</string>
     <string name="discovery_help">両方でアプリを開き、同じ Wi-Fi に接続してください。アドレスやリンクの入力は不要です。</string>

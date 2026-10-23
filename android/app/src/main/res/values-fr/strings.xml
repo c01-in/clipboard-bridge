@@ -4,7 +4,7 @@
     <string name="send_to_computer">Envoyer à l’ordinateur</string>
     <string name="status_unpaired">Pas encore associé</string>
     <string name="status_paired">Associé. Prêt à recevoir depuis Windows.</string>
-    <string name="send_clipboard">Copier dans le presse-papiers de l’ordinateur</string>
+    <string name="send_clipboard">Copier sur PC</string>
     <string name="send_help">Texte ou une image. Lecture uniquement lorsque vous touchez Envoyer.</string>
     <string name="connection_heading">Connecter un ordinateur</string>
     <string name="discovery_help">Ouvrez l’application sur les deux appareils et utilisez le même Wi-Fi. Aucune adresse ni aucun lien à saisir.</string>

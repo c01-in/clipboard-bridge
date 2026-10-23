@@ -4,7 +4,7 @@
     <string name="send_to_computer">Send to computer</string>
     <string name="status_unpaired">Not paired yet</string>
     <string name="status_paired">Paired. Ready to receive from Windows.</string>
-    <string name="send_clipboard">Copy to computer clipboard</string>
+    <string name="send_clipboard">Copy to PC</string>
     <string name="send_help">Text or one image. Your clipboard is read only when you tap Send.</string>
     <string name="connection_heading">Connect to a computer</string>
     <string name="discovery_help">Open Clipboard Bridge on both devices and connect to the same Wi-Fi. No addresses or pairing links to enter.</string>

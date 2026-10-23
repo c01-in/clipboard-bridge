@@ -4,7 +4,7 @@
     <string name="send_to_computer">An Computer senden</string>
     <string name="status_unpaired">Noch nicht gekoppelt</string>
     <string name="status_paired">Gekoppelt. Bereit zum Empfangen von Windows.</string>
-    <string name="send_clipboard">In die Zwischenablage des Computers kopieren</string>
+    <string name="send_clipboard">Auf PC kopieren</string>
     <string name="send_help">Text oder ein Bild. Der Inhalt wird erst beim Tippen auf Senden gelesen.</string>
     <string name="connection_heading">Mit einem Computer verbinden</string>
     <string name="discovery_help">App auf beiden Geräten öffnen und mit demselben WLAN verbinden. Keine Adressen oder Links eingeben.</string>
