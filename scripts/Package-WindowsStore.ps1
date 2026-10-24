@@ -34,6 +34,24 @@ foreach($taskLicense in @('LICENSE','THIRD_PARTY_NOTICES.md','PRIVACY.md')){Copy
 $taskName=[Security.SecurityElement]::Escape($taskIdentity.name)
 $taskPublisher=[Security.SecurityElement]::Escape($taskIdentity.publisher)
 $taskPublisherName=[Security.SecurityElement]::Escape($taskIdentity.publisherDisplayName)
+# Localize the shell name as well as the in-app UI. Keep the brand in each name
+# so Start can index the product name and the user's localized clipboard name.
+$taskNameLocales=@{
+    'en-US'='values'; 'zh-CN'='values-b+zh+Hans'; 'zh-TW'='values-b+zh+Hant'
+    'es'='values-es'; 'pt'='values-pt'; 'fr'='values-fr'; 'de'='values-de'
+    'ja'='values-ja'; 'ko'='values-ko'
+}
+foreach($taskLocale in $taskNameLocales.GetEnumerator()){
+    $taskStrings=[xml](Get-Content -LiteralPath (Join-Path $taskRoot ('android/app/src/main/res/'+$taskLocale.Value+'/strings.xml')) -Raw)
+    $taskLocalizedName=$taskStrings.SelectSingleNode('/resources/string[@name="app_name"]').InnerText
+    if([string]::IsNullOrWhiteSpace($taskLocalizedName)){throw ('Missing localized app name: '+$taskLocale.Key)}
+    if($taskLocalizedName -notlike '*Clipboard Bridge*'){$taskLocalizedName='Clipboard Bridge · '+$taskLocalizedName}
+    $taskLocalizedName=[Security.SecurityElement]::Escape($taskLocalizedName)
+    $taskResourceDirectory=Join-Path $taskStage ('Strings/'+$taskLocale.Key)
+    New-Item -ItemType Directory -Path $taskResourceDirectory -Force | Out-Null
+    $taskResourceXml='<?xml version="1.0" encoding="utf-8"?><root><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><data name="AppDisplayName" xml:space="preserve"><value>'+$taskLocalizedName+'</value></data></root>'
+    [IO.File]::WriteAllText((Join-Path $taskResourceDirectory 'Resources.resw'),$taskResourceXml,[Text.UTF8Encoding]::new($false))
+}
 $taskManifest=@"
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -43,11 +61,11 @@ $taskManifest=@"
  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
  IgnorableNamespaces="uap uap10 desktop rescap">
  <Identity Name="$taskName" Publisher="$taskPublisher" Version="$taskVersion" ProcessorArchitecture="x64" />
- <Properties><DisplayName>Clipboard Bridge</DisplayName><PublisherDisplayName>$taskPublisherName</PublisherDisplayName><Logo>Assets\Logo50.png</Logo></Properties>
+ <Properties><DisplayName>ms-resource:AppDisplayName</DisplayName><PublisherDisplayName>$taskPublisherName</PublisherDisplayName><Logo>Assets\Logo50.png</Logo></Properties>
  <Resources><Resource Language="en-us" /><Resource Language="zh-cn" /><Resource Language="zh-tw" /><Resource Language="es" /><Resource Language="pt" /><Resource Language="fr" /><Resource Language="de" /><Resource Language="ja" /><Resource Language="ko" /></Resources>
  <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" /></Dependencies>
  <Applications><Application Id="ClipboardBridge" Executable="app\ClipboardBridge.exe" uap10:RuntimeBehavior="packagedClassicApp" uap10:TrustLevel="mediumIL" uap10:SupportsMultipleInstances="true">
-  <uap:VisualElements DisplayName="Clipboard Bridge" Description="Share your clipboard, photos and files with your paired device" BackgroundColor="transparent" Square150x150Logo="Assets\Logo150.png" Square44x44Logo="Assets\Logo44.png" />
+  <uap:VisualElements DisplayName="ms-resource:AppDisplayName" Description="Share your clipboard, photos and files with your paired device" BackgroundColor="transparent" Square150x150Logo="Assets\Logo150.png" Square44x44Logo="Assets\Logo44.png" />
   <Extensions>
    <uap:Extension Category="windows.shareTarget"><uap:ShareTarget><uap:SupportedFileTypes><uap:SupportsAnyFileType /></uap:SupportedFileTypes><uap:DataFormat>StorageItems</uap:DataFormat></uap:ShareTarget></uap:Extension>
    <desktop:Extension Category="windows.startupTask" Executable="app\ClipboardBridge.exe" EntryPoint="Windows.FullTrustApplication"><desktop:StartupTask TaskId="ClipboardBridgeStartup" Enabled="true" DisplayName="Clipboard Bridge" /></desktop:Extension>

@@ -56,9 +56,21 @@ without developer mode or certificate-store changes, tray-driven broker startup,
 owner IPC, and broker recovery after termination. The review package was removed
 afterward. Store certification has passed; Store-delivered installation and update behavior have not yet both been verified on the user's everyday installation.
 
-The desktop edition and Store edition currently have separate encrypted state.
-Keep a backup and re-pair when changing distribution channels. Do not silently
-stop or remove a working desktop service to make a Store test pass.
+The desktop edition and Store edition have separate encrypted state. An explicit
+channel migration can preserve pairing by backing up desktop state, stopping the
+desktop broker, and re-encrypting the unchanged configuration from machine DPAPI
+to current-user DPAPI in the Store package context. Copy the receiving-folder,
+pause and share-staging preferences too. Confirm that the running Store broker
+reports the original pairing before retiring the desktop service and its Share
+preview registration. Copying files from an unpackaged process alone is not
+proof: MSIX can redirect the Store app to a different private copy. Do not
+silently stop or remove a working desktop service to make a Store test pass.
+
+The next Store package localizes its shell name separately from the WinForms UI.
+Package resources retain “Clipboard Bridge” alongside the localized app name, including
+“剪贴板同步” in Simplified Chinese. Changing these signed resources requires a new
+Store package; adding a second shortcut with the same application ID does not
+make the already-published 0.2.3 English-only shell name searchable in Chinese.
 
 ### Generic icon in Explorer's quick Share submenu
 
